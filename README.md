@@ -35,7 +35,7 @@ Let's leverage geospatial systems to build a better world, together.
 8. Tonga Electric Power Board 
 9. Tonga Communication Corporation 
 
-## Special Addition
+## Special Edition
 
 * TEPB Programming Manual https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/ton-power/TEPB%20Programming%20Manual.pdf, only available at the National Library of Australia http://catalogue.nla.gov.au/Record/2345856
 

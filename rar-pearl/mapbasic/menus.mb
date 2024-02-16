@@ -1,0 +1,106 @@
+'*****************************************************************
+'*  Name   : Menus
+'*  Purpose: Create user interface for Actions drop down menus
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Edwin Liava'a
+'*  Date   : 20/06/2011
+'*  Mods   :  
+'*
+'*****************************************************************
+Include "mapbasic.def"
+Include "menu.def"
+
+Global AC_Path As String	'	Access
+Global BD_Path As String	'	MapInfo Raster Layers 
+Global MI_Path As String	'	MapInfo Vector Layers
+
+Declare Sub Menus
+Declare Sub Layout_Preview
+Declare Sub DispFarms_97
+Declare Sub DispFarms_2011
+Declare Sub DispContours
+Declare Sub DispLines
+Declare Sub DispAnchors
+Declare Sub DispBuffers
+Declare Sub UpdateLines
+Declare Sub Update_Lines
+Declare Sub Update_Anchors
+Declare Sub DispSeedhouse
+Declare Sub DispBackdrop
+Declare Sub About
+Declare Sub Finish
+Declare Sub NotYetReleased
+
+Sub Menus
+
+	OnError goto Err_Manage
+
+	Create Menu "Common" 
+    	As 	
+			"Manihiki Image Backdrops" Calling DispBackdrop,
+			"Manihiki Lagoon Contours" Calling DispContours,
+			"(-",
+			"* Not yet released!"
+	Alter Menu Bar Add "Common" 
+
+	Create Menu "Layers" 
+    	As 
+			"MMR Layers",
+			"(-",
+			"Farms 1997" Calling DispFarms_97,
+			"Farms 2011" Calling DispFarms_2011,
+			"Anchors" Calling DispAnchors,
+			"Lines" Calling DispLines,
+			"* Seeding House" Calling DispSeedhouse,
+			"(-",
+			"* Not yet released!"
+	
+	Alter Menu Bar Add "Layers"
+
+ 	Create Menu "Actions" 
+    	As 	
+			"Update Lines" Calling Update_Lines,
+			"Update Anchors" Calling Update_Anchors,
+			"Print Layout" Calling Layout_Preview,
+			"(-",
+			"* Not yet released!"
+
+	Alter Menu Bar Add "Actions"  
+
+	Create Menu "Queries" 
+    	As 
+			"* MMR Thematic Maps" Calling NotYetReleased,
+			"(-",
+			"* Not yet released!"
+	
+	Alter Menu Bar Add "Queries"
+	
+	Create Menu "About" 
+    	As 	
+			"(-",
+			"About" Calling About,
+			"(-"
+	Alter Menu Bar Add "About" 	
+
+	Create Menu "Exit" 
+    	As 	
+			"(-",
+			"Exit" Calling Finish,
+			"(-"
+	Alter Menu Bar Add "Exit" 	
+
+
+Res_Menus:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Res_Menus
+End Sub Menus
+
+
+
+
+

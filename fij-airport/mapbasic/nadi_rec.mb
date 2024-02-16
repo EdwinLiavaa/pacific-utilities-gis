@@ -1,0 +1,37 @@
+'***********************************************************************************************
+'Title: NADI_REC.MB
+'Purpose: Open Nadi rectified Quickbird Satellite imagery
+'Input: 
+'Output:
+'Author: Edwin Liava'a
+'Date: 15/09/2011
+'***********************************************************************************************
+
+Include "Mapbasic.def"
+Include "Menu.def"
+
+Declare Sub NADI_REC
+
+Dim map_win_id As Integer
+
+Sub NADI_REC
+
+Open Table "C:\AFL\gis\backdrops\Nadi_Rectified\nadi0810_rec.TAB" Interactive
+
+Map From nadi0810_rec
+
+map_win_id = FrontWindow( )
+
+Set Map Window Map_Win_id
+		Center (177.44381,-17.75436)
+		Zoom 2000 Units "m"
+
+Set Window map_win_id Max
+
+End Sub
+
+
+
+
+
+

@@ -1,0 +1,207 @@
+'********************************************************
+'*                                                      *
+'*     PoleCons.MBO                Edwin, 20.08.98      *
+'*                                                      *
+'*  This program asks the operator to type in the month *
+'*  when the Pole was constructed.                      *
+'*                                                      *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required files:                                      *
+'*                MAPBASIC.DEF                          *
+'*			MENU.DEF                              *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required tables:                                     *
+'*                  - poles.tab                         *
+'*                  -                                   *
+'********************************************************
+
+	include "C:\Program Files\MapInfo\MapBasic\MAPBASIC.DEF"
+	include "C:\Program Files\MAPINFO\MAPBASIC\MENU.DEF"
+
+	Global passw as String 
+	Global MapPath as string
+	Global CadaPath as String
+
+
+	Declare Sub PoleCons
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++*
+
+	Sub PoleCons
+
+	
+	Dim  ivar1, ivar2, ivar3 As Integer
+	Dim vyear 			As SmallInt
+	Dim vyear3 			As SmallInt
+	Dim vmonth 			As SmallInt
+	Dim vmonth2 		As SmallInt
+	Dim stvar2 			As String
+	Dim stvar3 			As String
+	Dim styear, styear3 	As String
+	Dim stmonth, stmonth3 	As String
+	Dim vmonth3 		As SmallInt
+	Dim Map_Win_Id 		As Integer
+	Dim i_lay_type		As SmallInt
+	Dim iz, ln			As SmallInt
+	Dim MapName			As String
+
+	OnError goto Err_PoleCons
+
+' ++++++++++++++++++++++++++ close some toolbars ++++++++++++++++++++
+
+	Alter ButtonPad "Tools" Hide
+	Alter ButtonPad "Drawing" Hide
+	Alter ButtonPad "Main" Show Fixed
+	Alter ButtonPad "ODBC" Hide
+
+
+' ++++++++++++++++++++++++++ close and open map layers ++++++++++++++
+
+	
+	MapName = MapPath +"POLES.TAB"
+
+	Close All
+	
+	Open Table MapName As "Poles" Password passw
+
+	Map From Poles
+
+	Mapname = Cadapath + "n_cad.tab"
+	open table MapName as n_cad interactive
+
+	add map layer n_cad
+
+
+'+++++++++++++++++++++++++++  Getting window ID +++++++++++++++++++++
+
+	Map_Win_id = FrontWindow()
+
+'++++++  go out of program if operator does not know password +++++++
+
+	If Map_Win_id = 0 Then
+		Exit Sub
+	End If
+
+
+' +++++++++++++++++++  Dialog ++++++++++++++++++++++++++++++++++++++++
+
+
+	Dialog
+
+	Title "Poles constructed in:"
+
+	Control StaticText
+		Title "select year:"
+		Position 5, 10
+
+	Control EditText
+		Position 35, 20 Width 25
+		Value "----"
+		Into styear
+
+	Control StaticText
+		Title "select month:"
+		Position 80, 10
+
+	Control PopUpMenu
+		Title "01;02;03;04;05;06;07;08;09;10;11;12"
+		Position 80, 20 Width 30
+		Value 1
+		Into vmonth
+
+	Control OKButton
+		Position 25, 40
+	Control CancelButton
+		Position 65, 40
+
+	If not CommandInfo(CMD_INFO_DLG_OK) Then 	'The user just cancelled.
+  		Exit Sub
+	End If 
+ 
+'++++++++++++++++++++++ Calculating year and month +++++++++++++++++++
+
+	vyear = Val(styear)
+	vmonth3 = vmonth + 1
+
+	IF vmonth3 < 10 Then
+   		stmonth3 = "0" + Str$(vmonth3)
+		styear3 = styear
+
+	ElseIf vmonth3 = 13 Then       'handling month "December"
+		stmonth3 = "01"          'the upper month will be January
+		vyear3 = vyear + 1       'of next year, which is current year
+		styear3 = Str$(vyear3)   'plus 1
+	Else	
+		stmonth3 = Str$(vmonth3)
+		styear3 = styear
+	End If
+
+	If vmonth < 10 Then
+		stmonth = "0" + Str$(vmonth)
+	Else
+		stmonth = Str$(vmonth)
+	End If
+
+	stvar2 = styear+stmonth+"01" 
+	stvar3 = styear3+stmonth3+"01"
+	ivar2 = Val(stvar2)
+	ivar3 = Val(stvar3)
+
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+'++++++++++++++++++++++++++ Shade statements +++++++++++++++++++++++++
+
+	Shade Window Map_Win_Id "Poles" with CONST_DATE 
+		Ranges ivar2:ivar3 
+		Symbol (34,RED,8)
+		default Symbol (34,BLACK,8)
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+'+++++++++++++++++++++++++ View Entire Layer +++++++++++++++++++++++++
+
+	
+	Set Map Window  Map_Win_Id Zoom Entire Layer "Poles"
+
+'+++++++++++++++++++++++++ Legend Statements +++++++++++++++++++++++++
+
+	Set Legend Window Map_Win_Id layer prev 
+		display on 
+		shades off 
+		symbols on 
+		lines off 
+		count on 
+
+
+		title "Constructed in defined month" 
+		Font ("MS Sans Serif",0,10,0) 
+		subtitle "" Font ("MS Sans Serif",0,8,0) 
+		ascending on 
+		ranges Font ("MS Sans Serif",0,8,0) "all others" 
+		display on ,
+		"constructed" display on
+ 
+	Set Window WIN_LEGEND 
+	Position (1,4) Units "cm"
+	Width 6 Units "cm"
+	Height 3 Units "cm"
+
+	Open Window Legend
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	Set Window Map_Win_id Max
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Res_PoleCons:
+	Exit Sub
+
+Err_PoleCons:
+	note "PoleCons: "+str$(err())+" "+error$()
+	Resume Next
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	End Sub

@@ -1,0 +1,139 @@
+Include "mapbasic.def"
+Include "menu.def"
+
+Declare Sub Main_Menu
+Declare Sub DispRD					 
+Declare Sub DispCT					 
+Declare Sub DispCP
+Declare Sub DispBL
+Declare Sub DispBR
+Declare Sub DispBU
+Declare Sub DispGN
+Declare Sub DispLN_HV
+Declare Sub DispLN_LV
+Declare Sub DispMT
+Declare Sub DispND
+Declare Sub DispPL
+Declare Sub DispPS
+Declare Sub DispTX	 
+Declare Sub CreateLN_HV
+Declare Sub CreateLN_LV
+Declare Sub Create_IDs
+Declare Sub GRID	
+Declare Sub Layout_Preview	
+Declare Sub UpdateLinesHV
+Declare Sub UpdateLinesLV
+Declare Sub UpdatePoints
+Declare Sub UpdateRegions
+Declare Sub UpdateSU1
+Declare Sub UpdateSU2
+Declare Sub CreMeQueries			 
+Declare Sub CutLN_LV
+Declare Sub Find_Asset
+Declare Sub DispHV_FEEDER
+Declare Sub DispHV_UG
+Declare Sub DispLV_FEEDER
+Declare Sub DispLN_PHASE
+Declare Sub DispMT_PRECON
+Declare Sub DispPL_LIGHT
+Declare Sub DispPL_OWNER
+Declare Sub DispPL_TELCO
+Declare Sub DispTX_TOTALCONSUMP
+Declare Sub DispTX_ByFD
+Declare Sub NotYetReleased
+
+'*********************************************************************
+
+Sub Main_Menu
+
+OnError Goto Err_Manage
+
+	Create Menu "Common Layers" As
+		"Display Common Layers:",
+		"(-", 
+			"Buildings *"							Calling NotYetReleased,
+			"Coast *"								Calling NotYetReleased,
+			"Roads *"								Calling NotYetReleased,
+		"(-", 
+		"Display Image Backdrops:",
+		"(-", 
+			"SIEA 1 *"   					Calling NotYetReleased,
+			"SIEA 2 *" 						Calling NotYetReleased,
+		"(-", 
+		" * Not Yet Acquired"
+	
+	Alter Menu Bar Add "Common Layers"
+
+	Create Menu "SIEA Layers" As
+		"Display:",
+		"(-", 
+			"Breakers and Switches"			Calling DispBR,
+			"Buildings"							Calling DispBL,
+			"Busbars"								Calling DispBU,
+			"Generators"							Calling DispGN,
+			"Lines High Voltage"				Calling DispLN_HV,
+			"Lines Low Voltage"					Calling DispLN_LV,
+			"Meters" 								Calling DispMT,
+			"Nodes" 								Calling DispND,
+			"Poles"								Calling DispPL,
+			"Power Stations"						Calling DispPS,
+			"Transformers"						Calling DispTX,
+			"(-",
+			"* Not Yet Released"
+	
+	Alter Menu Bar Add "SIEA Layers"
+
+	Create Menu "SIEA Actions" As
+		"Maintenance:",
+		"(-",
+			"Create Unique IDs"					Calling Create_IDs, 
+			"Connect HV Lines"					Calling CreateLN_HV,
+			"Connect LV Lines"					Calling CreateLN_LV,
+			"Update HV Lines"					Calling UpdateLinesHV,
+			"Update LV Lines"					Calling UpdateLinesLV,
+			"Update Points"						Calling UpdatePoints,
+			"Update Regions"						Calling UpdateRegions,
+			"Update Survey1" 					Calling UpdateSU1,
+			"Update Survey2" 					Calling UpdateSU2,
+			"Create a Map Grid"					Calling GRID,
+			"Print Layout Preview"				Calling Layout_Preview,
+			"(-",
+			"* Not Yet Released"
+	
+	Alter Menu Bar Add "SIEA Actions"
+
+	Create Menu "SIEA Queries" As
+		"Display:",
+		"(-",
+			"Find Asset"								Calling Find_Asset, 
+			"Simulate Power Loss in KWH/$"		Calling CutLN_LV,
+			"Simulate Power Loss on LV Lines"	Calling NotYetReleased,
+			"Simulate Power Loss on Transformers" Calling NotYetReleased,
+			"Load Flow Analysis by Generator"	Calling NotYetReleased,
+			"Load Flow Analysis by Feeder"		Calling NotYetReleased,
+			"Load Flow Analysis by Transformer" Calling NotYetReleased,			
+			"HV Lines by Feeder"					Calling DispHV_FEEDER,
+			"HV Lines Underground"					Calling DispHV_UG,
+			"LV Lines by Feeder"					Calling DispLV_FEEDER,
+			"Lines by Phase"							Calling DispLN_PHASE,
+			"Meters Prepaid and Conventional"	Calling DispMT_PRECON, 
+			"Poles by Street Lights"				Calling DispPL_LIGHT,
+			"Poles by Owner"							Calling DispPL_OWNER,
+			"Poles with Telco Assets"				Calling DispPL_TELCO,
+			"Transformers by Feeder"				Calling DispTX_ByFD,
+			"Transformers by Total Consumption"	Calling DispTX_TOTALCONSUMP,
+			"(-",
+			"* Not Yet Released"
+	
+	Alter Menu Bar Add "SIEA Queries"
+
+
+Res_Main_Menu:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Res_Main_Menu
+	
+End Sub

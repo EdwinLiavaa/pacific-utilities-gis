@@ -1,0 +1,442 @@
+'*****************************************************************************
+'*  Name   : Create Fix_PPL_IDs
+'*  Purpose: Fix strLayer_ID and strLayer_ID of HV and LV Lines to new Assets IDs
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Edwin Liava'a
+'*  Date   : 22-01-2013
+'*  Mods   : 11-11-2013 
+'*           
+'*****************************************************************************
+
+Include "PPL_Lib.def"
+Include "mapbasic.def"
+Include "menu.def"
+Include "Icons.def"  
+
+Global db_conn_path As String	'	Access
+Global rs_path As String	'	MapInfo Raster Layers (BackDrops)
+GLobal vt_Path As String	'	MapInfo Vector Layers
+Global ph_Path As String	'	Photos
+
+
+Declare Sub Fix_PPL_IDs
+Declare Sub UpdateFROM_IDs(ByVal strLayer As string, ByVal strLayer_ID As string)
+Declare Sub UpdateNEXT_IDs(ByVal strLayer As string, ByVal strLayer_ID As string)
+
+
+Sub Fix_PPL_IDs
+
+OnError Goto Err_Manage
+
+	Dim s_filename As String
+
+	Close All
+
+	Note "Open HV or LV Lines to Update strLayer_ID and strLayer_IDs!"
+	s_filename = FileOpenDlg("","","TAB","Open Table") 
+	
+	Open Table s_filename As NewTable
+
+	'++++++++++++++++++++++++++++ adding UniqueID      ++++++++++++++++++++++++++++++
+
+ 			Call UpdateFROM_IDs(NewTable, "FROM_ID")
+			Call UpdateNEXT_IDs(NewTable, "NEXT_ID")
+
+	'	++++++++++++++++++++++++++++ 		End adding UniqueID      ++++++++++++++++++++++++++++++
+
+	Browse * FROM NewTable
+
+Res_Fix_PPL_IDs:
+
+	Exit Sub
+
+Err_Manage:
+	note "Error: Blank Table!" + str$(Err()) + ", " + Error$()
+	Resume Res_Fix_PPL_IDs
+
+End Sub
+
+'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Sub UpdateFROM_IDs(ByVal strLayer As string, ByVal strLayer_ID As string)
+
+	Dim iRec, iCount as integer
+	Dim strID as string
+
+			iCount = 1
+			iRec = 1
+	
+			Fetch first from strLayer
+			Do While Not EOT(strLayer)
+
+'6 trailing 0s
+				If Mid$(strLayer_ID,3,6) = "000000" AND Left$(strLayer_ID,2) = "GN" Then
+					Update strLayer Set strLayer_ID = "GN" + Right$(strLayer_ID,1) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,6) = "000000" AND Left$(strLayer_ID,2) = "TH" Then
+					Update strLayer Set strLayer_ID = "TH" + Right$(strLayer_ID,1) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,6) = "000000" AND Left$(strLayer_ID,2) = "HY" Then
+					Update strLayer Set strLayer_ID = "HY" + Right$(strLayer_ID,1) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,6) = "000000" AND Left$(strLayer_ID,2) = "SG" Then
+					Update strLayer Set strLayer_ID = "SG" + Right$(strLayer_ID,1) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,6) = "000000" AND Left$(strLayer_ID,2) = "BR" Then
+					Update strLayer Set strLayer_ID = "BR" + Right$(strLayer_ID,1) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,6) = "000000" AND Left$(strLayer_ID,2) = "BU" Then
+					Update strLayer Set strLayer_ID = "BU" + Right$(strLayer_ID,1) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,6) = "000000" AND Left$(strLayer_ID,2) = "IS" Then
+					Update strLayer Set strLayer_ID = "IS" + Right$(strLayer_ID,1) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,6) = "000000" AND Left$(strLayer_ID,2) = "LA" Then
+					Update strLayer Set strLayer_ID = "LA" + Right$(strLayer_ID,1) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,6) = "000000" AND Left$(strLayer_ID,2) = "ES" Then
+					Update strLayer Set strLayer_ID = "ES" + Right$(strLayer_ID,1) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,6) = "000000" AND Left$(strLayer_ID,2) = "TT" Then
+					Update strLayer Set strLayer_ID = "TT" + Right$(strLayer_ID,1) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,6) = "000000" AND Left$(strLayer_ID,2) = "TX" Then
+					Update strLayer Set strLayer_ID = "TX" + Right$(strLayer_ID,1) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,6) = "000000" AND Left$(strLayer_ID,2) = "PL" Then
+					Update strLayer Set strLayer_ID = "PL" + Right$(strLayer_ID,1) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,6) = "000000" AND Left$(strLayer_ID,2) = "MT" Then
+					Update strLayer Set strLayer_ID = "MT" + Right$(strLayer_ID,1) Where RowID = iRec
+'5 trailing 0s
+
+				ElseIf Mid$(strLayer_ID,3,5) = "00000" AND Left$(strLayer_ID,2) = "GN" Then
+					Update strLayer Set strLayer_ID = "GN" + Right$(strLayer_ID,2) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,5) = "00000" AND Left$(strLayer_ID,2) = "TH" Then
+					Update strLayer Set strLayer_ID = "TH" + Right$(strLayer_ID,2) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,5) = "00000" AND Left$(strLayer_ID,2) = "HY" Then
+					Update strLayer Set strLayer_ID = "HY" + Right$(strLayer_ID,2) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,5) = "00000" AND Left$(strLayer_ID,2) = "SG" Then
+					Update strLayer Set strLayer_ID = "SG" + Right$(strLayer_ID,2) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,5) = "00000" AND Left$(strLayer_ID,2) = "BR" Then
+					Update strLayer Set strLayer_ID = "BR" + Right$(strLayer_ID,2) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,5) = "00000" AND Left$(strLayer_ID,2) = "BU" Then
+					Update strLayer Set strLayer_ID = "BU" + Right$(strLayer_ID,2) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,5) = "00000" AND Left$(strLayer_ID,2) = "IS" Then
+					Update strLayer Set strLayer_ID = "IS" + Right$(strLayer_ID,2) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,5) = "00000" AND Left$(strLayer_ID,2) = "LA" Then
+					Update strLayer Set strLayer_ID = "LA" + Right$(strLayer_ID,2) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,5) = "00000" AND Left$(strLayer_ID,2) = "ES" Then
+					Update strLayer Set strLayer_ID = "ES" + Right$(strLayer_ID,2) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,5) = "00000" AND Left$(strLayer_ID,2) = "TT" Then
+					Update strLayer Set strLayer_ID = "TT" + Right$(strLayer_ID,2) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,5) = "00000" AND Left$(strLayer_ID,2) = "TX" Then
+					Update strLayer Set strLayer_ID = "TX" + Right$(strLayer_ID,2) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,5) = "00000" AND Left$(strLayer_ID,2) = "PL" Then
+					Update strLayer Set strLayer_ID = "PL" + Right$(strLayer_ID,2) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,5) = "00000" AND Left$(strLayer_ID,2) = "MT" Then
+					Update strLayer Set strLayer_ID = "MT" + Right$(strLayer_ID,2) Where RowID = iRec
+'4 trailing 0s
+
+				ElseIf Mid$(strLayer_ID,3,4) = "0000" AND Left$(strLayer_ID,2) = "GN" Then
+					Update strLayer Set strLayer_ID = "GN" + Right$(strLayer_ID,3) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,4) = "0000" AND Left$(strLayer_ID,2) = "TH" Then
+					Update strLayer Set strLayer_ID = "TH" + Right$(strLayer_ID,3) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,4) = "0000" AND Left$(strLayer_ID,2) = "HY" Then
+					Update strLayer Set strLayer_ID = "HY" + Right$(strLayer_ID,3) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,4) = "0000" AND Left$(strLayer_ID,2) = "SG" Then
+					Update strLayer Set strLayer_ID = "SG" + Right$(strLayer_ID,3) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,4) = "0000" AND Left$(strLayer_ID,2) = "BR" Then
+					Update strLayer Set strLayer_ID = "BR" + Right$(strLayer_ID,3) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,4) = "0000" AND Left$(strLayer_ID,2) = "BU" Then
+					Update strLayer Set strLayer_ID = "BU" + Right$(strLayer_ID,3) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,4) = "0000" AND Left$(strLayer_ID,2) = "IS" Then
+					Update strLayer Set strLayer_ID = "IS" + Right$(strLayer_ID,3) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,4) = "0000" AND Left$(strLayer_ID,2) = "LA" Then
+					Update strLayer Set strLayer_ID = "LA" + Right$(strLayer_ID,3) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,4) = "0000" AND Left$(strLayer_ID,2) = "ES" Then
+					Update strLayer Set strLayer_ID = "ES" + Right$(strLayer_ID,3) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,4) = "0000" AND Left$(strLayer_ID,2) = "TT" Then
+					Update strLayer Set strLayer_ID = "TT" + Right$(strLayer_ID,3) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,4) = "0000" AND Left$(strLayer_ID,2) = "TX" Then
+					Update strLayer Set strLayer_ID = "TX" + Right$(strLayer_ID,3) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,4) = "0000" AND Left$(strLayer_ID,2) = "PL" Then
+					Update strLayer Set strLayer_ID = "PL" + Right$(strLayer_ID,3) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,4) = "0000" AND Left$(strLayer_ID,2) = "MT" Then
+					Update strLayer Set strLayer_ID = "MT" + Right$(strLayer_ID,3) Where RowID = iRec
+'3 trailing 0s
+
+				ElseIf Mid$(strLayer_ID,3,3) = "000" AND Left$(strLayer_ID,2) = "GN" Then
+					Update strLayer Set strLayer_ID = "GN" + Right$(strLayer_ID,4) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,3) = "000" AND Left$(strLayer_ID,2) = "TH" Then
+					Update strLayer Set strLayer_ID = "TH" + Right$(strLayer_ID,4) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,3) = "000" AND Left$(strLayer_ID,2) = "HY" Then
+					Update strLayer Set strLayer_ID = "HY" + Right$(strLayer_ID,4) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,3) = "000" AND Left$(strLayer_ID,2) = "SG" Then
+					Update strLayer Set strLayer_ID = "SG" + Right$(strLayer_ID,4) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,3) = "000" AND Left$(strLayer_ID,2) = "BR" Then
+					Update strLayer Set strLayer_ID = "BR" + Right$(strLayer_ID,4) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,3) = "000" AND Left$(strLayer_ID,2) = "BU" Then
+					Update strLayer Set strLayer_ID = "BU" + Right$(strLayer_ID,4) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,3) = "000" AND Left$(strLayer_ID,2) = "IS" Then
+					Update strLayer Set strLayer_ID = "IS" + Right$(strLayer_ID,4) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,3) = "000" AND Left$(strLayer_ID,2) = "LA" Then
+					Update strLayer Set strLayer_ID = "LA" + Right$(strLayer_ID,4) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,3) = "000" AND Left$(strLayer_ID,2) = "ES" Then
+					Update strLayer Set strLayer_ID = "ES" + Right$(strLayer_ID,4) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,3) = "000" AND Left$(strLayer_ID,2) = "TT" Then
+					Update strLayer Set strLayer_ID = "TT" + Right$(strLayer_ID,4) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,3) = "000" AND Left$(strLayer_ID,2) = "TX" Then
+					Update strLayer Set strLayer_ID = "TX" + Right$(strLayer_ID,4) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,3) = "000" AND Left$(strLayer_ID,2) = "PL" Then
+					Update strLayer Set strLayer_ID = "PL" + Right$(strLayer_ID,4) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,3) = "000" AND Left$(strLayer_ID,2) = "MT" Then
+					Update strLayer Set strLayer_ID = "MT" + Right$(strLayer_ID,4) Where RowID = iRec
+'2 trailing 0s
+
+				ElseIf Mid$(strLayer_ID,3,2) = "00" AND Left$(strLayer_ID,2) = "GN" Then
+					Update strLayer Set strLayer_ID = "GN" + Right$(strLayer_ID,5) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,2) = "00" AND Left$(strLayer_ID,2) = "TH" Then
+					Update strLayer Set strLayer_ID = "TH" + Right$(strLayer_ID,5) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,2) = "00" AND Left$(strLayer_ID,2) = "HY" Then
+					Update strLayer Set strLayer_ID = "HY" + Right$(strLayer_ID,5) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,2) = "00" AND Left$(strLayer_ID,2) = "SG" Then
+					Update strLayer Set strLayer_ID = "SG" + Right$(strLayer_ID,5) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,2) = "00" AND Left$(strLayer_ID,2) = "BR" Then
+					Update strLayer Set strLayer_ID = "BR" + Right$(strLayer_ID,5) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,2) = "00" AND Left$(strLayer_ID,2) = "BU" Then
+					Update strLayer Set strLayer_ID = "BU" + Right$(strLayer_ID,5) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,2) = "00" AND Left$(strLayer_ID,2) = "IS" Then
+					Update strLayer Set strLayer_ID = "IS" + Right$(strLayer_ID,5) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,2) = "00" AND Left$(strLayer_ID,2) = "LA" Then
+					Update strLayer Set strLayer_ID = "LA" + Right$(strLayer_ID,5) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,2) = "00" AND Left$(strLayer_ID,2) = "ES" Then
+					Update strLayer Set strLayer_ID = "ES" + Right$(strLayer_ID,5) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,2) = "00" AND Left$(strLayer_ID,2) = "TT" Then
+					Update strLayer Set strLayer_ID = "TT" + Right$(strLayer_ID,5) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,2) = "00" AND Left$(strLayer_ID,2) = "TX" Then
+					Update strLayer Set strLayer_ID = "TX" + Right$(strLayer_ID,5) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,2) = "00" AND Left$(strLayer_ID,2) = "PL" Then
+					Update strLayer Set strLayer_ID = "PL" + Right$(strLayer_ID,5) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,2) = "00" AND Left$(strLayer_ID,2) = "MT" Then
+					Update strLayer Set strLayer_ID = "MT" + Right$(strLayer_ID,5) Where RowID = iRec
+'1 trailing 0s
+
+				ElseIf Mid$(strLayer_ID,3,1) = "0" AND Left$(strLayer_ID,2) = "GN" Then
+					Update strLayer Set strLayer_ID = "GN" + Right$(strLayer_ID,6) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,1) = "0" AND Left$(strLayer_ID,2) = "TH" Then
+					Update strLayer Set strLayer_ID = "TH" + Right$(strLayer_ID,6) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,1) = "0" AND Left$(strLayer_ID,2) = "HY" Then
+					Update strLayer Set strLayer_ID = "HY" + Right$(strLayer_ID,6) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,1) = "0" AND Left$(strLayer_ID,2) = "SG" Then
+					Update strLayer Set strLayer_ID = "SG" + Right$(strLayer_ID,6) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,1) = "0" AND Left$(strLayer_ID,2) = "BR" Then
+					Update strLayer Set strLayer_ID = "BR" + Right$(strLayer_ID,6) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,1) = "0" AND Left$(strLayer_ID,2) = "BU" Then
+					Update strLayer Set strLayer_ID = "BU" + Right$(strLayer_ID,6) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,1) = "0" AND Left$(strLayer_ID,2) = "IS" Then
+					Update strLayer Set strLayer_ID = "IS" + Right$(strLayer_ID,6) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,1) = "0" AND Left$(strLayer_ID,2) = "LA" Then
+					Update strLayer Set strLayer_ID = "LA" + Right$(strLayer_ID,6) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,1) = "0" AND Left$(strLayer_ID,2) = "ES" Then
+					Update strLayer Set strLayer_ID = "ES" + Right$(strLayer_ID,6) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,1) = "0" AND Left$(strLayer_ID,2) = "TT" Then
+					Update strLayer Set strLayer_ID = "TT" + Right$(strLayer_ID,6) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,1) = "0" AND Left$(strLayer_ID,2) = "TX" Then
+					Update strLayer Set strLayer_ID = "TX" + Right$(strLayer_ID,6) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,1) = "0" AND Left$(strLayer_ID,2) = "PL" Then
+					Update strLayer Set strLayer_ID = "PL" + Right$(strLayer_ID,6) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,1) = "0" AND Left$(strLayer_ID,2) = "MT" Then
+					Update strLayer Set strLayer_ID = "MT" + Right$(strLayer_ID,6) Where RowID = iRec
+				Else 
+					 '"Complete Update"
+				End If
+
+				iCount = iCount + 1
+				iRec = iRec + 1
+				Fetch Next From strLayer
+			Loop
+
+
+End Sub
+
+'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Sub UpdateNEXT_IDs(ByVal strLayer As string, ByVal strLayer_ID As string)
+
+	Dim iRec, iCount as integer
+	Dim strID as string
+
+			iCount = 1
+			iRec = 1
+	
+			Fetch first from strLayer
+			Do While Not EOT(strLayer)
+
+'6 trailing 0s
+				If Mid$(strLayer_ID,3,6) = "000000" AND Left$(strLayer_ID,2) = "GN" Then
+					Update strLayer Set strLayer_ID = "GN" + Right$(strLayer_ID,1) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,6) = "000000" AND Left$(strLayer_ID,2) = "TH" Then
+					Update strLayer Set strLayer_ID = "TH" + Right$(strLayer_ID,1) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,6) = "000000" AND Left$(strLayer_ID,2) = "HY" Then
+					Update strLayer Set strLayer_ID = "HY" + Right$(strLayer_ID,1) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,6) = "000000" AND Left$(strLayer_ID,2) = "SG" Then
+					Update strLayer Set strLayer_ID = "SG" + Right$(strLayer_ID,1) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,6) = "000000" AND Left$(strLayer_ID,2) = "BR" Then
+					Update strLayer Set strLayer_ID = "BR" + Right$(strLayer_ID,1) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,6) = "000000" AND Left$(strLayer_ID,2) = "BU" Then
+					Update strLayer Set strLayer_ID = "BU" + Right$(strLayer_ID,1) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,6) = "000000" AND Left$(strLayer_ID,2) = "IS" Then
+					Update strLayer Set strLayer_ID = "IS" + Right$(strLayer_ID,1) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,6) = "000000" AND Left$(strLayer_ID,2) = "LA" Then
+					Update strLayer Set strLayer_ID = "LA" + Right$(strLayer_ID,1) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,6) = "000000" AND Left$(strLayer_ID,2) = "ES" Then
+					Update strLayer Set strLayer_ID = "ES" + Right$(strLayer_ID,1) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,6) = "000000" AND Left$(strLayer_ID,2) = "TT" Then
+					Update strLayer Set strLayer_ID = "TT" + Right$(strLayer_ID,1) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,6) = "000000" AND Left$(strLayer_ID,2) = "TX" Then
+					Update strLayer Set strLayer_ID = "TX" + Right$(strLayer_ID,1) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,6) = "000000" AND Left$(strLayer_ID,2) = "PL" Then
+					Update strLayer Set strLayer_ID = "PL" + Right$(strLayer_ID,1) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,6) = "000000" AND Left$(strLayer_ID,2) = "MT" Then
+					Update strLayer Set strLayer_ID = "MT" + Right$(strLayer_ID,1) Where RowID = iRec
+'5 trailing 0s
+
+				ElseIf Mid$(strLayer_ID,3,5) = "00000" AND Left$(strLayer_ID,2) = "GN" Then
+					Update strLayer Set strLayer_ID = "GN" + Right$(strLayer_ID,2) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,5) = "00000" AND Left$(strLayer_ID,2) = "TH" Then
+					Update strLayer Set strLayer_ID = "TH" + Right$(strLayer_ID,2) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,5) = "00000" AND Left$(strLayer_ID,2) = "HY" Then
+					Update strLayer Set strLayer_ID = "HY" + Right$(strLayer_ID,2) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,5) = "00000" AND Left$(strLayer_ID,2) = "SG" Then
+					Update strLayer Set strLayer_ID = "SG" + Right$(strLayer_ID,2) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,5) = "00000" AND Left$(strLayer_ID,2) = "BR" Then
+					Update strLayer Set strLayer_ID = "BR" + Right$(strLayer_ID,2) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,5) = "00000" AND Left$(strLayer_ID,2) = "BU" Then
+					Update strLayer Set strLayer_ID = "BU" + Right$(strLayer_ID,2) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,5) = "00000" AND Left$(strLayer_ID,2) = "IS" Then
+					Update strLayer Set strLayer_ID = "IS" + Right$(strLayer_ID,2) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,5) = "00000" AND Left$(strLayer_ID,2) = "LA" Then
+					Update strLayer Set strLayer_ID = "LA" + Right$(strLayer_ID,2) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,5) = "00000" AND Left$(strLayer_ID,2) = "ES" Then
+					Update strLayer Set strLayer_ID = "ES" + Right$(strLayer_ID,2) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,5) = "00000" AND Left$(strLayer_ID,2) = "TT" Then
+					Update strLayer Set strLayer_ID = "TT" + Right$(strLayer_ID,2) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,5) = "00000" AND Left$(strLayer_ID,2) = "TX" Then
+					Update strLayer Set strLayer_ID = "TX" + Right$(strLayer_ID,2) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,5) = "00000" AND Left$(strLayer_ID,2) = "PL" Then
+					Update strLayer Set strLayer_ID = "PL" + Right$(strLayer_ID,2) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,5) = "00000" AND Left$(strLayer_ID,2) = "MT" Then
+					Update strLayer Set strLayer_ID = "MT" + Right$(strLayer_ID,2) Where RowID = iRec
+'4 trailing 0s
+
+				ElseIf Mid$(strLayer_ID,3,4) = "0000" AND Left$(strLayer_ID,2) = "GN" Then
+					Update strLayer Set strLayer_ID = "GN" + Right$(strLayer_ID,3) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,4) = "0000" AND Left$(strLayer_ID,2) = "TH" Then
+					Update strLayer Set strLayer_ID = "TH" + Right$(strLayer_ID,3) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,4) = "0000" AND Left$(strLayer_ID,2) = "HY" Then
+					Update strLayer Set strLayer_ID = "HY" + Right$(strLayer_ID,3) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,4) = "0000" AND Left$(strLayer_ID,2) = "SG" Then
+					Update strLayer Set strLayer_ID = "SG" + Right$(strLayer_ID,3) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,4) = "0000" AND Left$(strLayer_ID,2) = "BR" Then
+					Update strLayer Set strLayer_ID = "BR" + Right$(strLayer_ID,3) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,4) = "0000" AND Left$(strLayer_ID,2) = "BU" Then
+					Update strLayer Set strLayer_ID = "BU" + Right$(strLayer_ID,3) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,4) = "0000" AND Left$(strLayer_ID,2) = "IS" Then
+					Update strLayer Set strLayer_ID = "IS" + Right$(strLayer_ID,3) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,4) = "0000" AND Left$(strLayer_ID,2) = "LA" Then
+					Update strLayer Set strLayer_ID = "LA" + Right$(strLayer_ID,3) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,4) = "0000" AND Left$(strLayer_ID,2) = "ES" Then
+					Update strLayer Set strLayer_ID = "ES" + Right$(strLayer_ID,3) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,4) = "0000" AND Left$(strLayer_ID,2) = "TT" Then
+					Update strLayer Set strLayer_ID = "TT" + Right$(strLayer_ID,3) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,4) = "0000" AND Left$(strLayer_ID,2) = "TX" Then
+					Update strLayer Set strLayer_ID = "TX" + Right$(strLayer_ID,3) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,4) = "0000" AND Left$(strLayer_ID,2) = "PL" Then
+					Update strLayer Set strLayer_ID = "PL" + Right$(strLayer_ID,3) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,4) = "0000" AND Left$(strLayer_ID,2) = "MT" Then
+					Update strLayer Set strLayer_ID = "MT" + Right$(strLayer_ID,3) Where RowID = iRec
+'3 trailing 0s
+
+				ElseIf Mid$(strLayer_ID,3,3) = "000" AND Left$(strLayer_ID,2) = "GN" Then
+					Update strLayer Set strLayer_ID = "GN" + Right$(strLayer_ID,4) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,3) = "000" AND Left$(strLayer_ID,2) = "TH" Then
+					Update strLayer Set strLayer_ID = "TH" + Right$(strLayer_ID,4) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,3) = "000" AND Left$(strLayer_ID,2) = "HY" Then
+					Update strLayer Set strLayer_ID = "HY" + Right$(strLayer_ID,4) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,3) = "000" AND Left$(strLayer_ID,2) = "SG" Then
+					Update strLayer Set strLayer_ID = "SG" + Right$(strLayer_ID,4) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,3) = "000" AND Left$(strLayer_ID,2) = "BR" Then
+					Update strLayer Set strLayer_ID = "BR" + Right$(strLayer_ID,4) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,3) = "000" AND Left$(strLayer_ID,2) = "BU" Then
+					Update strLayer Set strLayer_ID = "BU" + Right$(strLayer_ID,4) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,3) = "000" AND Left$(strLayer_ID,2) = "IS" Then
+					Update strLayer Set strLayer_ID = "IS" + Right$(strLayer_ID,4) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,3) = "000" AND Left$(strLayer_ID,2) = "LA" Then
+					Update strLayer Set strLayer_ID = "LA" + Right$(strLayer_ID,4) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,3) = "000" AND Left$(strLayer_ID,2) = "ES" Then
+					Update strLayer Set strLayer_ID = "ES" + Right$(strLayer_ID,4) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,3) = "000" AND Left$(strLayer_ID,2) = "TT" Then
+					Update strLayer Set strLayer_ID = "TT" + Right$(strLayer_ID,4) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,3) = "000" AND Left$(strLayer_ID,2) = "TX" Then
+					Update strLayer Set strLayer_ID = "TX" + Right$(strLayer_ID,4) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,3) = "000" AND Left$(strLayer_ID,2) = "PL" Then
+					Update strLayer Set strLayer_ID = "PL" + Right$(strLayer_ID,4) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,3) = "000" AND Left$(strLayer_ID,2) = "MT" Then
+					Update strLayer Set strLayer_ID = "MT" + Right$(strLayer_ID,4) Where RowID = iRec
+'2 trailing 0s
+
+				ElseIf Mid$(strLayer_ID,3,2) = "00" AND Left$(strLayer_ID,2) = "GN" Then
+					Update strLayer Set strLayer_ID = "GN" + Right$(strLayer_ID,5) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,2) = "00" AND Left$(strLayer_ID,2) = "TH" Then
+					Update strLayer Set strLayer_ID = "TH" + Right$(strLayer_ID,5) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,2) = "00" AND Left$(strLayer_ID,2) = "HY" Then
+					Update strLayer Set strLayer_ID = "HY" + Right$(strLayer_ID,5) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,2) = "00" AND Left$(strLayer_ID,2) = "SG" Then
+					Update strLayer Set strLayer_ID = "SG" + Right$(strLayer_ID,5) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,2) = "00" AND Left$(strLayer_ID,2) = "BR" Then
+					Update strLayer Set strLayer_ID = "BR" + Right$(strLayer_ID,5) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,2) = "00" AND Left$(strLayer_ID,2) = "BU" Then
+					Update strLayer Set strLayer_ID = "BU" + Right$(strLayer_ID,5) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,2) = "00" AND Left$(strLayer_ID,2) = "IS" Then
+					Update strLayer Set strLayer_ID = "IS" + Right$(strLayer_ID,5) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,2) = "00" AND Left$(strLayer_ID,2) = "LA" Then
+					Update strLayer Set strLayer_ID = "LA" + Right$(strLayer_ID,5) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,2) = "00" AND Left$(strLayer_ID,2) = "ES" Then
+					Update strLayer Set strLayer_ID = "ES" + Right$(strLayer_ID,5) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,2) = "00" AND Left$(strLayer_ID,2) = "TT" Then
+					Update strLayer Set strLayer_ID = "TT" + Right$(strLayer_ID,5) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,2) = "00" AND Left$(strLayer_ID,2) = "TX" Then
+					Update strLayer Set strLayer_ID = "TX" + Right$(strLayer_ID,5) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,2) = "00" AND Left$(strLayer_ID,2) = "PL" Then
+					Update strLayer Set strLayer_ID = "PL" + Right$(strLayer_ID,5) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,2) = "00" AND Left$(strLayer_ID,2) = "MT" Then
+					Update strLayer Set strLayer_ID = "MT" + Right$(strLayer_ID,5) Where RowID = iRec
+'1 trailing 0s
+
+				ElseIf Mid$(strLayer_ID,3,1) = "0" AND Left$(strLayer_ID,2) = "GN" Then
+					Update strLayer Set strLayer_ID = "GN" + Right$(strLayer_ID,6) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,1) = "0" AND Left$(strLayer_ID,2) = "TH" Then
+					Update strLayer Set strLayer_ID = "TH" + Right$(strLayer_ID,6) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,1) = "0" AND Left$(strLayer_ID,2) = "HY" Then
+					Update strLayer Set strLayer_ID = "HY" + Right$(strLayer_ID,6) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,1) = "0" AND Left$(strLayer_ID,2) = "SG" Then
+					Update strLayer Set strLayer_ID = "SG" + Right$(strLayer_ID,6) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,1) = "0" AND Left$(strLayer_ID,2) = "BR" Then
+					Update strLayer Set strLayer_ID = "BR" + Right$(strLayer_ID,6) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,1) = "0" AND Left$(strLayer_ID,2) = "BU" Then
+					Update strLayer Set strLayer_ID = "BU" + Right$(strLayer_ID,6) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,1) = "0" AND Left$(strLayer_ID,2) = "IS" Then
+					Update strLayer Set strLayer_ID = "IS" + Right$(strLayer_ID,6) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,1) = "0" AND Left$(strLayer_ID,2) = "LA" Then
+					Update strLayer Set strLayer_ID = "LA" + Right$(strLayer_ID,6) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,1) = "0" AND Left$(strLayer_ID,2) = "ES" Then
+					Update strLayer Set strLayer_ID = "ES" + Right$(strLayer_ID,6) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,1) = "0" AND Left$(strLayer_ID,2) = "TT" Then
+					Update strLayer Set strLayer_ID = "TT" + Right$(strLayer_ID,6) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,1) = "0" AND Left$(strLayer_ID,2) = "TX" Then
+					Update strLayer Set strLayer_ID = "TX" + Right$(strLayer_ID,6) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,1) = "0" AND Left$(strLayer_ID,2) = "PL" Then
+					Update strLayer Set strLayer_ID = "PL" + Right$(strLayer_ID,6) Where RowID = iRec
+				ElseIf Mid$(strLayer_ID,3,1) = "0" AND Left$(strLayer_ID,2) = "MT" Then
+					Update strLayer Set strLayer_ID = "MT" + Right$(strLayer_ID,6) Where RowID = iRec
+				Else 
+					'note "Complete Update"
+				End If
+
+				iCount = iCount + 1
+				iRec = iRec + 1
+				Fetch Next From strLayer
+			Loop
+
+
+End Sub

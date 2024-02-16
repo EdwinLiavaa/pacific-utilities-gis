@@ -1,0 +1,340 @@
+'********************************************************
+'*                                                      *
+'*     NbConsTr.MBO                Paula, 24.08.98      *
+'*                                                      *
+'*  This programme will calculate the cost of Power     *
+'*  Failure.                                            *
+'*                                                      *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required files:                                      *
+'*		MAPBASIC.DEF                                *
+'*		MENU.DEF                                    *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required tables:                                     *
+'*                  - Tralist.tab                       *
+'*                  - Location.tab                      *
+'*                  - Customer.tab                      *
+'* This program create a temporary table temp.tab and   *
+'* erase this table after.				        *
+'********************************************************
+
+
+	Include "C:\Program Files\Mapinfo\Mapbasic\Mapbasic.def"
+	Include "C:\Program Files\Mapinfo\Mapbasic\Menu.def"
+
+	Global passw as String 
+	Global MapPath as string
+	Global CadaPath as String
+
+
+	Declare Sub NbConsTr
+
+
+'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+sub NbConsTr
+
+	Dim Map_win_Id 	As Integer
+	Dim Tnb		As String
+	Dim Tloc		As String
+	Dim Cust_nb		As Integer
+	Dim Cust_nb_total	As Integer
+	Dim MapName		As String
+	Dim Consump		As Float
+	Dim Consump_total	As Float
+	Dim Cost		As Float
+	Dim NbTrans		As Integer
+	Dim hours		As Integer
+	Dim minutes		As Integer
+	Dim i			As Integer
+
+'+++++++++++++++++++++++++Open Table Statement++++++++++++++++++++++++++++++++
+
+	MapName = MapPath +"Tralist.tab"
+	open table MapName Password passw as Tralist
+
+	MapName = MapPath +"Location.tab"
+	open table MapName Password passw as Location
+
+	select * from Tralist,Location Where Tralist.LOCAT_NO=Location.LOCAT_NO
+		into Transformers NoSelect
+
+	MapName = MapPath +"Customer.TAB"
+	Open Table MapName Password passw As Customer 
+
+	Map from Transformers,customer Max
+
+	Mapname = Cadapath + "n_cad.tab"
+	open table MapName as n_cad interactive
+
+	add map layer n_cad
+
+MapName = MapPath +"Temp.tab"
+Create Table "temp" ( ACCOUNT Char(8),
+  METER_NO Char(8),
+  CUSTOMER Char(25),
+  V_CODE Char(2),
+  CUSTO_NO Char(4),
+  MAP_ADDRES Char(7),
+  POLE_ID Char(8),
+  PHA_TYPE Char(2),
+  COND_TYPE Char(2),
+  COND_SPAN Float,
+  C_CLASS Char(2),
+  POLE_FUSE Logical,
+  MET_TYPE Char(2),
+  SEALED_T Date,
+  SEALED_B Date,
+  LOCAT_NO Char(3),
+  STREET Char(25),
+  CONSUMPTION Float,
+  LASTCONSUMPTION Float) file MapName TYPE NATIVE Charset "WindowsLatin1"
+Create Map For temp 
+CoordSys Earth Projection 8, 104, "m", -177, 0, 0.9996, 500000, 10000000 
+Bounds (-7745844.29597, 2035.05676326) (8745844.29597, 19997964.9432)
+Add Map Layer temp
+Set Map Layer temp Editable On
+
+
+Map_Win_id= FrontWindow()
+i=0
+'****************Dialog box**************************************
+
+
+dialog
+	Title "Enter the Number of Tranformer(s) AFFECTED "
+	width 190 height 60
+
+Control StaticText
+	position 15,15
+	Title "Number :"
+
+Control EditText
+	position 60,15
+	Into NbTrans  
+
+
+Control OKButton
+	position 30,40
+Control CancelButton
+	position 120,40
+
+	If not CommandInfo(CMD_INFO_DLG_OK) Then 	'The user just cancelled.
+  		Exit Sub
+	End If 
+
+
+dialog
+	Title "Enter the Time of the Power Failure"
+	Width 150 Height 70
+ 
+Control StaticText
+	Position 20,10
+	Title "Nb of hours :"
+
+Control EditText
+	position 90,10 width 20
+	Into hours
+
+Control StaticText
+	position 20,25
+	Title "Nb of minutes :"
+
+Control EditText
+	position 90,25 width 20
+	Into minutes
+
+
+Control OKButton
+	position 20,50
+Control CancelButton
+	position 80,50
+
+	If not CommandInfo(CMD_INFO_DLG_OK) Then 	'The user just cancelled.
+  		Exit Sub
+	End If 
+
+'+++++++++++++++++++++++Enter one by one the Location of affected Transormers++++++++++++++++++++
+Consump_total=0
+Cust_nb_total=0
+
+
+do
+
+
+	Tnb=""
+	Tloc=""
+
+	Do While Tnb="" or Tloc=""  
+
+		dialog
+		
+
+Title "Transformer No.# :"+str$(i+1)
+		Control StaticText
+ 		Title "Enter the Tranformer Number OR the Tranformer Location"
+
+		Control StaticText
+		position 10,20
+		Title "Location :"
+
+		Control EditText
+		position 50,20
+		Into Tloc
+
+		Control StaticText
+		position 10,35
+		Title "Number :"
+
+		Control EditText
+		position 50,35     
+		Into Tnb
+
+
+		Control OKButton
+		Control CancelButton
+
+		If not CommandInfo(CMD_INFO_DLG_OK) Then 	'The user just cancelled.
+  			Exit Sub
+		End If 
+
+
+
+'**********************************End Dialog Box*************************************
+
+
+'********************************Control if this transformer is in the database*********
+		if val(Tloc)=0 then Tloc="" 
+		End if
+
+		if Tloc<>"" then 
+			select * from Transformers where val(Locat_No)=val(Tloc) into sel noselect
+			If sel.locat_no="" then Tloc=""  Else Tloc=sel.locat_no End If
+  	
+		end if
+
+		if Tnb<>"" then 
+			select * from Transformers where val(Transf_No)=val(Tnb) into sel noselect
+			If sel.locat_no="" then Tnb=""  else Tloc=sel.locat_no End If
+  	
+		end if
+
+
+	loop
+
+	consump=Sel.Consumption
+	
+	close table sel
+
+'********************************End Control**********************************************
+
+
+'******************************Calculation of number of customer***************************
+
+
+	select * from Customer where Locat_No=Tloc into sel noselect
+	Fetch First From sel
+	cust_nb=0
+	
+  	Do While Not EOT(sel)
+    		cust_nb = cust_nb + 1
+    		Fetch Next From sel
+  	Loop
+i=i+1
+
+insert into temp select * from sel 
+
+set map redraw off
+Add Map Layer sel 
+Set Map Layer sel Display Global Editable Off Selectable On 
+Global Line (1,2,0)  
+Global Pen (1,2,0)  
+Global Brush (2,16777215,16777215)  
+Global Symbol (33,16711680,10,"MapInfo Real Estate",1,0)  
+Global Font ("Arial",0,9,0) 
+Zoom (0, 100000) Units "km" Off 
+Label Line Arrow Position Right Font ("Arial",0,9,0) Pen (1,2,0)  
+With ACCOUNT Parallel On Auto Off Overlap Off PartialSegments Off 
+Duplicates On Offset 2 Max Visibility On Nodes Off Arrows Off 
+Centroids Off
+set map redraw on
+Set Map Window Map_Win_id Zoom Entire Layer sel
+
+
+
+Note
+"There is "+str$(cust_nb)+" Customer(s) connected to the transformer (location "
++Tloc+" ) this is your N#"+i+" location."
+
+consump_total=consump_total+consump
+Cust_nb_total=Cust_nb_total+Cust_nb
+
+close table sel
+
+Loop Until i=Nbtrans
+
+'+++++++++++++++++++++++ Calculate the consumption for the transformers ++++++++++++++++ 
+
+minutes=minutes+hours*60
+
+Consump=minutes*consump_total/43380 ' 43380 is an average of the number of minutes in one month
+
+Cost=Consump*.26
+
+set map redraw off
+Add Map Layer temp 
+Set Map Layer temp Display Global Editable Off Selectable On 
+Global Line (1,2,0)  
+Global Pen (1,2,0)  
+Global Brush (2,16777215,16777215)  
+Global Symbol (33,16711680,10,"MapInfo Real Estate",1,0)  
+Global Font ("Arial",0,9,0) Zoom (0, 100000) Units "km" Off 
+Label Line Arrow Position Right Font ("Arial",0,9,0) Pen (1,2,0)  
+With ACCOUNT Parallel On Auto Off Overlap Off PartialSegments Off 
+Duplicates On Offset 2 Max Visibility On Nodes Off Arrows Off 
+Centroids Off
+set map redraw on
+Set Map Window Map_Win_id Zoom Entire Layer temp
+
+
+'+++++++++++++++++++++++++++ Full Report ++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Dialog
+
+Title "Power Failure Report"
+POSITION 0,30
+Width 180 Height 130
+
+control staticText
+position 15,10
+Title "Time of Power Failure :"+Str$(hours)+" hour(s) "+Str$(minutes-60*hours)+" Minutes"
+
+control staticText
+position 15,30
+Title "Number of affected Location :"+Str$(i)
+
+control staticText
+position 15,50
+Title "Total of affected Consumers :"+Str$(Cust_Nb_Total)
+
+control staticText
+position 15,70
+Title "Estimated Lost Consumption : "+Str$(Consump)+" KWh"
+
+control staticText
+position 15,90
+Title "Cost of the estimated Consumption : T$ "+Str$(cost)
+
+Control OKButton
+position 50,110
+
+If not CommandInfo(CMD_INFO_DLG_OK) Then 	'The user just cancelled.
+	Exit Sub
+End If 
+ 
+Drop table temp
+
+
+
+End Sub 

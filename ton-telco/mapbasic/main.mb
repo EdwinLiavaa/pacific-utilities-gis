@@ -1,0 +1,52 @@
+'*****************************************************************
+'*  Name   : Main
+'*  Purpose: Function main that calls menus which calls other modules
+'*  Inputs : Global variables
+'*  Outputs: 
+'*  Author : Edwin Liava'a
+'*  Date   : 10/02/2011
+'*  Mods   :  
+'*
+'*****************************************************************
+Include "mapbasic.def"
+Include "menu.def"
+
+Global AC_Path As String	'	Access
+Global BD_Path As String	'	MapInfo Raster Layers 
+Global MI_Path As String	'	MapInfo Vector Layers
+Global DB_Name As String'	Database Name
+
+Declare Sub Main
+Declare Sub Menus
+
+Dim ilen As Integer
+Dim frontPath As String
+
+Sub Main
+
+	OnError goto Err_Manage
+
+	frontPath = ApplicationDirectory$()		' get directory where this MapBasic program located
+	ilen = len(frontPath)
+	frontPath = mid$(frontpath, 1, ilen - 10)	' remove trailing string "\mapbasic\"
+
+	AC_Path = frontPath + "\access\"		'	Access
+	BD_Path = frontPath + "\backdrops\"	'	MapInfo Raster Layers 
+	MI_Path = frontPath + "\mapinfo\"	'	MapInfo Vector Layers
+	DB_Name = "TCC_GIS_FE.accde"
+
+	Call Menus
+
+Res_Main:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Res_Main
+End Sub Main
+
+
+
+
+

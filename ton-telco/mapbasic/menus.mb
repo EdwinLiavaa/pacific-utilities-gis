@@ -1,0 +1,130 @@
+'*****************************************************************
+'*  Name   : Menus
+'*  Purpose: Create user interface for Actions drop down menus
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Edwin Liava'a
+'*  Date   : 10/02/2011
+'*  Mods   :  
+'*
+'*****************************************************************
+Include "mapbasic.def"
+Include "menu.def"
+
+Global AC_Path As String	'	Access
+Global BD_Path As String	'	MapInfo Raster Layers 
+Global MI_Path As String	'	MapInfo Vector Layers
+
+Declare Sub Menus
+Declare Sub Layout_Preview
+Declare Sub Save_To_TG2005
+Declare Sub DispN_CAD
+Declare Sub DispT_QBD
+Declare Sub DispBL
+Declare Sub DispCR 
+Declare Sub DispCT 
+Declare Sub DispCB 
+Declare Sub DispEX 
+Declare Sub DispMH 
+Declare Sub DispPG 
+Declare Sub DispPR 
+Declare Sub DispPT
+Declare Sub DispPL 
+Declare Sub DispZO 
+Declare Sub About
+Declare Sub Finish
+Declare Sub NotYetReleased
+
+Sub Menus
+
+	OnError goto Err_Manage
+
+	Create Menu "Common" 
+    	As 	
+			"Backdrops",
+			"(-",
+			"Tongatapu Quickbird Image Backdrops" Calling DispT_QBD,
+			"* Vava'u Image Backdrops" Calling NotYetReleased,
+			"* Ha'apai Image Backdrops" Calling NotYetReleased,
+			"* 'Eua Image Backdrops" Calling NotYetReleased,
+			"* Niuas Image Backdrops" Calling NotYetReleased,
+			"(-",
+			"Cadastrals",
+			"(-",
+			"Nuku'alofa" Calling DispN_CAD,
+			"* Tongatapu" Calling NotYetReleased,
+			"* Vava'u" Calling NotYetReleased,
+			"* Ha'apai" Calling NotYetReleased,
+			"*'Eua" Calling NotYetReleased,
+			"* Niuas" Calling NotYetReleased,
+			"(-",
+			"Coastlines",
+			"(-",
+			"* Tongatapu" Calling NotYetReleased,
+			"* Vava'u" Calling NotYetReleased,
+			"* Ha'apai" Calling NotYetReleased,
+			"* 'Eua" Calling NotYetReleased,
+			"* Niuas" Calling NotYetReleased,
+			"(-",
+			"* Not yet released!"
+	Alter Menu Bar Add "Common" 
+
+	Create Menu "Layers" 
+    	As 
+			"TCC Layers",
+			"(-",
+			"Buildings" Calling DispBL,
+			"Cabinets" Calling DispCT,
+			"Cables" Calling DispCB,
+			"Customers" Calling DispCR,
+			"Exchange" Calling DispEX,
+			"Manholes" Calling DispMH,
+			"Pair Gain System (PGS)" Calling DispPG,
+			"Pillars" Calling DispPR,
+			"Pits" Calling DispPT,
+			"Poles" Calling DispPL,
+			"Zones" Calling DispZO,
+			"(-"	
+	Alter Menu Bar Add "Layers"
+
+ 	Create Menu "Actions" 
+    	As 	
+			"Convert to Tonga Map Grid" Calling Save_To_TG2005,
+			"Print Layout" Calling Layout_Preview,
+			"(-"
+	Alter Menu Bar Add "Actions"  
+
+	Create Menu "Queries" 
+    	As 
+			"TCC Thematic Maps",
+			"(-"	
+	Alter Menu Bar Add "Queries"
+	
+	Create Menu "About" 
+    	As 	
+			"(-",
+			"About" Calling About,
+			"(-"
+	Alter Menu Bar Add "About" 	
+
+	Create Menu "Exit" 
+    	As 	
+			"(-",
+			"Exit" Calling Finish,
+			"(-"
+	Alter Menu Bar Add "Exit" 	
+
+
+Res_Menus:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Res_Menus
+End Sub Menus
+
+
+
+
+

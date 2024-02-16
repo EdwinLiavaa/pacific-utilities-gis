@@ -1,0 +1,12 @@
+!table
+!version 300
+!charset WindowsLatin1
+
+Definition Table
+  Type NATIVE Charset "Neutral"
+  Fields 5
+    Ring_ SmallInt ;
+    Radius_ Float ;
+    Dist_Units Char (14) ;
+    Area_ Float ;
+    Area_Units Char (18) ;

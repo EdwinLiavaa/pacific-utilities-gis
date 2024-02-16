@@ -1,0 +1,65 @@
+'*****************************************************************
+'*  Name   : CreMeLayers
+'*  Purpose: Create user interface for EPC Layers drop down menu
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Leslie Allinson, Edwin Liava'a
+'*  Date   : 25-Jan-2007
+'*  Mods   : 28-Feb-2007
+'*
+'*****************************************************************
+Include "mapbasic.def"
+Include "menu.def"
+
+Global AC_Path As String	'	Access
+Global BD_Path As String	'	MapInfo Raster Layers (BackDrops)
+Global MI_Path As String	'	MapInfo Vector Layers
+	
+Declare Sub CreMeLayers			 
+Declare Sub DispBL
+Declare Sub DispBR
+Declare Sub DispBU
+Declare Sub DispGN
+Declare Sub DispLN_HV
+Declare Sub DispLN_LV
+Declare Sub DispMT
+Declare Sub DispND
+Declare Sub DispPL
+Declare Sub DispPS
+Declare Sub DispTX
+Declare Sub NotYetReleased
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++*
+
+Sub CreMeLayers
+
+OnError Goto Err_Manage
+
+	Create Menu "EPC Layers" As
+		"Display:",
+		"(-", 
+			"Breakers"							Calling DispBR,
+			"Buildings"							Calling DispBL,
+			"Busbars"								Calling DispBU,
+			"Generators"							Calling DispGN,
+			"Lines High Voltage"				Calling DispLN_HV,
+			"Lines Low Voltage"					Calling DispLN_LV,
+			"Meters" 								Calling DispMT,
+			"Nodes" 								Calling DispND,
+			"Poles"								Calling DispPL,
+			"Power Stations"						Calling DispPS,
+			"Transformers"						Calling DispTX,
+			"(-",
+			"* Not Yet Released"
+	
+	Alter Menu Bar Add "EPC Layers"
+
+Res_CreMeLayers:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Res_CreMeLayers
+	
+End Sub

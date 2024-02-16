@@ -1,0 +1,195 @@
+'********************************************************
+'*                                                      *
+'*     InsMonM.MBO                Paula, 24.08.98       *
+'*                                                      *
+'*  This program displays The Meter installed in a      *
+'*  chosen month.                                       *
+'*                                                      *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required files:                                      *
+'*                MAPBASIC.DEF                          *
+'*			MENU.DEF                              *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required tables:                                     *
+'*                  - Customer.tab                      *
+'*                  -                                   *
+'********************************************************
+
+
+
+Declare Sub InsMonM
+
+Global passw as String 
+Global MapPath as string
+Global CadaPath as String
+
+
+include "C:\program files\mapinfo\mapbasic\MENU.DEF"
+include "C:\program files\mapinfo\mapbasic\MAPBASIC.DEF"
+
+
+'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Sub InsMonM
+
+	Dim ivar1, ivar2, ivar3 	As Integer
+	Dim vyear 				As SmallInt
+	Dim vyear3 				As SmallInt
+	Dim vmonth 				As SmallInt
+	Dim stvar2 				As String
+	Dim stvar3 				As String
+	Dim styear, styear3 		As String
+	Dim stmonth, stmonth3 		As String
+	Dim vmonth3 			As SmallInt
+	Dim Map_Win_Id 			as Integer
+	Dim TitleMsg 			as String
+	Dim iz				As SmallInt
+	Dim ln				As SmallInt
+	Dim i_lay_type			As SmallInt
+	Dim MapName				As String
+
+'++++++++++++++++++++++++++Error Statement++++++++++++++++++++++++++++
+	
+	OnError goto Err_Met_Mont
+
+'+++++++++++++++++++++++++++open Table statement+++++++++++++++++++++++
+
+	MapName = MapPath +"customer.tab" 
+	open table MapName password passw as customer 
+	
+	map from customer Max
+
+	Mapname = Cadapath + "n_cad.tab"
+	open table MapName as n_cad interactive
+
+	add map layer n_cad
+
+'+++++++++++++++++++++++++++Getting Window ID++++++++++++++++++++++++++++
+
+	Map_Win_id= FrontWindow()
+	if WindowInfo(Map_Win_id,WIN_INFO_TYPE)<>WIN_MAPPER then
+		note "You must Select a Map Window first"
+		Exit Sub
+	End If
+
+	ln = MapperInfo(Map_Win_id, MAPPER_INFO_LAYERS)
+	iz = 1
+
+	Do 
+		i_lay_type = LayerInfo(Map_Win_id, iz, LAYER_INFO_TYPE)
+		If i_lay_type = LAYER_INFO_TYPE_THEMATIC Then
+			set map redraw off
+		 	Set Map Layer iz Display Off
+		 	set map redraw on
+		End If
+		iz = iz + 1
+
+	Loop While iz <= ln
+
+
+'+++++++++++++++++++++++++++  DIALOG ++++++++++++++++++++++++++++++++++
+
+	Dialog
+
+	Title "Meter connecetd in:"
+
+	Control StaticText
+		Title "select year:"
+		Position 5, 10
+
+	Control EditText
+		Position 35, 20 Width 25
+		Value "1990"
+		Into styear
+
+	Control StaticText
+		Title "select month:"
+		Position 80, 10
+
+	Control PopUpMenu
+		Title "01;02;03;04;05;06;07;08;09;10;11;12"
+		Position 80, 20 Width 30
+		Value 1
+		Into vmonth
+
+	Control OKButton
+		Position 25, 40
+	Control CancelButton
+		Position 65, 40
+
+	If not CommandInfo(CMD_INFO_DLG_OK) Then 	'The user just cancelled.
+  		Exit Sub
+	End If 
+
+'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+'++++++++++++++++++++++ Calculating year and month +++++++++++++++++++
+
+	vyear = val(styear)
+	'styear = Str$(vyear)
+
+	vmonth3 = vmonth + 1
+
+	IF vmonth3 < 10 Then
+   		stmonth3 = "0" + Str$(vmonth3)
+		styear3 = styear
+	ElseIf vmonth3 = 13 Then
+		stmonth3 = "01"
+		vyear3 = vyear + 1
+		styear3 = Str$(vyear3)
+	Else	
+		stmonth3 = Str$(vmonth3)
+		styear3 = styear
+	End If
+
+	If vmonth < 10 Then
+		stmonth = "0" + Str$(vmonth)
+	Else
+		stmonth = Str$(vmonth)
+	End If
+
+	stvar2 = styear+stmonth+"01"     ' not possible from 01 to 31 because
+	stvar3 = styear3+stmonth3+"01"    ' some month 30, better 01 next month!
+
+	ivar2 = Val(stvar2)
+	ivar3 = Val(stvar3)
+
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+'++++++++++++++++++++++++++ Shade statements +++++++++++++++++++++++++
+
+	Shade Window Map_Win_Id "Customer" with SEALED_T Ranges ivar2:ivar3 Symbol 
+		(60,BLACK,8)default Symbol (60,GREEN,8)
+	Set Map 	Zoom Entire layer Customer
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+'+++++++++++++++++++++++++ Legend Statements +++++++++++++++++++++++++
+	titlemsg="Connected in "+str$(vmonth)+"/"+str$(vyear)
+
+	Set Legend Window Map_Win_Id layer prev display on shades off symbols on 
+		lines off count on title titlemsg Font 
+		("MS Sans Serif",0,10,0) subtitle "" Font ("MS Sans Serif",0,8,0) 
+		ascending on ranges Font ("MS Sans Serif",0,8,0) "all others" 
+		display on ,"connected" display on 
+
+	Set Window WIN_LEGEND 
+	Position (1,4) Units "cm"
+	Width 6 Units "cm"
+	Height 3 Units "cm"
+
+	Open Window Legend
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Res_Met_Mont:
+	Exit Sub
+
+Err_Met_Mont:
+	note "Met_Mont: "+str$(err())+" "+error$()
+	Resume Res_Met_Mont
+end sub
+

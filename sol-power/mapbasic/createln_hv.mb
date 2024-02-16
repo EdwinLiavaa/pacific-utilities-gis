@@ -1,0 +1,345 @@
+'*****************************************************************
+'*  Name   : CreateLN_HV
+'*  Purpose: Create Lines High Voltage 
+'*
+'*				1. Select Feeder
+'*				2. Open relevant points tables to connect HV Lines
+'*				3. Connect nodes with lines
+'*				4. Populate distributioin Lines Table with data
+'*
+'*  Inputs : Relevant nodes tables
+'*  Outputs: LN
+'*  Author : Edwin Liava'a
+'*  Date   : 1-Feb-2007
+'*  Mods   : 
+'*           
+'*****************************************************************
+
+Include "SIEA_Lib.def"
+Include "mapbasic.def"
+Include "menu.def"
+Include "Icons.def"  
+
+'*****************************************************************
+
+' Sub Program (Procedure) Declarations
+
+Declare sub CreateLN_HV			
+Declare sub PickID
+Declare sub LetsContinue(byval x1 as float, byval y1 as float, byval nextID as string)
+
+' Declare Global Variables
+
+Global vt_Path 													As String			 
+Global feederID,fromID,nextID,phaseID,cableID,ugID  		As String
+Global lineID														As Integer
+Global voltID														As float
+Global WIA														As Logical			 
+Global x1,y1,x2,y2												As Float
+
+
+'******************************CreateLN_HV Procedure********************************
+' this procedure open the tables and display the tools
+
+Sub CreateLN_HV
+
+	Dim Map_Win_id 	As Integer
+	Dim i,j			As Integer
+	Dim TableName		As String
+	Dim strFD_ID		As String
+ 
+	WIA = FALSE
+
+	Close All
+	
+	TableName = vt_Path + "\" + "LN.tab"
+	Open Table TableName As LN_HV Interactive
+	TableName = vt_Path + "\" + "TX.tab"
+	Open Table TableName As TX Interactive
+	TableName = vt_Path + "\" + "PL.tab"
+	Open Table TableName As PL Interactive
+	TableName = vt_Path + "\" + "ND.tab"
+	Open Table TableName As ND Interactive
+	TableName = vt_Path + "\" + "FD.tab"
+	Open Table TableName As FD Interactive
+	TableName = vt_Path + "\" + "GN.tab"
+	Open Table TableName As GN Interactive
+				
+	Map From LN_HV, TX, PL, ND, GN  Max
+
+	Set Map Distance Units "m"
+	Set Map Redraw Off
+	Set Map Layer LN_HV Editable On
+	Set Map Redraw On
+	set map redraw off
+	Set Map Layer 1 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+	set map redraw on
+	set map redraw off
+	Set Map Layer 2 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+		Activate Using PIC On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 3 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+		Activate Using PIC On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 4 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+		Activate Using PIC On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 5 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+		Activate Using PIC On Labels Objects Relative Path On
+	set map redraw on
+	
+	Create ButtonPad "Line" As ToolButton	
+	Icon MI_ICON_HOT_LINK
+	Cursor MI_CURSOR_FINGER_UP
+	DrawMode DM_CUSTOM_POINT
+	ID 23	
+	Calling PickID
+	Position (5,5)
+	Width 10
+	Float
+	Show
+
+'+++++++++++++++++++++++++++  Getting window ID +++++++++++++++++++++
+
+	Map_Win_id = FrontWindow()
+
+	If Map_Win_id = 0 Then
+		Exit Sub
+	End If
+
+'+++++++++++++++++++++++++++ Dialog Feeder+++++++++++++++++++++++
+
+	Dialog
+	Title "SIEA GIS" 
+	Control StaticText
+		Title "Please Enter Feeder_ID:"  ' FD001, FD002, etc
+	Control EditText 
+		Value strFD_ID		'this is a Global String variable
+		Into strFD_ID	
+	Control OKButton
+	Control CancelButton  
+			
+	If Not CommandInfo(CMD_INFO_DLG_OK) Then 
+		' ...then the user clicked CANCEL
+		Note "Program will now close!"
+		Close All Interactive
+		Exit Sub
+	End If
+	If CommandInfo(CMD_INFO_DLG_OK) And strFD_ID = "" Then
+		Note "Invalid Feerder_ID!"
+		Call CreateLN_HV
+	Else	' ...the user clicked OK
+		Select FD_ID from FD where FD_ID = Ucase$(str$(strFD_ID)) into Temp1
+		If Temp1.COL1 = Ucase$(str$(strFD_ID)) Then
+			feederID = Ucase$(Str$(strFD_ID))
+			Note "Pick Node to Connect HV Line" 			
+		Else
+			Note "Invalid Feerder_ID!"
+			Call CreateLN_HV
+		End If
+	End If
+
+'+++++++++++++++++ Set Centre and Zoom of Map ++++++++++++++++++++++++
+
+		Set Map Zoom Entire 
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+End Sub
+
+
+'*****************************PickID Procedure*********************************
+' this procedure selects a pole or transformer to connect a HV line from and to
+
+Sub PickID
+
+	Dim Map_Win_id 	As Integer
+	Dim x,x1			As Float
+	Dim y,y1			As Float
+	Dim iFound		As Integer
+	Dim i				As Integer
+	Dim j				As Integer
+	Dim sTable		As String
+	Dim iRowid		As Integer
+	Dim aTable		As Alias
+	Dim lFound		As Logical
+	Dim Counter		As Integer
+	Dim xyUnits		As String
+	Dim CosName		As String
+	Dim ofound		As Object
+
+OnError Goto Err_Manage
+
+	Map_Win_id = FrontWindow()
+	If WindowInfo(Map_Win_id,WIN_INFO_TYPE) <> WIN_MAPPER Then
+		Note "You must Select a Map Window first"
+		Exit Sub
+	End If
+
+	CosName = WindowInfo(Map_Win_Id,WIN_INFO_TABLE)
+
+	Set CoordSys Window Map_Win_id
+	
+	x = CommandInfo(CMD_INFO_X)
+	y = CommandInfo(CMD_INFO_Y)
+
+	xyunits = MapperInfo(Map_Win_id,MAPPER_INFO_XYUNITS)
+	
+	ifound = SearchPoint(Map_Win_Id,x,y)
+	
+	If ifound = 0 Then
+		lFound = FALSE
+	Else
+		lFound = FALSE
+		For i = 1 to ifound
+      		' Get the name of the table containing a "hit".
+	      	stable = SearchInfo(i, SEARCH_INFO_TABLE)
+   
+	      	' Get the row ID number of the object that was a hit.
+	      	irowid = SearchInfo(i, SEARCH_INFO_ROW)
+
+			voltID = FD.VOLT		
+
+			If sTable = "GN" Then 
+	        		' Fetch the row of the object the user clicked on.
+	        		Fetch rec iRowid From sTable
+	        		ofound = GN.obj
+					x1 = centroidX(ofound)
+					y1 = centroidY(ofound)
+					nextID = GN.GN_ID
+					phaseID = "A"
+					ugID = "Y"
+					lFound = TRUE
+			ElseIf sTable = "TX" Then 
+	        		' Fetch the row of the object the user clicked on.
+	        		Fetch rec iRowid From sTable
+	        		ofound = TX.obj
+					x1 = centroidX(ofound)
+					y1 = centroidY(ofound)
+					nextID = TX.TX_ID
+					ugID = TX.UG
+					lFound = TRUE
+			ElseIf sTable = "ND" Then 
+	        		' Fetch the row of the object the user clicked on.
+	        		Fetch rec iRowid From sTable
+	        		ofound = ND.obj
+					x1 = centroidX(ofound)
+					y1 = centroidY(ofound)
+					nextID = ND.ND_ID
+					phaseID = ND.PHASE_ID
+					ugID = "Y"
+					lFound = TRUE
+	      	ElseIf sTable = "PL" Then 
+	        		' Fetch the row of the object the user clicked on.
+	        		Fetch rec iRowid From sTable
+	        		ofound = PL.obj
+					x1 = centroidX(ofound)
+					y1 = centroidY(ofound)
+					If PL.HVLV_ID = "L" Then
+						lFound = FALSE
+						Note "Sorry! HV Line cannot connect to LV Pole"
+					Else	
+						lineID = tableinfo(LN_HV,TAB_INFO_NROWS)
+						nextID = PL.PL_ID
+						phaseID = PL.PHASE_ID
+						If PL.UG_ID = "B" OR PL.UG_ID = "C" OR PL.UG_ID = "D" Then
+							ugID = "N"
+						Else
+							ugID = "N"
+						End If							
+						lFound = TRUE
+					End If
+			End If 
+    	Next
+	End If
+
+	If lFound = FALSE Then
+		Print chr$(12)
+		Note "Sorry, Nothing There! Please Try Again!"
+	else
+		call LetsContinue(x1, y1, nextID)
+	End If
+	
+PickID:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume PickID
+
+End Sub 
+
+'*********************************LetsContinue procedure*********************************
+' this procedure allows you to continue connecting Nodes with LN_HV
+
+Sub LetsContinue(Byval x1 As Float, byval y1 As Float, Byval nextID As String)
+
+	Dim i,j				As Integer
+	Dim newline			As Object
+	Dim counter			As Integer
+	Dim dist 				As Float
+
+OnError Goto Err_Manage
+
+	If WIA = FALSE then 
+		x2 = x1 
+		y2 = y1
+		fromID = nextID 
+		WIA = TRUE
+		Note "Pick the Node to Connect HV Line!"
+		Exit Sub
+	End If
+	
+	dist = Distance(x2,y2,x1,y1,"m")
+	cableID = "U"
+	Select Max(LN_ID) from LN_HV into MaxID
+	lineID = MaxID.COL1 + 1
+			
+	Insert Into LN_HV(LN_ID,FD_ID,FROM_ID,NEXT_ID,PHASE_ID,CABLE_ID,VOLT,UG,XB,YB,XE,YE,LENGTH)
+	Values (lineID, feederID, fromID, nextID, phaseID, cableID,voltID, ugID, x2, y2, x1, y1, dist)
+	
+	counter = tableinfo(LN_HV,TAB_INFO_NROWS)
+	
+	Create Line
+			Into Variable newline
+			(x2, y2) (x1, y1)
+			Pen MakePen(2, 2, RED)
+
+	Update LN_HV
+		Set Obj = newline
+		where  RowID = counter
+
+'Set Message Window
+		Set Window WIN_INFO Table LN_HV Rec counter
+		Set Window WIN_INFO
+		Position (0.50, 0.50) ' place in upper left 
+		Font ("Arial", 1, 12, BLUE) ' Arial bold...
+		Width 3.0 ' make window 3" wide 
+		Height 5.0 ' make window 1" high
+		Open Window WIN_INFO
+				
+	WIA = FALSE
+
+LetsContinue:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume LetsContinue
+
+End Sub
+

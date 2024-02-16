@@ -1,0 +1,88 @@
+'*****************************************************************
+'*  Name   : RemoveLineObjs
+'*  Purpose: Find lines objects and remove them 
+'*  Inputs : Any Layer
+'*  Outputs: RemoveLinesObjs FEB 2012
+'*  Author : Edwin Liava'a
+'*  Date   : 
+'*  Mods   : 
+'*           
+'*****************************************************************
+
+Include "mapbasic.def"
+Include "menu.def"
+
+Declare Sub Main
+
+Sub Main
+
+OnError Goto Err_Manage
+
+	Dim myOBJ As Object
+	Dim Map_Win_id, irow, counter, i, obj_type As Integer
+	Dim x, y As Float
+	Dim new_pnt As Object
+	Dim s_filename, Temp As String
+
+	Close All
+
+	s_filename = FileOpenDlg("","","TAB","Open Table") 
+	
+	Open Table s_filename As s_table Interactive
+	
+	Map from s_table
+
+	'+++++++++++++++++++++++++++  Getting window ID +++++++++++++++++++++
+
+	Map_Win_id = FrontWindow()
+
+	If Map_Win_id = 0 Then
+		Exit Sub
+	End If
+
+	Set map redraw off
+	Set Map Layer 1 Editable On
+	Set map redraw on
+
+	irow = 1
+
+	Fetch First From s_table
+	
+	Do While Not EOT(s_table) 
+		myOBJ = s_table.obj
+		obj_type = ObjectInfo(myOBJ, OBJ_INFO_TYPE) 
+		Do Case obj_type
+			Case OBJ_TYPE_POINT				
+				Print "First object is a Point object."
+			Case OBJ_TYPE_LINE
+				Select * From s_table Where RowID = irow
+				Delete From s_table Where RowID = irow
+				Print "Deleted Non Point Objects " & irow
+			Case Else
+				Select * From s_table Where RowID = irow
+				Delete From s_table Where RowID = irow
+				Print "Deleted Non Point Objects " & irow
+			End Case
+		Fetch Next From s_table
+		irow = irow + 1
+	Loop
+
+	Run Menu Command M_QUERY_SELECTALL
+
+	'Objects Snap From Selection Tolerance Node 0.5 Vector 0.5 Units "m"
+
+	'Commit Table s_table
+	
+	'Pack Table s_table Interactive
+
+	Print "Finished Cleaning Non Points Objects!" 
+
+	
+Main:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	'Note "Error: " + str$(err()) + ", " + error$()
+	Resume Next
+End Sub

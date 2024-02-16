@@ -1,0 +1,31 @@
+'*****************************************************************
+'*  Name   : NotYetReleased
+'*  Purpose: Display dialog as placeholder for non released 
+'*           modules
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Edwin Liava'a
+'*  Date   : 19-Jan-2013
+'*  Mods   : 
+'*           
+'*****************************************************************
+
+Include "mapbasic.def"
+Include "menu.def"
+
+Declare Sub NotYetReleased
+
+Sub NotYetReleased
+
+OnError Goto Err_Manage
+
+	Note "Module not yet released"
+
+NotYetReleased:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume NotYetReleased
+End Sub

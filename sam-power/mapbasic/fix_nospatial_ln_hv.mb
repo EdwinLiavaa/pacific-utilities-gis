@@ -1,0 +1,106 @@
+'*****************************************************************
+'*  Name   : Fix_NoSpatial_LN_HV
+'*  Purpose: Find rows with no spatial data in LN_HV and delete them  
+'*  Inputs : LN_HV
+'*  Outputs: LN_HV
+'*  Author : Leslie Allinson, Edwin Liava'a
+'*  Date   : 16-02-2007
+'*  Mods   : 09-03-2007
+'*           
+'*****************************************************************
+
+Include "mapbasic.def"
+Include "menu.def"
+
+Declare Sub Main
+
+Sub Main
+
+OnError Goto Err_Manage
+
+'	+++++++++++++++ declarations +++++++++++++++
+
+	Dim myCol, myOBJ, linetablecol, tableOBj As Alias
+	Dim myXC, myYC, xBEG_tmp, xCNT_tmp, xEND_tmp, yBEG_tmp, yCNT_tmp, yEND_tmp As Float
+'	Dim mapID, myRow, row, row_LN_HV_MI, row_LN_LV_MI As Integer
+'	Dim myID, myMI_ID, myTable, path As String
+
+	Dim a_col_name1, a_col_name2 As Alias
+	Dim icount, ifound, ifoundflag, ilen, irow1, irow2 As Integer
+	Dim more As Logical
+	Dim AC_PATH, frontPath, MI_PATH As String
+	Dim s_col_name1, s_col_name2, s_table1, s_table2 As String
+
+
+'	+++++++++++++++ initialise +++++++++++++++
+
+	more = Ask("  Find no spatial rows in LN_HV connection:" + Chr$(10) +
+				"  this could take upto 3 minutes to run" + Chr$(10) + Chr$(10) +		 
+				"  Do you want to continue?", "OK", "Cancel")
+	If more Then
+	Else
+		Exit Sub
+	End if
+
+	Set CoordSys Earth 
+		Projection 8, 104, "m", -171, 0, 0.9996, 500000, 10000000 
+
+	Print Chr$(12)
+	Print "Start Test_NoSpatial_LN_HV"
+
+	frontPath = ApplicationDirectory$()		' get directory where this MapBasic program located
+	ilen = len(frontPath)
+	frontPath = mid$(frontpath, 1, ilen - 10)	' remove trailing string "\mapbasic\"
+
+	AC_Path = frontPath + "\access"
+	MI_Path = frontPath + "\mapinfo"
+
+	s_table1 = "LN_HV"
+
+	Print "AC_PATH: " + AC_PATH
+
+'	+++++++++++++++ process +++++++++++++++
+
+	Close All Interactive
+
+	Open Table AC_PATH + "\" + s_table1 Interactive
+	Map From s_table1
+
+	s_col_name1 = "LN_ID"
+	a_col_name1 = s_table1 + "." + s_col_name1
+
+start:
+
+	irow1 = 1
+	Fetch First From s_table1
+	
+	Do While Not EOT(s_table1) 
+		myOBJ = LN_HV.obj
+		If myOBJ Then
+		Else
+			Print "No spatial data in row/LN_ID" + irow1 + " " + LN_HV.LN_ID
+			icount = icount + 1
+			Print "Table " + s_table1 + " rows " + irow1 + " Bad " + icount
+			Delete From s_table1 Where RowID = irow1
+			Commit Table s_table1
+			Pack Table s_table1 Graphic Data Interactive
+			Goto start
+		End if
+		Fetch Next From s_table1
+		irow1 = irow1 + 1
+	Loop 
+
+	
+	Close All Interactive
+
+	Note  "Closed: " + s_table1
+	Print "Closed: " + s_table1
+
+Main:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Main
+End Sub

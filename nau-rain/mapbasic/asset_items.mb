@@ -1,0 +1,60 @@
+	'***********************************************************
+	'*                  Asset_Items           Wolf 08.11.07    *
+	'* Modified: Edwin 23.06.08                                    *
+	'* This program creates a drop down menu from which the    *
+    '* can select executable program to create thematic maps  * 
+	'***********************************************************
+
+		Declare Sub Asset_Items
+       Declare Sub MapRoofConnect
+		Declare Sub NumberTanks
+		Declare Sub MapRoofMaterial
+		Declare Sub RoofCondition
+		Declare Sub RoofSlope
+		Declare Sub HouseUtilisation
+		Declare Sub TreeCover
+		Declare Sub PersonPerHouse
+		Declare Sub MapStoragePerson
+		Declare Sub MapRoofPartGutter
+       Declare Sub GutterPercent
+       Declare Sub GutterCondition
+		Declare Sub GutterMaterial
+		Declare Sub GutterWidth
+		Declare Sub DownPipeCondition
+		Declare Sub MapWasteDisposal
+		Declare Sub NoDownpipe 
+
+		Sub Asset_Items
+
+			OnError Goto Err_Manage
+
+		Create Menu "Asset Items" As 
+			"Display roofs connected to water tanks" Calling MapRoofConnect,
+			"Display number of tanks / roof" Calling NumberTanks,
+			"Display roof material" Calling MapRoofMaterial,
+          "Display roof % guttered" Calling GutterPercent,
+			"Display roof condition " Calling RoofCondition,
+			"Display roof slope " Calling RoofSlope,
+			"Display house utilisation" Calling HouseUtilisation,
+			"Display tree cover of roof" Calling TreeCover,
+			"Display persons per house" Calling PersonPerHouse,
+          "Display gutter condition " Calling GutterCondition,
+          "Display gutter material " Calling GutterMaterial,
+          "Display gutter width" Calling GutterWidth,
+			"Display downpipe condition" Calling DownPipeCondition,
+			"Display Waste Disposal" Calling MapWasteDisposal,
+          "Display downpipe connected to tank" Calling NoDownpipe,
+			"(-",
+			" * not ready yet"
+
+		Alter Menu Bar Remove "Help"
+		Alter Menu Bar Add "Asset Items", "Help"
+
+			Res_Main:
+				Exit Sub
+			Err_Manage:
+				note "Error: " + str$(err()) + ", " + error$()
+				Resume Res_Main		
+
+		End Sub
+

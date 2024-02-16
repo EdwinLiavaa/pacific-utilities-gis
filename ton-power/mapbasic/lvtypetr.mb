@@ -1,0 +1,123 @@
+'********************************************************
+'*                                                      *
+'*     LVTypeTr.MBO                Paula, 24.08.98      *
+'*                                                      *
+'*  This program displays The Transformers by classe of *
+'*  different type for the Low Voltage.                 *
+'*                                                      *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required files:                                      *
+'*		MAPBASIC.DEF                                *
+'*		MENU.DEF                                    *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required tables:                                     *
+'*                  - Tralist.tab                       *
+'*                  - Location.tab                      *
+'********************************************************
+
+	Declare Sub LVTypeTr
+
+	Global passw as String 
+	Global MapPath as string
+	Global CadaPath as String
+
+
+	include "C:\Program Files\mapinfo\mapbasic\MAPBASIC.DEF"
+	include "C:\Program Files\MAPINFO\MAPBASIC\MENU.DEF"
+
+
+'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Sub LVTypeTr
+
+
+	Dim Map_Win_Id 	as Integer
+	Dim iz, ln		As SmallInt
+	Dim i_lay_type	As SmallInt
+	Dim MapName		As String
+
+' ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	OnError goto Err_LV_Typ
+
+' +++++++++++++++++++++++ Open Table Statement +++++++++++++++++++++
+
+	MapName = MapPath +"Tralist.tab"
+	open table MapName password passw as Tralist
+	MapName = MapPath +"Location.tab"
+	open table MapName password passw as Location 
+
+select * from Tralist,Location Where Tralist.LOCAT_NO=Location.LOCAT_NO
+		into Transformers NoSelect
+
+Map From Transformers Max
+	Mapname = Cadapath + "n_cad.tab"
+	open table MapName as n_cad interactive
+
+	add map layer n_cad
+
+
+
+
+
+	Map_Win_id= FrontWindow()
+	if WindowInfo(Map_Win_id,WIN_INFO_TYPE)<>WIN_MAPPER then
+		note "You must Select a Map Window first"
+		Exit Sub
+	End If
+
+	ln = MapperInfo(Map_Win_id, MAPPER_INFO_LAYERS)
+	iz = 1
+
+	Do 
+		i_lay_type = LayerInfo(Map_Win_id, iz, LAYER_INFO_TYPE)
+		If i_lay_type = LAYER_INFO_TYPE_THEMATIC Then
+			set map redraw off
+		 	Set Map Layer iz Display Off
+		 	set map redraw on
+		End If
+		iz = iz + 1
+
+	Loop While iz <= ln
+
+	
+
+'++++++++++++++++++++++++++ Shade statements +++++++++++++++++++++++++
+
+	Shade Window Map_Win_Id "Transformers" with VOLT_LV Values
+		"240" Symbol (37,RED,12,"MapInfo Symbols",257,0) ,
+		"415" Symbol (37,BLUE,12,"MapInfo Symbols",257,0) ,
+		"433" Symbol (37,GREEN,12,"MapInfo Symbols",257,0),
+		"415/240" Symbol (37,Yellow,12,"MapInfo Symbols",257,0),
+		"480/240" Symbol (37,8388608,12,"MapInfo Symbols",257,0)
+		default Symbol (37,0,12,"MapInfo Symbols",257,0)
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+'+++++++++++++++++++++++++ Legend statements +++++++++++++++++++++++++
+
+	Set Legend Window Map_win_Id layer prev display on shades off symbols on 
+		lines off count on title "Low Voltage Type" 
+		Font ("MS Sans Serif",0,10,0) subtitle "" 
+		Font ("MS Sans Serif",0,8,0) ranges 
+		Font ("MS Sans Serif",0,8,0) 
+		"other" display on 
+	
+
+
+	Set Window WIN_LEGEND 
+	Position (1,4) Units "cm"
+	Width 5 Units "cm"
+	Height 5 Units "cm"
+
+	Open Window Legend
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Res_LV_Typ:
+	Exit Sub
+
+Err_LV_Typ:
+	note "LV_Typ: "+str$(err())+" "+error$()
+	Resume Res_LV_Typ
+
+end sub
+

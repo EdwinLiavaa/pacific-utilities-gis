@@ -1,0 +1,160 @@
+'***********************************************************************************************
+'Title: MAP_IFR.MB
+'Purpose: Convert IFR data from Excel to MapInfo, create points and save to Access
+'Input: Waypoints.xls
+'Output: IFR_MI.tab, IFR_AC.tab
+'Author: Edwin Liava'a
+'Date: 15/09/2011
+'***********************************************************************************************
+
+Include "Mapbasic.def"
+Include "Menu.def"
+
+Declare Sub MAP_IFR
+
+Dim map_win_id As Integer
+
+Sub MAP_IFR
+
+Close All Interactive
+
+Register Table "C:\AFL\gis\execl\Waypoints-Coordinates.xls"  TYPE XLS 
+	Titles  Range "IFR Routes & Reporting Point!A2:Q159"  Interactive 
+	Into "C:\AFL\gis\execl\Waypoints-Coordinates.TAB"
+
+Open Table "C:\AFL\gis\execl\Waypoints-Coordinates.TAB" Interactive
+
+Browse * From Waypoints_Coordinates
+
+Commit Table Waypoints_Coordinates As "C:\AFL\gis\mapinfo\IFR_MI.TAB" TYPE NATIVE Charset "WindowsLatin1"
+
+Close All Interactive
+
+Open Table "C:\AFL\gis\mapinfo\IFR_MI.TAB" Interactive
+
+Browse * From IFR_MI
+
+Alter Table "IFR_MI" 
+	( drop Xd,Xm,Xs,Yd,Ym,Ys,Xc,Yc 
+		add IFR_ID Integer order IFR_ID,
+		Route,
+		NAVAID_Waypoint,
+		Latitudes,
+		Longtitude,
+		Heading_To,
+		Heading_From,
+		Distance,
+		X,
+		Y) Interactive
+
+Create Map For IFR_MI CoordSys Earth Projection 1, 104
+
+Create Index On IFR_MI (IFR_ID)
+
+Open Table "C:\AFL\gis\mapinfo\IFR_MI.TAB" Interactive
+
+Map From IFR_MI
+
+Update IFR_MI Set IFR_ID = RowID
+
+select * from IFR_MI where X = 0 into Selection
+
+set map redraw off
+Set Map Layer 1 Editable On
+set map redraw on
+
+Run Menu Command M_EDIT_CLEAR
+Commit Table IFR_MI Interactive
+
+Commit Table IFR_MI As "C:\AFL\gis\access\IFR_AC.tab" 
+	Type ACCESS Database "C:\AFL\gis\access\AFL_Aerodromes_MIS.mdb" Table "IFR_AC"
+
+Update IFR_MI 
+	Set obj = CreatePoint(X, Y)
+
+map_win_id = FrontWindow( )
+
+Set Map Window map_win_id Zoom Entire 
+
+Set Window map_win_id Max 
+
+Register Table "C:\AFL\gis\access\AFL_Aerodromes_MIS.mdb"  
+	Type ACCESS Table "IFR_AC" Into "C:\AFL\gis\access\IFR_AC.TAB"
+
+Open Table "C:\AFL\gis\access\IFR_AC.TAB" Interactive
+
+Select * from IFR_MI, IFR_AC where IFR_MI.IFR_ID = IFR_AC.IFR_ID into LINK_IFR
+
+set map redraw off
+Add Map Layer LINK_IFR 
+Set Map Layer 1 
+	Display Graphic Zoom (0, 100000) Units "m" 
+	Off Editable 
+	Off Selectable 
+	On Global Line (1,2,8421504) 
+	Global Pen (1,2,8421504)  
+	Global Brush (15,0,16777215)  
+	Global Symbol (33,12632256,12)  
+	Global Font ("Arial",0,9,0) 
+	Label Line Arrow Position Right 
+	Font ("Arial",0,9,0) Pen (1,2,0)  
+	With Route Parallel On 
+	Auto Off 
+	Overlap Off 
+	PartialSegments Off 
+	Duplicates On 
+	Offset 2 Max 
+	Visibility On 
+	Nodes Off 
+	Arrows Off 
+	Centroids Off
+Set Map Layer 2 Display Off
+set map redraw on
+
+shade window map_win_id 1 
+	with Distance ranges 
+	apply all use all Symbol (41,22015,12,"MapInfo Cartographic",16,0)  
+	0: 81 Symbol (41,22015,12,"MapInfo Cartographic",16,0) ,
+	81: 104 Symbol (41,53352,12,"MapInfo Cartographic",16,0) ,
+	104: 174 Symbol (41,16777024,12,"MapInfo Cartographic",16,0) ,
+	174: 320 Symbol (41,16750640,12,"MapInfo Cartographic",16,0) ,
+	320: 536 Symbol (41,12595200,12,"MapInfo Cartographic",16,0) 
+	default Symbol (41,16777215,12,"MapInfo Cartographic",0,0)  
+
+set legend window map_win_id layer 
+	prev display on 
+	shades off 
+	symbols on 
+	lines off 
+	count on 
+	title auto 
+	Font ("Arial",0,9,0) 
+	subtitle auto 
+	Font ("Arial",0,8,0) 
+	ascending off 
+	ranges Font ("Arial",0,8,0) 
+	auto display off ,
+	auto display on ,
+	auto display on ,
+	auto display on ,
+	auto display on ,
+	auto display on  
+
+Create Cartographic Legend From Window map_win_id behind Frame From Layer 1
+
+Set Window legend 
+	  Position (0.5,3) Units "cm"
+	  Width 8 Units "cm"
+	  Height 4 Units "cm"
+
+Open Window Legend
+
+Run Menu Command M_QUERY_UNSELECT
+
+End Sub
+
+
+
+
+
+

@@ -1,0 +1,31 @@
+'*****************************************************************
+'*  Name   : Finish
+'*  Purpose: End program TCC.MBX 
+'*           
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Edwin Liava'a
+'*  Date   : 16-05-2011
+'*  Mods   : 
+'*           
+'*****************************************************************
+
+Include "mapbasic.def"
+Include "menu.def"
+
+Declare Sub Finish
+
+Sub Finish
+
+OnError Goto Err_Manage
+
+	End Program
+
+Finish:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Finish
+End Sub

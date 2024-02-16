@@ -1,0 +1,185 @@
+'*****************************************************************
+'*  Name   : DispPL_ByFD
+'*  Purpose: Display Transformer by Feeders
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Edwin Liava'a
+'*  Date   : 26-Feb-2007
+'*  Mods   : 
+'*           
+'*****************************************************************
+
+Include "PPL_Lib.def"
+Include "mapbasic.def"
+Include "menu.def"
+Include "Icons.def"  
+
+Declare Sub DispPL_ByFD
+
+Global db_conn_path As String	'	Access
+Global rs_path As String	'	MapInfo Raster Layers (BackDrops)
+GLobal vt_Path As String	'	MapInfo Vector Layers
+
+Sub DispPL_ByFD
+
+OnError Goto Err_Manage
+
+	'	+++++++++++++++ declarations +++++++++++++++
+
+	Dim Map_Win_id 				As Integer
+	Dim i,j						As Integer
+	Dim TableName				 	As String
+
+	'	+++++++++++++++ display selected layer +++++++++++++++
+
+	Close All
+
+	TableName = db_conn_path + "\" + "PL.tab"
+	Open Table TableName As PL Interactive
+			
+	Map From PL Max
+
+	Set Map Distance Units "m"
+	set map redraw off
+	Set Map Layer 1 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 1000)units "m"
+		Activate Using Tag_Target_Photo On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	
+	'++++++++++++++++++  Getting window ID +++++++++++++++++++++
+
+	Map_Win_id = FrontWindow()
+
+	'++++++++++++++++++  Shade Statement  ++++++++++++++++++++++
+
+	Shade window Map_Win_id "PL" with Feeder_ID ignore "" values
+
+	"BK-WG" Symbol (34,16711680,12) ,
+	"BK1" Symbol (34,65280,12) ,
+	"BK1-BK5" Symbol (34,255,12) ,
+	"BK1-BK6" Symbol (34,16711935,12) ,
+	"BK2" Symbol (34,16776960,12) ,
+	"BK2-BK7" Symbol (34,65535,12) ,
+	"BK2-KD5" Symbol (34,8388608,12) ,
+	"BK3" Symbol (34,32768,12) ,
+	"BK3-BM2" Symbol (34,128,12) ,
+	"BK3-WG2" Symbol (34,8388736,12) ,
+	"BK4" Symbol (34,8421376,12) ,
+	"BK5" Symbol (34,32896,12) ,
+	"BK5-BK7" Symbol (34,16744576,12) ,
+	"BK6" Symbol (34,8454016,12) ,
+	"BK7" Symbol (34,8421631,12) ,
+	"BK8" Symbol (34,16744703,12) ,
+	"BK8-BM2" Symbol (34,16777088,12) ,
+	"BK8-WG4" Symbol (34,8454143,12) ,
+	"BM1" Symbol (34,8405056,12) ,
+	"BM1-BM3" Symbol (34,4227136,12) ,
+	"BM2" Symbol (34,4210816,12) ,
+	"BM2-BM3" Symbol (34,8405120,12) ,
+	"BM3" Symbol (34,8421440,12) ,
+	"KD2" Symbol (34,4227200,12) ,
+	"KD2-BK1" Symbol (34,16761024,12) ,
+	"KD2-BK5" Symbol (34,12648384,12) ,
+	"KD2-BK6" Symbol (34,12632319,12) ,
+	"KD2-KD5" Symbol (34,16761087,12) ,
+	"KD2-KD6" Symbol (34,16777152,12) ,
+	"KD3" Symbol (34,12648447,12) ,
+	"KD3-KD6" Symbol (34,8413280,12) ,
+	"KD3-KD7" Symbol (34,6324320,12) ,
+	"KD4" Symbol (34,6316160,12) ,
+	"KD4-KD7" Symbol (34,8413312,12) ,
+	"KD5" Symbol (34,8421472,12) ,
+	"KD5-BK7" Symbol (34,6324352,12) ,
+	"KD5-WG2" Symbol (34,16711680,12) ,
+	"KD6" Symbol (34,65280,12) ,
+	"KD7" Symbol (34,255,12) ,
+	"KN2" Symbol (34,16711935,12) ,
+	"KN3" Symbol (34,16776960,12) ,
+	"TP22" Symbol (34,65535,12) ,
+	"TP33" Symbol (34,8388608,12) ,
+	"WG1" Symbol (34,32768,12) ,
+	"WG1-KN3" Symbol (34,128,12) ,
+	"WG1-WG2" Symbol (34,8388736,12) ,
+	"WG2" Symbol (34,8421376,12) ,
+	"WG3" Symbol (34,32896,12) ,
+	"WG3-WG5" Symbol (34,16744576,12) ,
+	"WG5" Symbol (34,8454016,12) ,
+	"WG5-BK3" Symbol (34,8421631,12) 
+	default Symbol (40,0,12)  
+
+'+++++++++++++++++++++++++ Legend statements +++++++++++++++++++++++++
+
+	Set Legend Window Map_Win_id layer prev display on shades off symbols on lines off count on 
+	title "PPL MIS-GIS" Font ("Arial",0,9,0) 
+	subtitle "Poles by Feeder" Font ("Arial",0,8,0) 
+	ascending on ranges Font ("Arial",0,8,0) auto display off ,
+
+	"BK-WG" display on ,
+	"BK1" display on ,
+	"BK1-BK5" display on ,
+	"BK1-BK6" display on ,
+	"BK2" display on ,
+	"BK2-BK7" display on ,
+	"BK2-KD5" display on ,
+	"BK3" display on ,
+	"BK3-BM2" display on ,
+	"BK3-WG2" display on ,
+	"BK4" display on ,
+	"BK5" display on ,
+	"BK5-BK7" display on ,
+	"BK6" display on ,
+	"BK7" display on ,
+	"BK8" display on ,
+	"BK8-BM2" display on ,
+	"BK8-WG4" display on ,
+	"BM1" display on ,
+	"BM1-BM3" display on ,
+	"BM2" display on ,
+	"BM2-BM3" display on ,
+	"BM3" display on ,
+	"KD2" display on ,
+	"KD2-BK1" display on ,
+	"KD2-BK5" display on ,
+	"KD2-BK6" display on ,
+	"KD2-KD5" display on ,
+	"KD2-KD6" display on ,
+	"KD3" display on ,
+	"KD3-KD6" display on ,
+	"KD3-KD7" display on ,
+	"KD4" display on ,
+	"KD4-KD7" display on ,
+	"KD5" display on ,
+	"KD5-BK7" display on ,
+	"KD5-WG2" display on ,
+	"KD6" display on ,
+	"KD7" display on ,
+	"KN2" display on ,
+	"KN3" display on ,
+	"TP22" display on ,
+	"TP33" display on ,
+	"WG1" display on ,
+	"WG1-KN3" display on ,
+	"WG1-WG2" display on ,
+	"WG2" display on ,
+	"WG3" display on ,
+	"WG3-WG5" display on ,
+	"WG5" display on ,
+	"WG5-BK3" display on 
+	
+	Set Window WIN_LEGEND 
+		Position (0.5,0.5) Units "cm"
+		Width 6 Units "cm"
+		Height 20 Units "cm"
+
+	Open Window Legend
+
+Res_DispPL_ByFD:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executin the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Res_DispPL_ByFD
+End Sub

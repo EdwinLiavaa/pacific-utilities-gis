@@ -1,0 +1,101 @@
+'********************************************************
+'*                                                      *
+'*     TypeMetr.MBO                Paula, 24.08.98      *
+'*                                                      *
+'*  This program displays The Meters by classe of       *
+'*  different meter type.                               *
+'*                                                      *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required files:                                      *
+'*		MAPBASIC.DEF                                *
+'*		MENU.DEF                                    *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required tables:                                     *
+'*                  - Customer.tab                       *
+'*                                                      *
+'********************************************************
+
+
+	include "C:\program files\mapinfo\mapbasic\MENU.DEF"
+	include "C:\program files\mapinfo\mapbasic\MAPBASIC.DEF"
+
+	Global passw as String 
+	Global MapPath as string
+	Global CadaPath as String
+
+
+	Declare Sub TypeMetr
+
+'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	Sub TypeMetr
+
+
+	Dim Map_Win_Id 	As integer
+	Dim i_lay_type	As SmallInt
+	Dim iz, ln		As SmallInt
+	Dim MapName		As String
+
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	
+OnError goto Err_Meter_Ty
+
+'++++++++++++++++++++++++++open Table statement+++++++++++++++++++++++++++++++++++++++++++
+
+	MapName = MapPath +"customer.tab"
+	open table MapName Password passw as customer
+ 
+	map from customer Max
+	Mapname = Cadapath + "n_cad.tab"
+	open table MapName as n_cad interactive
+
+	add map layer n_cad
+
+
+	Map_Win_id= FrontWindow()
+	
+'++++++++++++++++++++++++++ Shade statements +++++++++++++++++++++++++
+
+	Shade Window Map_Win_Id "Customer" with MET_TYPE values  
+		"01" Symbol (47,16711680,12,"MapInfo Real Estate",257,0) ,
+		"02" Symbol (47,65280,12,"MapInfo Real Estate",257,0) ,
+		"03" Symbol (47,255,12,"MapInfo Real Estate",257,0) ,
+		"04" Symbol (47,16711935,12,"MapInfo Real Estate",257,0) ,
+		"05" Symbol (47,16776960,12,"MapInfo Real Estate",257,0) 
+		default Symbol (47,0,12,"MapInfo Real Estate",257,0)
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+'+++++++++++++++++++++++++ Legend statements +++++++++++++++++++++++++
+
+	Set Legend Window Map_Win_Id layer prev display on shades off symbols on 
+		lines off count on title "Meter types" 
+		Font ("MS Sans Serif",0,10,0) subtitle "" 
+		Font ("MS Sans Serif",0,8,0) ascending on ranges 
+		Font ("MS Sans Serif",0,8,0) 
+		"all others" display on ,
+		"01 - 10" display on ,
+		"11 - 20" display on ,
+		"21 - 30" display on ,
+		"31 - 40" display on ,
+		"41 - 50" display on ,
+		"51 - 58" display on
+
+	Set Window WIN_LEGEND 
+	Position (1,4) Units "cm"
+	Width 5 Units "cm"
+	Height 5 Units "cm"
+
+	Open Window Legend
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Res_Meter_Ty:
+	Exit Sub
+
+Err_Meter_Ty:
+	note "Meter_Ty: "+str$(err())+" "+error$()
+	Resume Res_Meter_Ty
+
+End Sub
+

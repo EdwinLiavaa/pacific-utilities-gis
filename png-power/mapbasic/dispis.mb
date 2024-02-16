@@ -1,0 +1,83 @@
+'*****************************************************************
+'*  Name   : DispIS
+'*  Purpose: Display Isolators
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Edwin Liava'a
+'*  Date   : 1-Feb-2007
+'*  Mods   : 5-Nov-2013
+'*           
+'*****************************************************************
+
+Include "mapbasic.def"
+Include "menu.def"
+
+Declare Sub DispIS
+
+Global db_conn_path As String	'	Access
+Global rs_path As String	'	MapInfo Raster Layers (BackDrops)
+GLobal vt_Path As String	'	MapInfo Vector Layers
+Global db_name As String	'	MIS database
+
+Sub DispIS
+
+OnError Goto Err_Manage
+
+	'	+++++++++++++++ declarations +++++++++++++++
+
+	Dim layer_num, mapID, num_layers As Integer
+	Dim layer_already_disp As Logical
+	Dim strlayer As String
+
+	'	+++++++++++++++ display selected layer +++++++++++++++
+
+	strlayer = "IS"
+
+	mapId = FrontWindow()
+	If mapId = 0 Then ' no layers displayed
+		'Register Table db_conn_path + "\" + db_name Type ACCESS Table strlayer Into db_conn_path + "\" + strlayer
+		Open Table db_conn_path + "\" + strlayer Interactive
+		Map From strlayer
+		Set Map Distance Units "m"
+		set map redraw off
+		Set Map Layer strLayer 
+			Label Position Below Font ("Arial",257,8,0) 
+			With IS_ID Auto On Visibility Zoom (0, 1000) Units "m" 
+			'Activate Using Tag_Target_Photo On Objects Relative Path On
+		Set Map Zoom Entire Layer 1
+		set map redraw on
+	Else
+		mapID = FrontWindow()
+		layer_already_disp = "FALSE"
+		num_layers	= MapperInfo( mapID , MAPPER_INFO_LAYERS)
+		For layer_num = 1 To num_layers
+			If strlayer = LayerInfo( mapID , layer_num , LAYER_INFO_NAME ) Then
+				layer_already_disp = "TRUE"
+			End If
+		Next
+		If layer_already_disp = "TRUE" Then
+			Note "Layer already displayed"
+		Else
+			'Register Table db_conn_path + "\" + db_name Type ACCESS Table strlayer Into db_conn_path + "\" + strlayer
+			Open Table db_conn_path + "\" + strlayer Interactive
+			Add Map Auto Layer strlayer
+			Set Map Distance Units "m"
+			set map redraw off
+			Set Map Layer strLayer 
+				Label Position Below Font ("Arial",257,8,0) 
+				With IS_ID Auto On Visibility Zoom (0, 1000) Units "m" 
+				'Activate Using Tag_Target_Photo On Objects Relative Path On 
+			set map redraw on
+		End If
+	End If
+
+Set Window FrontWindow( ) Max
+
+Res_DispIS:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executin the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Res_DispIS
+End Sub

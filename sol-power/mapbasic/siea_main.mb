@@ -1,0 +1,62 @@
+Include "Mapbasic.def"
+Include "Menu.def"
+
+'	******************* global variables ***********************
+
+Global db_conn_path As String			' database connection path	 
+Global rs_path As String	 			' raster path
+Global vt_Path As String				' vector path 
+Global db_name As String				' database name	 
+
+'	******************* declarations ***************************
+
+Declare Sub Main
+Declare Sub Main_Menu
+
+'	******************* main procedure *************************
+
+Sub Main
+
+'	***************** declare and initialize ********************
+
+	Dim frontPath As String
+	Dim ilen As Integer
+	
+	OnError Goto Err_Manage
+	
+	frontPath = ApplicationDirectory$()		' get directory where this MapBasic program located
+	ilen = len(frontPath)
+	frontPath = mid$(frontpath, 1, ilen - 9)	' remove trailing string "\mapbasic\"
+
+	db_conn_path = frontPath + "\access"
+	rs_path = frontPath + "\backdrop"
+	vt_Path = frontPath + "\mapinfo\working"
+	db_name  = "SIEA_GIS.mdb"
+
+'	***************** alter menu items ********************
+
+	Alter ButtonPad "DBMS" Hide
+	Alter ButtonPad "Tools" Hide
+	Alter ButtonPad "Web Services" Hide
+	Alter ButtonPad "Standard" Show Fixed ToolbarPosition (0,0)
+	Alter ButtonPad "Main" Show Fixed ToolbarPosition (1,0)
+	Alter ButtonPad "Drawing" Show Fixed ToolbarPosition (0,1)
+	
+	'	+++++++++++++++ set environment +++++++++++++++
+
+	Set CoordSys 
+		Earth Projection 8, 104, "m", 159, 0, 0.9996, 500000, 10000000 Bounds (-7745844.29597, 2035.05676326) (8745844.29597, 19997964.9432)
+
+	'	+++++++++++++++ create user interface +++++++++++++++
+
+	Call Main_Menu 
+	
+Res_Main:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+
+Err_Manage:
+	Note "Error: " + str$(err()) + " " + error$()
+	Resume Res_Main
+End Sub

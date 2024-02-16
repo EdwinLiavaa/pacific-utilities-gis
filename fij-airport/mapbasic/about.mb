@@ -1,0 +1,31 @@
+'*****************************************************************
+'*  Name   : About
+'*  Purpose: Display dialog About MMR.MBX 
+'*           modules
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Edwin Liava'a
+'*  Date   : 18-07-2011
+'*  Mods   : 
+'*           
+'*****************************************************************
+
+Include "mapbasic.def"
+Include "menu.def"
+
+Declare Sub About
+
+Sub About
+
+OnError Goto Err_Manage
+
+	Note "GIS for Airport Fiji Ltd Aerodrome Data Managemnt Copyright © 2011 SOPAC" + CHR$(13) + CHR$(10)
+
+About:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume About
+End Sub

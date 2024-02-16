@@ -1,0 +1,116 @@
+'*****************************************************************
+'*  Name   : Find_NoConnectTX
+'*  Purpose: Find Transformer with no LN_LV Connection  
+'*  Inputs : TX, LN_LV
+'*  Outputs: 
+'*  Author : Edwin Liava'a
+'*  Date   : 16-Feb-2007
+'*  Mods   : 09-Mar-2007           
+'*****************************************************************
+
+Include "mapbasic.def"
+Include "menu.def"
+
+Declare Sub Main
+
+Dim a_col_name1, a_col_name2 As Alias
+Dim ifound, ifoundflag, ilen, irow1, irow2 As Integer
+Dim more As Logical
+Dim db_conn_path, frontPath, vt_Path As String
+Dim s_col_name1, s_col_name2, s_table1, s_table2 As String
+
+Sub Main
+
+OnError Goto Err_Manage
+
+'	+++++++++++++++ declarations +++++++++++++++
+
+
+
+'	+++++++++++++++ initialise +++++++++++++++
+
+	Print Chr$(12)
+	Print "Start Test_NoConnectMT"
+
+	frontPath = ApplicationDirectory$()		' get directory where this MapBasic program located
+	ilen = len(frontPath)
+	frontPath = mid$(frontpath, 1, ilen - 10)	' remove trailing string "\mapbasic\"
+
+	db_conn_path = frontPath + "\access"
+	vt_Path = frontPath + "\mapinfo"
+
+	s_table1 = "TX"
+	s_table2 = "LN_LV"
+
+	Print "db_conn_path: " + db_conn_path
+	Print "vt_Path: " + vt_Path
+
+'	+++++++++++++++ decision time +++++++++++++++
+
+	more = Ask("  Find " + s_table1 + " with no LN_LV connection:" + Chr$(10) +
+				"  this could take upto 2 minutes to run" + Chr$(10) + Chr$(10) +		 
+				"  Do you want to continue?", "OK", "Cancel")
+	If more Then
+	Else
+		Exit Sub
+	End if
+
+'	+++++++++++++++ process +++++++++++++++
+
+	Close All Interactive
+
+	Open Table db_conn_path + "\" + s_table1 Interactive
+	Map From s_table1
+	Open Table db_conn_path + "\" + s_table2 Interactive
+	Add Map Auto Layer s_table2
+
+	s_col_name1 = "TX_ID"
+	a_col_name1 = s_table1 + "." + s_col_name1
+	s_col_name2 = "FROM_ID"
+	a_col_name2 = s_table2 + "." + s_col_name2
+
+	irow1 = 1
+	Fetch First from s_table1
+	Do While Not EOT(s_table1) 'And irow1 <= 2000
+		'Print "s_table1: " + s_table1 + " irow1: " + irow1 + " " + s_col_name1 + ": " + a_col_name1
+
+		ifoundflag = 0
+		irow2 = 1
+		Fetch First from s_table2
+		Do While Not EOT(s_table2) And ifoundflag = 0
+			'Print "s_table2: " + s_table2 + " irow2: " + irow2 + " " + s_col_name2 + ": " + a_col_name2
+			If a_col_name1 <> a_col_name2 Then
+				ifoundflag = 1
+			End If
+			Fetch Next From s_table2
+			irow2 = irow2 + 1
+		Loop
+		irow2 = irow2 - 1	'	we exit after row has been incremented
+
+		If ifoundflag = 0 Then
+			Print s_table1 + " with no LN_LV: " + a_col_name1
+		Else
+			ifound = ifound + 1
+		End If
+
+		Fetch Next From s_table1
+		irow1 = irow1 + 1
+	Loop
+	irow1 = irow1 - 1		'	we exit after row has been incremented
+
+	Note  "Table " + s_table1 + " rows " + irow1 + " Not found " + (irow1 - ifound)
+	Print "Table " + s_table1 + " rows " + irow1 + " Not found " + (irow1 - ifound)
+
+	Close All Interactive
+
+	Note "Closed: " + s_table1 + ", " + s_table2
+	Print "Closed: " + s_table1 + ", " + s_table2
+
+Main:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Main
+End Sub

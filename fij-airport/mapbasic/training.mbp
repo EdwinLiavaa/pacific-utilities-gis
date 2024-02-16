@@ -1,0 +1,7 @@
+[LINK]
+Application=Training.MBX
+Module=Main.MBO
+Module=Menu.MBO
+Module=MAP_IFR.MBO
+Module=NADI_REC.MBO
+Module=WL_Count_AM.MBO

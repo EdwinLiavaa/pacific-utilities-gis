@@ -1,0 +1,146 @@
+'********************************************************
+'*                                                      *
+'*     LocaTran.MBO                Paula, 24.08.98      *
+'*                                                      *
+'*  This program locates and displays The Transformer   *
+'*  with the ID number that the user has chosen.        *
+'*                                                      *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required files:                                      *
+'*		MAPBASIC.DEF                                *
+'*		MENU.DEF                                    *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required tables:                                     *
+'*                  - Tralist.tab                       *
+'*                  - Location.tab                      *
+'********************************************************
+
+
+	include "C:\Program Files\mapinfo\mapbasic\MAPBASIC.DEF"
+	include "C:\Program Files\MAPINFO\MAPBASIC\MENU.DEF"
+
+
+	Global passw as String 
+	Global MapPath as string
+	Global CadaPath as String
+
+
+	Declare Sub Locatran
+
+
+'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+sub LocaTran
+	
+  
+
+	Dim  ivar1, ivar2, ivar3 	As Integer
+	Dim transfno 			As String
+	Dim Map_Win_Id 			As Integer
+	Dim ixv, iyv			As Integer
+	Dim iz, ln				As SmallInt
+	Dim i_lay_type			As SmallInt
+	Dim MapName				As String
+
+
+
+' ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	OnError goto Err_Tra_Loca
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+'++++++++++++++++++ open table statement++++++++++++++++++++++++++++++++++
+
+	MapName = MapPath +"Tralist.tab"
+	open table MapName password passw as Tralist
+	MapName = MapPath +"Location.tab" 
+	open table MapName password passw as Location 
+
+select * from Tralist,Location Where Tralist.LOCAT_NO=Location.LOCAT_NO
+		into Transformers NoSelect
+
+Map From Transformers Max
+	Mapname = Cadapath + "GPSRoads.tab"
+	open table MapName as GPSRoads interactive
+
+	add map layer GPSRoads
+'+++++++++++++++++++++++++++  Map Window, Layer Display +++++++++++++++
+
+	Map_Win_id= FrontWindow()
+	if WindowInfo(Map_Win_id,WIN_INFO_TYPE)<>WIN_MAPPER then
+		note "You must Select a Map Window first"
+		Exit Sub
+	End If
+
+
+	ln = MapperInfo(Map_Win_id, MAPPER_INFO_LAYERS)
+	iz = 1
+
+	Do 
+		i_lay_type = LayerInfo(Map_Win_id, iz, LAYER_INFO_TYPE)
+		If i_lay_type = LAYER_INFO_TYPE_THEMATIC Then
+			set map redraw off
+		 	Set Map Layer iz Display Off
+		 	set map redraw on
+		End If
+		iz = iz + 1
+
+	Loop While iz <= ln
+
+
+'+++++++++++++++++++++++++++  DIALOG ++++++++++++++++++++++++++++++++++
+
+	Dialog
+
+	Title "Transformer Location Number"
+
+	Control StaticText
+		Title "Type in Location Number:"
+		Position 5, 10
+
+	Control EditText
+		Position 20,20 Width 40
+		Into transfno
+	
+	Control OKButton
+		Position 5, 40
+	Control CancelButton
+		Position 45, 40
+
+	If not CommandInfo(CMD_INFO_DLG_OK) Then 	'The user just cancelled.
+  		Exit Sub
+	End If 
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	Select * From Transformers into sel
+		Where LOCAT_NO=locatno
+
+	Run Menu Command M_QUERY_FIND_SELECTION
+
+
+'+++++++++++++++++ Set Centre and Zoom of Map ++++++++++++++++++++++++
+
+		'ixv = CentroidX(Transformers.obj)
+		'iyv = CentroidY(Transformers.obj)
+
+Add Map Layer Sel
+	Set Map 
+		Zoom Entire layer sel
+		Zoom 2000 Units "m"
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+Res_Tra_Loca:
+	Exit Sub
+
+Err_Tra_Loca:
+	note "Tra_Loca: "+str$(err())+" "+error$()
+	Resume Res_Tra_Loca
+
+end sub
+
+

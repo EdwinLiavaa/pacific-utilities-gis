@@ -1,0 +1,94 @@
+'*****************************************************************
+'*  Name   : DispPL_COND
+'*  Purpose: Display Poles by Light Type
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Edwin Liava'a
+'*  Date   : 26-Feb-2007
+'*  Mods   : 
+'*           
+'*****************************************************************
+
+Include "PPL_Lib.def"
+Include "mapbasic.def"
+Include "menu.def"
+Include "Icons.def"  
+
+Declare Sub DispPL_COND
+
+Global db_conn_path As String	'	Access
+Global rs_path As String	'	MapInfo Raster Layers (BackDrops)
+GLobal vt_Path As String	'	MapInfo Vector Layers
+
+Sub DispPL_COND
+
+OnError Goto Err_Manage
+
+	'	+++++++++++++++ declarations +++++++++++++++
+
+	Dim Map_Win_id 				As Integer
+	Dim i,j						As Integer
+	Dim TableName				 	As String
+
+	'	+++++++++++++++ display selected layer +++++++++++++++
+
+	Close All
+
+	TableName = db_conn_path + "\" + "PL.tab"
+	Open Table TableName As PL Interactive
+			
+	Map From PL Max
+
+	Set Map Distance Units "m"
+	set map redraw off
+	Set Map Layer 1 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+		Activate Using Tag_Target_Photo On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	
+	'++++++++++++++++++  Getting window ID +++++++++++++++++++++
+
+	Map_Win_id = FrontWindow()
+
+	'++++++++++++++++++  Shade Statement  ++++++++++++++++++++++
+
+	Shade window Map_Win_id "PL" with Pole_Base_Condition ignore "" values
+ 	"Burnt Out" Symbol (34,16711680,12) ,
+	"Excellent" Symbol (34,65280,12) ,
+	"Rotten" Symbol (34,255,12) ,
+	"Rusty with Holes" Symbol (34,16711935,12) ,
+	"Rusty" Symbol (34,16776960,12) , 
+	"Unknown" Symbol (34,400,12)
+	default Symbol (40,0,12)  
+
+
+'+++++++++++++++++++++++++ Legend statements +++++++++++++++++++++++++
+
+	Set Legend Window Map_Win_id layer prev display on shades off symbols on lines off count on 
+	title "PPL MIS-GIS" Font ("Arial",0,9,0) 
+	subtitle "Poles by Base Condition" Font ("Arial",0,8,0) 
+	ascending on ranges Font ("Arial",0,8,0) auto display off ,
+	"Burnt Out" display on ,
+	"Excellent" display on ,
+	"Rotten" display on ,
+	"Rusty with Holes" display on ,
+	"Rusty" display on,
+	"Unknown" display on  
+		
+	Set Window WIN_LEGEND 
+		Position (1,1) Units "cm"
+		Width 6 Units "cm"
+		Height 6 Units "cm"
+
+	Open Window Legend
+
+Res_DispPL_COND:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executin the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Res_DispPL_COND
+End Sub

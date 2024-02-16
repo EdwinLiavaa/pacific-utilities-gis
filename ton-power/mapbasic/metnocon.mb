@@ -1,0 +1,112 @@
+'********************************************************
+'*                                                      *
+'*     MetNoCon.MBO                Paula, 24.08.98      *
+'*                                                      *
+'*  This program displays The Meters disconnected in    *
+'*  the month the user has chosen.                      *
+'*                                                      *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required files:                                      *
+'*		MAPBASIC.DEF                                *
+'*		MENU.DEF                                    *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required tables:                                     *
+'*                  - Consumer.tab                      *
+'*                                                      *
+'********************************************************
+
+
+	include "C:\program files\mapinfo\mapbasic\MENU.DEF"
+	include "C:\program files\mapinfo\mapbasic\MAPBASIC.DEF"
+
+	Global passw as String 
+	Global MapPath as string
+	Global CadaPath as String
+
+
+
+	Declare Sub MetNoCon
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Sub MetNoCon
+
+	Dim ivar1 		As integer
+	Dim Map_Win_Id 	as Integer
+	Dim iz, ln 		As SmallInt
+	Dim i_lay_type	As SmallInt
+	Dim MapName		As String
+
+' +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	OnError goto Err_Not_Conn
+
+' ++++++++++++++++++++++++++ Open table Statement ++++++++++++++++++++++++++
+
+
+	MapName = MapPath +"customer.tab"
+	open table MapName Password passw as customer
+	map from customer Max
+	Mapname = Cadapath + "n_cad.tab"
+	open table MapName as n_cad interactive
+
+	add map layer n_cad
+
+'+++++++++++++++++++++++++++++Get the Window ID+++++++++++++++++++++++++++++
+
+	Map_Win_id= FrontWindow()
+	if WindowInfo(Map_Win_id,WIN_INFO_TYPE)<>WIN_MAPPER then
+		note "You must Select a Map Window first"
+		Exit Sub
+	End If
+
+	ln = MapperInfo(Map_Win_id, MAPPER_INFO_LAYERS)
+	iz = 1
+
+	Do 
+		i_lay_type = LayerInfo(Map_Win_id, iz, LAYER_INFO_TYPE)
+		If i_lay_type = LAYER_INFO_TYPE_THEMATIC Then
+			set map redraw off
+		 	Set Map Layer iz Display Off
+		 	set map redraw on
+		End If
+		iz = iz + 1
+
+	Loop While iz <= ln
+
+	
+'++++++++++++++++++++++++++ Shade statements +++++++++++++++++++++++++
+
+	Shade Window Map_win_Id "Customer" with MET_TYPE values  
+		"0" Symbol (47,Blue,12,"MapInfo Real Estate",257,0) ,
+		"00" Symbol (47,RED,12,"MapInfo Real Estate",257,0) 
+		default Symbol (47,BLACK,12,"MapInfo Real Estate",257,0)
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+'+++++++++++++++++++++++++ Legend statements +++++++++++++++++++++++++
+
+	Set Legend Window Map_Win_Id layer prev display on shades off symbols on 
+		lines off count on title "Meter removed" 
+		Font ("MS Sans Serif",0,10,0) subtitle "" 
+		Font ("MS Sans Serif",0,8,0) ascending on ranges 
+		Font ("MS Sans Serif",0,8,0) "all others" display on ,
+		"unknown" display on ,"removed" display on ,"Not connected" display on 
+
+	Set Window WIN_LEGEND 
+	Position (1,4) Units "cm"
+	Width 5 Units "cm"
+	Height 4 Units "cm"
+
+Open Window Legend
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Res_Not_Conn:
+	Exit Sub
+
+Err_Not_Conn:
+	note "Not_Conn: "+str$(err())+" "+error$()
+	Resume Res_Not_Conn
+
+End Sub
+

@@ -1,0 +1,900 @@
+'*****************************************************************
+'*  Name   : Loss_Calculation
+'*  Purpose: Run Network Trace and calculate Technical Losses
+'*				on the Transmission & Distribution Lines  
+'*
+'*				1. Select Feeder Then Hit either HV or LV
+'*				2. Open relevant points tables  
+'*				3. Trace Network
+'*				4. Populate simulated HV and LV 
+'*
+'*  Author : Edwin Liava'a 21/01/2013
+'*  Inputs : HV, LV, Feeders and Relevant points tables
+'*  Outputs: Technical Losses
+'*           
+'*****************************************************************
+
+Include "PPL_Lib.def"
+Include "mapbasic.def"
+Include "menu.def"
+Include "Icons.def"  
+
+'*****************************************************************
+
+Global rs_path 					As String	 'MapInfo Raster Layers (BackDrops)
+Global vt_Path 					As String	 'MapInfo Vector Layers
+Global TableName					As String
+Global strFD_ID					As String
+Global strTX_ID					As String
+Global cKWH 			 			As Float
+
+Declare sub Loss_Calculation
+Declare Sub CutaLine
+Declare Sub LineGridCut_LV(ByVal LineFrom as String, ByVal start as Logical, ByVal Cosname as String)
+Declare Sub LineGridCut_HV(ByVal LineFrom as String, ByVal start as Logical, ByVal Cosname as String)
+
+'*****************************************************************
+
+Sub Loss_Calculation
+
+	Dim Map_Win_id 	As Integer
+	Dim FeederID 		As String
+	Dim VoltID 		As Float
+	
+	OnError goto Err_Manage
+	
+'************* close some toolbars ******************
+
+	Alter ButtonPad "Drawing" Hide
+	Alter ButtonPad "Main" Show Fixed
+	Alter ButtonPad "ODBC" Hide
+
+'************* Creat Toolbox ************************
+
+	Create ButtonPad "PPL MIS/GIS" As	
+			ToolButton
+				Icon MI_ICON_CUT
+				Cursor MI_CURSOR_CROSSHAIR
+				DrawMode DM_CUSTOM_POINT
+				ID 23	
+				HelpMsg "Select a HV or LV Line"
+		
+				Calling CutaLine
+
+			Title " "
+			width 8
+			Float
+			Show
+	
+'************* close and open map layers *************
+	
+	Close All
+
+	TableName = vt_Path + "\" + "LN_HV.tab"
+	Open Table TableName As HV Interactive
+	TableName = vt_Path + "\" + "LN_LV.tab"
+	Open Table TableName As LV Interactive
+	TableName = vt_Path + "\" + "TT.tab"
+	Open Table TableName As Towers Interactive
+	TableName = vt_Path + "\" + "TX.tab"
+	Open Table TableName As Transformers Interactive
+	TableName = vt_Path + "\" + "MT.tab"
+	Open Table TableName As Met Interactive
+	TableName = vt_path + "\" + "FD.tab"
+	Open Table TableName As Feeders Interactive
+	TableName = vt_path + "\" + "GN.tab"
+	Open Table TableName As DGensets Interactive
+	TableName = vt_path + "\" + "TH.tab"
+	Open Table TableName As TGensets Interactive
+	TableName = vt_path + "\" + "HY.tab"
+	Open Table TableName As Hydros Interactive
+	TableName = vt_path + "\" + "BU.tab"
+	Open Table TableName As Busbars Interactive
+	TableName = vt_path + "\" + "BR.tab"
+	Open Table TableName As Breakers Interactive
+	TableName = vt_path + "\" + "IS.tab"
+	Open Table TableName As Isolators Interactive
+	TableName = vt_path + "\" + "ES.tab"
+	Open Table TableName As ESwitches Interactive
+	TableName = vt_path + "\" + "LA.tab"
+	Open Table TableName As LArresters Interactive
+	TableName = vt_path + "\" + "PL.tab"
+	Open Table TableName As POL Interactive
+	TableName = vt_path + "\" + "BL.tab"
+	Open Table TableName As Buildings Interactive
+		
+	Map From HV,LV,POL,Transformers,Met,Towers,DGensets,TGensets,Hydros,Busbars,Breakers,Isolators,ESwitches,LArresters,Buildings Max
+
+'************************* Getting window ID *************************
+
+	Map_Win_Id = FrontWindow()
+	If Map_Win_id = 0 Then
+		Exit Sub
+	End If
+
+'*************************** Dialog Feeder ***************************
+
+	Dialog
+	Title "PPL MIS-GIS" 
+	Control StaticText
+		Title "Please Enter Feeder_ID:"  
+	Control EditText 
+		Value strFD_ID		'this is a Global String variable
+		Into strFD_ID	
+	Control OKButton
+	Control CancelButton  
+			
+	If Not CommandInfo(CMD_INFO_DLG_OK) Then 
+		' ...then the user clicked CANCEL
+		Note "Program will now close!"
+		Close All Interactive
+		Exit Sub
+	End If
+	If CommandInfo(CMD_INFO_DLG_OK) And strFD_ID = "" Then
+		Note "Invalid Feerder_ID!"
+		Call Loss_Calculation
+	Else	' ...the user clicked OK
+		Select FD_ID,KV from Feeders 
+			where FD_ID = Ucase$(str$(strFD_ID)) into Temp1
+		Select * from Feeders, HV, LV 
+			where Feeders.FD_ID = HV.FD_ID 
+			And HV.FD_ID = LV.FD_ID 
+			And Feeders.FD_ID = Ucase$(str$(strFD_ID)) into Temp2
+
+		If Temp1.COL1 = Ucase$(str$(strFD_ID)) And Temp2.COL1 <> "" Then
+			feederID = Ucase$(Str$(strFD_ID))
+			voltID = Temp1.COL2
+			Note "Select HV or LV Line" 			
+		Else
+			Note "Invalid Feerder_ID!"
+			Call Loss_Calculation
+		End If
+	End If
+
+'************* Change Map, Set Centre and Zoom to Feeder ******************
+
+	Select * from HV where FD_ID = Ucase$(str$(strFD_ID)) into Lines_HV
+	Select * from LV where FD_ID = Ucase$(str$(strFD_ID)) into Lines_LV
+	Select * from POL where Feeder_ID = Ucase$(str$(strFD_ID)) into Poles
+ 	Select * from Transformers where Feeder_ID = Ucase$(str$(strFD_ID)) into Trans
+	Select * from Met where CS_FEEDER_ID = Ucase$(str$(strFD_ID)) into Meters
+
+	Set Map redraw off
+	Set Map Distance Units "m" 
+	Set Map Window Map_Win_Id Layer 1 Display Off
+	Set Map Window Map_Win_Id Layer 2 Display Off
+	Set Map Window Map_Win_Id Layer 3 Display Off
+	Set Map Window Map_Win_Id Layer 4 Display Off
+	Set Map Window Map_Win_Id Layer 5 Display Off
+	Set Map Window Map_Win_Id Layer 6 Display Off
+	Add Map Window Map_Win_Id Layer "Meters"
+	Add Map Window Map_Win_Id Layer "Poles"
+	Add Map Window Map_Win_Id Layer "Trans"
+	Add Map Window Map_Win_Id Layer "Lines_LV"
+	Add Map Window Map_Win_Id Layer "Lines_HV"
+	Set Map Layer "Poles"  Display Global Global Symbol (34,65280,6)
+	Set Map Layer "Lines_LV"  Display Global Global Line (1,2,255)
+	Set Map Layer "Lines_HV"  Display Global Global Line (2,2,16711680) 
+	Set Map Window Map_Win_Id Layer 1 Arrows On
+	Set Map Window Map_Win_Id Layer 2 Arrows On
+	Set Map Window Map_Win_Id Zoom Entire Layer 1
+	Set Window Map_Win_Id Max
+	Set map redraw on
+
+	Run Menu Command ID 23
+	Run Menu Command M_QUERY_UNSELECT
+
+	Set Map Center(521663.80, 8955028.25)
+	Set Map Zoom 1099 units "m"
+
+Res_Loss_Calculation:
+	Exit Sub
+
+Err_Manage:
+	'note "Loss_Calculation: "+str$(err())+" "+error$()
+	Resume Next
+
+End Sub
+
+'*********************************************
+
+Sub CutaLine
+
+	Dim x								as Float
+	Dim y 								as Float
+	Dim iFound						as Integer
+	Dim i								as Integer
+	Dim j								as Integer
+	Dim sTable						as String
+	Dim iRowid						as Integer
+	Dim aTable						as Alias
+	Dim aTableObj						as Alias
+	Dim aFrom							as Alias
+	Dim aNext 						as Alias
+	Dim aPhase 						as Alias
+	Dim aCable 						as Alias
+	Dim aSpan							as Alias
+	Dim aVoltage						as Alias
+	Dim aUG							as Alias
+	Dim aLoad							as Alias
+	Dim lFound						as Logical
+	Dim Counter						as Integer
+	Dim xyUnits						as String
+	Dim CosName						as String
+	Dim Map_Win_id 					as Integer
+	Dim iTariff						As Float
+	Dim Three_Phase_Constant		As Float
+	Dim Total_Connected_Load		As Float
+	Dim Peak_Load						As Float
+	Dim Diversity_Factor			As Float
+	Dim Load_Factor					As Float
+	Dim Loss_Load_Factor			As Float
+	Dim Annual_Iron_Losses			As Float
+	Dim Annual_Copper_Losses		As Float
+	Dim HT_Line_Losses				As Float
+	Dim Peak_Power_Losses			As Float
+	Dim LT_Line_Losses				As Float
+	Dim Technical_Losses			As Float
+	Dim Per_Technical_Loss			As Float
+	Dim Units_Send	 				As Float
+	Dim totalKWH 						As Float
+	Dim totalSPAN_LV 				As Float
+	Dim totalSPAN_HV  				As Float
+	Dim maxAmps						As Float
+	Dim LineVoltage					As Float
+	Dim Power_Factor					As Float
+	Dim Minimum_PF					As Float
+	Dim HT_Resistance				As Float
+	Dim HT_Line_Loss_Const			As Float 
+	Dim hrs_Years						As Integer
+	Dim Total_LT_Line_Losses 		As Float
+	
+	OnError goto Err_CutaLine
+
+
+'*************  Getting window ID ********************
+
+	Map_Win_id = FrontWindow()
+
+	If Map_Win_id = 0 Then
+		Exit Sub
+	End If
+
+'************* Clear Cosmetic Objects **************** 
+
+	Run Menu Command 810 
+
+	cKWH = 0
+	Total_Connected_Load = 0
+	Peak_Load = 0
+	Diversity_Factor = 0
+	Load_Factor = 0
+	Loss_Load_Factor = 0
+	Annual_Iron_Losses = 0
+	Annual_Copper_Losses = 0
+	HT_Line_Losses = 0
+	Total_LT_Line_Losses = 0
+	LT_Line_Losses = 0
+	Peak_Power_Losses = 0
+	Technical_Losses = 0
+	Per_Technical_Loss = 0
+		
+	iTariff = 1.013077
+	Three_Phase_Constant = 1.732
+	LineVoltage = 11.0
+	maxAmps = 12.0
+	Power_Factor = 0.8
+	Minimum_PF = 0.2
+	hrs_Years	= 8760 
+	HT_Line_Loss_Const = 1.05 
+	HT_Resistance	 = 0.54 
+
+	CosName = WindowInfo(Map_Win_Id,WIN_INFO_TABLE)
+
+	Set CoordSys Window Map_Win_id 
+	
+	x = CommandInfo(CMD_INFO_X)
+	y = CommandInfo(CMD_INFO_Y)
+
+	xyunits = MapperInfo(Map_Win_id,MAPPER_INFO_XYUNITS)
+
+	ifound = SearchPoint(Map_Win_Id,x,y)
+
+	If ifound = 0 Then
+		lFound = FALSE
+	Else
+		lFound = FALSE
+		For i = 1 to ifound
+      		' Get the name of the table containing a "hit".
+	      	sTable = SearchInfo(i, SEARCH_INFO_TABLE)
+   
+	      	' Get the row ID number of the object that was a hit.
+	      	irowid = SearchInfo(i, SEARCH_INFO_ROW)
+
+		   	If Right$(sTable, 2) = "HV" Then 
+	        	' Fetch the row of the object the user clicked on.
+	        	Fetch rec iRowid  From sTable
+	        	aTable = sTable + ".LN_ID"
+				aFrom = sTable + ".FROM_ID"
+				aNext  = sTable + ".NEXT_ID"
+				aCable  = sTable + ".CABLE_ID"
+				aSpan = sTable + ".LENGTH"
+				aVoltage = sTable + ".VOLTAGE"
+				aPhase = sTable + ".PHASE_ID"
+				aUG = sTable + ".UG"
+				aLoad = sTable + ".LOAD"
+				aTableObj = sTable + ".obj"
+				Print ""
+				Print "T&D Network Trace From LN_ID: " + aTable
+				Print ""
+				Print "From" + "," + "To" + "," + "Cable" + "," + "Span" + "," + "Volt" + "," + "Phase" + "," + "UG" + "," + "Load"
+				Print aFrom + "," + aNext + "," + aCable + "," + aSpan + "," + aVoltage + "," + aPhase + "," + aUG + "," + aLoad
+				Call LineGridCut_HV(aTable, TRUE, CosName)
+				lFound = TRUE
+			ElseIf
+				Right$(sTable, 2) = "LV" Then 
+	        	' Fetch the row of the object the user clicked on.
+	        	Fetch rec iRowid  From sTable
+	        	aTable = sTable + ".LN_ID"
+				aFrom = sTable + ".FROM_ID"
+				aNext = sTable + ".NEXT_ID"
+				aCable = sTable + ".CABLE_ID"
+				aSpan = sTable + ".LENGTH"
+				aVoltage = sTable + ".VOLTAGE"
+				aPhase = sTable + ".PHASE_ID"
+				aUG = sTable + ".UG"
+				aLoad = sTable + ".LOAD"
+				aTableObj = sTable + ".obj"
+				Print ""
+				Print "T&D Network Trace From LN_ID: " + aTable
+				Print ""
+				Print "From" + "," + "To" + "," + "Cable" + "," + "Span" + "," + "Volt" + "," + "Phase" + "," + "UG" + "," + "Load"
+				Print aFrom + "," + aNext + "," + aCable + "," + aSpan + "," + aVoltage + "," + aPhase + "," + aUG + "," + aLoad
+				Call LineGridCut_LV(aTable, TRUE, CosName)
+				lFound = TRUE
+      		End If 
+    		Next
+	End If
+
+	If lFound = FALSE Then
+		Print "Sorry, no Lines to Choose!"
+		Print "Make sure the layer Lines is selectable or try again!"
+		Exit Sub
+
+	End If
+	
+	Select Sum(Meters.CUR_CONSUMP) from Meters into TotalConsumption
+	totalKWH = TotalConsumption.COL1
+
+	Select Sum(Lines_LV.LENGTH) from Lines_LV into TotalLength_LV
+	totalSPAN_LV = TotalLength_LV.COL1
+
+	Select Sum(Lines_HV.LENGTH) from Lines_HV into TotalLength_HV
+	totalSPAN_HV = TotalLength_HV.COL1
+
+	Select Cur_Units_Send from Feeders Where FD_ID = strFD_ID into Kwh_Send
+	Units_Send = Kwh_Send.COL1
+
+	Print "Loss 1 month BLACK OUT = " + cKWH + " Kwh = $ " + cKWH * iTariff
+	Print "Loss 1 week BLACK OUT = " + cKWH/4 + " Kwh = $ " + cKWH/4 * iTariff
+	Print "Loss 1 day BLACK OUT = " + cKWH/28 + " Kwh = $ " + cKWH/28 * iTariff
+	Print "Loss 1 hour BLACK OUT = " + cKWH/28/24 + " Kwh = $ " + cKWH/28/24 * iTariff
+	Print "Total Length of LV Lines in Meters = " + totalSPAN_LV + " m"
+	Print "Total Length of HV Lines in Meters = " + totalSPAN_HV + " m"
+	Print "Total Units Send = " + Units_Send + " Kwh"
+	Print "Total Units Sold = " + cKWH + " Kwh"
+	
+	Add Map Window Map_Win_id Layer Lines_HV2
+	Set map redraw on
+	Set Map Window Map_Win_id Layer Lines_HV2 Editable ON
+	Run Menu Command M_QUERY_SELECTALL
+	Run Menu Command M_EDIT_CLEAR
+	Remove Map Window Map_Win_id Layer Lines_HV2
+	Close Table Lines_HV2
+
+	Add Map Window Map_Win_id Layer Lines_LV2
+	Set map redraw on
+	Set Map Window Map_Win_id Layer Lines_LV2 Editable ON
+	Run Menu Command M_QUERY_SELECTALL
+	Run Menu Command M_EDIT_CLEAR
+	Remove Map Window Map_Win_id Layer Lines_LV2
+	Close Table Lines_LV2
+
+	Set Map Window Map_Win_Id Zoom Entire Layer 3
+	Set Map Redraw Off
+	Set Map Layer 3 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 2000) Units "m"
+	Set map redraw on
+
+	Set Map Window Map_Win_Id Layer 3 
+		Label With TX_ID + " " + Tx_kva + " KVA " + Tx_Phase + Chr$(13) 
+		+ "Loss W: Iron- " + Iron_loss + " Copper- " + Copper_loss + " Average LT- " + AVG_LT_loss + Chr$(13)
+		+ "Total 3 PHASE = " + count_ABC_Phase + " with " + Kwh_ABC_Phase + " Kwh" + Chr$(13)
+		+ "Total RED PHASE = " + count_A_Phase + " with " + Kwh_A_Phase + " Kwh" + Chr$(13)
+		+ "Total YELLOW PHASE = " + count_B_Phase + " with " + Kwh_B_Phase + " Kwh" + Chr$(13)
+		+ "Total BLUE PHASE = " + count_C_Phase + " with " + Kwh_C_Phase + " Kwh" + Chr$(13)
+		+ "Total Consumption = " + cur_consum_kWh + " Kwh"
+		Font ("Arial Narrow",256,8,0,12632256) '("Arial Narrow",1,8,0) 
+		Visibility  Zoom (100,1100) Units "m" Overlap On  Auto Retry On
+
+	'Set Map Window Map_Win_Id Order Layers 3 DestGroupLayer 0 'Move up layer 3 to layer 1
+	'Set Map Window Map_Win_Id Zoom 1
+	Set Map Center(521663.80, 8955028.25)
+	Set Map Zoom 1099 units "m"
+
+'************* Calculations Total Connected Load = No’s of Connected Transformers ****************
+
+Select count(*), tx_kva from Trans where Feeder_ID = strFD_ID group by tx_kva into Sum_Kva
+
+Fetch First From Sum_Kva
+i = 1
+  	Do While Not EOT(Sum_Kva)
+		Total_Connected_Load = Total_Connected_Load + Sum_Kva.COL1 * Sum_Kva.COL2
+ 		i = i + 1
+		Fetch Next From Sum_Kva
+	Loop
+
+Print "Total Connected Load: " + Total_Connected_Load + " KVA"
+
+'************* Calculations Peak Load = 1.732(Three_Phase_Constant) x 11(LineVoltage) x 12(MaxAmp) ****************
+
+Peak_Load = Three_Phase_Constant * LineVoltage * maxAmps
+
+Print "Peak Load: " + Peak_Load + " KVA"
+
+'************* Diversity Factor (DF) = Connected Load (In KVA) / Peak Load ****************
+
+Diversity_Factor = Total_Connected_Load/Peak_Load
+
+Print "Diversity Factor (DF): " + Diversity_Factor 
+
+'************* Load Factor(LF)= Unit Sent Out(Kwh) / 1.732 x Line Voltage x MaxAmp x Power Factor(PF) x 8760 hrs year ****************
+
+Load_Factor = Units_Send / (Three_Phase_Constant * LineVoltage * maxAmps * Power_Factor * hrs_Years) 
+
+Print "Load Factor (LF): " + Load_Factor 
+
+'************* Loss Load Factor (LLF) = (PF 0.8 x LFx LF) + (0.2 minimum PF x LF) ****************
+
+Loss_Load_Factor = (Power_Factor * Load_Factor * Load_Factor) + (Minimum_PF * Load_Factor)
+
+Print "Loss Load Factor (LLF): " + Loss_Load_Factor 
+
+'************* Total Annual Iron loss in Kwh = Iron Loss in Watts X Nos of TC on the feeder X 8760 hrs / 1000 *************
+
+Select count(*), Iron_loss from Trans where Feeder_ID = strFD_ID group by Tx_kva into Sum_Iron
+
+Fetch First From Sum_Iron
+
+  	Do While Not EOT(Sum_Iron)
+		Annual_Iron_Losses = Annual_Iron_Losses + ((Sum_Iron.COL1 * Sum_Iron.COL2) * hrs_Years) / 1000  
+ 		Fetch Next From Sum_Iron
+	Loop
+
+Print "Total Annual Iron Losses: " + Annual_Iron_Losses + " Kwh"
+
+'************* Total Annual Copper loss in Kwh = Copper Loss in Watts X Nos of TC on the feeder X LF X LF X 8760 hrs / 1000 *************
+
+Select count(*), Copper_loss from Trans where Feeder_ID = strFD_ID group by Tx_kva into Sum_Copper
+
+Fetch First From Sum_Copper
+
+  	Do While Not EOT(Sum_Copper)
+		Annual_Copper_Losses = Annual_Iron_Losses + (Sum_Copper.COL1 * Sum_Copper.COL2) * ((Load_Factor * Load_Factor * hrs_Years) / 1000)
+ 		Fetch Next From Sum_Copper
+	Loop
+
+Print "Total Annual Copper Losses: " + Annual_Copper_Losses + " Kwh"
+
+'************* HT Line Losses (Kwh)=1.05 x (Conn. Load x 2) x Length x Resistance x LLF /( LDF x DF x DF x 2 ) ************
+
+Select NLD_Factor from Feeders Where FD_ID = strFD_ID Into LDF
+
+HT_Line_Losses = HT_Line_Loss_Const * (Total_Connected_Load * 2) * (totalSPAN_HV/1000) * HT_Resistance * Loss_Load_Factor / (LDF.COL1 * Diversity_Factor * Diversity_Factor * 2) 
+
+Print "HT Line Losses: " + HT_Line_Losses + " Kwh"
+
+'************* Peak Power Losses = (3 x Total LT Line Losses) / (PPLxDFxDFx 1000) ************
+
+Select count(*), AVG_LT_loss from Trans where Feeder_ID = strFD_ID group by Tx_kva into LT_Loss
+
+Fetch First From LT_Loss
+  	Do While Not EOT(LT_Loss)
+		Total_LT_Line_Losses = Total_LT_Line_Losses + (LT_Loss.COL1 * LT_Loss.COL2) 
+		Fetch Next From LT_Loss
+	Loop
+
+Peak_Power_Losses = (3 * Total_LT_Line_Losses) / (Diversity_Factor * Diversity_Factor * 1000) 
+
+Print "Peak Power Losses: " + Peak_Power_Losses + " Kwh"
+
+'*************  LT Line Losses (Kwh)= (PPL.) x (LLF) x 8760 ************
+
+LT_Line_Losses = Peak_Power_Losses * Loss_Load_Factor * hrs_Years  
+
+Print "LT Line Losses: " + LT_Line_Losses + " Kwh"
+
+'*************  Total Technical Losses = (HT Line Losses + LT Line Losses + Annual Cu Losses + Annual Iron Losses) ************
+
+Technical_Losses = HT_Line_Losses + LT_Line_Losses + Annual_Copper_Losses + Annual_Iron_Losses
+
+Print "Total Technical Losses: " + Technical_Losses + " Kwh"
+
+'*************  % Technical Loss = (Total Losses) / (Unit Sent Out Annually) x 100  ************
+
+Per_Technical_Loss = (Technical_Losses / Units_Send) * 100
+
+Print "Total Technical Losses: " + Per_Technical_Loss + " %"
+
+
+Res_CutaLine:
+	Exit Sub
+
+Err_CutaLine:
+	'note "CutaLine: "+str$(err())+" "+error$()
+	Resume Next
+
+End Sub
+
+'****************************************************************************
+
+Sub LineGridCut_HV(ByVal Polefrom as String, ByVal start as Logical, ByVal CosName as String)
+
+Dim aLN_ID				as Alias
+Dim aPole_From			as Alias
+Dim aPole_To				as Alias
+Dim aCable 				as Alias
+Dim aLength				as Alias
+Dim aVoltage 				as Alias
+Dim aPhase 				as Alias
+Dim aUG 					as Alias
+Dim aLoad					as Alias
+Dim aObj					as Alias
+Dim poleto(1)				as String
+Dim i,Map_Win_Id			as Integer
+Dim j 						as Integer
+Dim LineObj				as Object
+Dim SelName				as String
+Dim TableName				As String
+Dim txConnected_Load  	As Float   
+
+	OnError goto Err_LineGridCut_HV
+
+'*************  Getting window ID *************
+
+	Map_Win_Id = FrontWindow()
+	If Map_Win_id = 0 Then
+		Exit Sub
+	End If
+
+'***********Set Message Window****************
+
+	Open Window Message 
+	Set Window Message 
+	Font ("Arial Narrow", 1, 8, BLUE)
+	Position (0.1, 0.10)  
+	Width 2.6  
+	Height 6.3
+
+	aLN_ID = "Lines_HV.LN_ID"
+	aPole_From = "Lines_HV.FROM_ID"
+	aPole_To = "Lines_HV.NEXT_ID"
+	aCable = "Lines_HV.CABLE_ID"
+	aLength = "Lines_HV.LENGTH"
+	aVoltage = "Lines_HV.VOLTAGE"
+	aPhase = "Lines_HV.PHASE_ID"
+	aUG = "Lines_HV.UG"
+	aLoad = "Lines_HV.LOAD"
+	aObj = "Lines_HV.obj"
+
+	If start Then
+		Select * From Lines_HV into Selection_HV
+			Where LN_ID = Val(Right$(PoleFrom,6))
+			If SelectionInfo(SEL_INFO_NROWS) = 0 Then
+				Exit Sub
+			End if
+		SelName = SelectionInfo(SEL_INFO_SELNAME)
+		Fetch First From Selection_HV
+		If str$(aPole_To) <> "" Then
+			LineObj = aObj
+			Alter Object LineObj
+				Info OBJ_INFO_PEN, MakePen(3,2,YELLOW)
+			Insert Into CosName (Obj)
+				Values(LineObj)
+			If Left$(Str$(aPole_To),2)<> "TX" then 
+				Call LineGridCut_HV(aPole_To,False,CosName)
+			ElseIf Left$(Str$(aPole_To),2)= "TX" Then
+				strTX_ID = str$(aPole_To)
+				Select * From Trans Where TX_ID = strTX_ID Into TX_found
+				Select CS_TX_ID, Count(*), sum(CUR_CONSUMP) from Meters where CS_TX_ID = strTX_ID AND CS_MTR_CONECT = "ABC Phase" into iThreePHASE
+				Select CS_TX_ID, Count(*), sum(CUR_CONSUMP) from Meters where CS_TX_ID = strTX_ID AND CS_MTR_CONECT = "A Phase" into iR_PHASE
+				Select CS_TX_ID, Count(*), sum(CUR_CONSUMP) from Meters where CS_TX_ID = strTX_ID AND CS_MTR_CONECT = "B Phase" into iY_PHASE
+				Select CS_TX_ID, Count(*), sum(CUR_CONSUMP) from Meters where CS_TX_ID = strTX_ID AND CS_MTR_CONECT = "C Phase" into iB_PHASE
+
+				Note "Found " + TX_found.TX_ID + Chr$(13)
+				+ TX_found.Tx_kva + " KVA " + TX_found.Tx_Phase + Chr$(13) 
+				+ "Iron Loss " + TX_found.Iron_loss + " W" + Chr$(13)
+				+ "Copper Loss " + TX_found.Copper_loss + " W" + Chr$(13)
+				+ "Average LT Loss " + TX_found.AVG_LT_loss + " W" + Chr$(13)
+				+ "Total 3 PHASE = " + iThreePHASE.COL2 + " with " + iThreePHASE.COL3 + " Kwh" + Chr$(13)
+				+ "Total on RED PHASE = " + iR_PHASE.COL2 + " with " + iR_PHASE.COL3 + " Kwh" + Chr$(13)
+				+ "Total on YELLOW PHASE = " + iY_PHASE.COL2 + " with " + iY_PHASE.COL3 + " Kwh" + Chr$(13)
+				+ "Total on BLUE PHASE = " + iB_PHASE.COL2 + " with " + iB_PHASE.COL3 + " Kwh" + Chr$(13)
+				+ "Total Consumption " + TX_found.cur_consum_kWh + " kWH" 
+				
+				Add Column "Trans" (count_ABC_Phase )From iThreePHASE Set To COL2 Where COL1 = COL1
+				Add Column "Trans" (count_A_Phase )From iR_PHASE Set To COL2 Where COL1 = COL1
+				Add Column "Trans" (count_B_Phase )From iY_PHASE Set To COL2 Where COL1 = COL1
+				Add Column "Trans" (count_C_Phase )From iB_PHASE Set To COL2 Where COL1 = COL1
+				Add Column "Trans" (Kwh_ABC_Phase )From iThreePHASE Set To COL3 Where COL1 = COL1
+				Add Column "Trans" (Kwh_A_Phase )From iR_PHASE Set To COL3 Where COL1 = COL1
+				Add Column "Trans" (Kwh_B_Phase )From iY_PHASE Set To COL3 Where COL1 = COL1
+				Add Column "Trans" (Kwh_C_Phase )From iB_PHASE Set To COL3 Where COL1 = COL1
+
+				Commit Table Trans Interactive
+
+				Call LineGridCut_LV(aPole_To,FALSE,CosName)
+			ElseIf Left$(Str$(aPole_to),2)= "TX" AND Left$(Str$(aPole_From),2)= "PL" Then
+				Call LineGridCut_HV(aPole_to,FALSE,CosName)			
+			Else
+				Call LineGridCut_LV(aPole_From,FALSE,CosName)
+			End if
+		End if
+		
+		Commit Table Selection_HV As vt_Path + "\" + "SimLine_HV.TAB" Interactive
+	
+		Close Table SelName
+	Else
+		Select * From Lines_HV into Selection_HV
+			Where FROM_ID = polefrom
+			If SelectionInfo(SEL_INFO_NROWS) = 0 Then
+			Exit Sub
+		End if
+		SelName = SelectionInfo(SEL_INFO_SELNAME)
+		Fetch First From Selection_HV
+		i = 1
+  		Do While Not EOT(Selection_HV)
+			If str$(aPole_to) <> "" Then
+				Print poleFrom + "," + str$(aPole_To) + "," + aCable + "," + aLength + "," + aVoltage + "," + aPhase + "," + aUG + "," + aLoad
+					LineObj = aObj
+				Alter Object LineObj
+					Info OBJ_INFO_PEN, MakePen(3,2,YELLOW)
+				Insert into CosName (Obj)
+					Values(LineObj)
+				If left$(str$(aPole_To),2)<>"TX" Then
+					ReDim PoleTo(i)
+					poleTo(i)=str$(aPole_To)
+					i = i + 1
+				ElseIf Left$(Str$(aPole_To),2)= "TX" Then
+					strTX_ID = str$(aPole_To)
+					Select * From Trans Where TX_ID = strTX_ID Into jTX_found
+					Select CS_TX_ID, Count(*), sum(CUR_CONSUMP) from Meters where CS_TX_ID = strTX_ID AND CS_MTR_CONECT = "ABC Phase" into jThreePHASE
+					Select CS_TX_ID, Count(*), sum(CUR_CONSUMP) from Meters where CS_TX_ID = strTX_ID AND CS_MTR_CONECT = "A Phase" into jR_PHASE
+					Select CS_TX_ID, Count(*), sum(CUR_CONSUMP) from Meters where CS_TX_ID = strTX_ID AND CS_MTR_CONECT = "B Phase" into jY_PHASE
+					Select CS_TX_ID, Count(*), sum(CUR_CONSUMP) from Meters where CS_TX_ID = strTX_ID AND CS_MTR_CONECT = "C Phase" into jB_PHASE
+
+					Note "Found " + jTX_found.TX_ID + Chr$(13)
+					+ jTX_found.Tx_kva + " KVA " + jTX_found.Tx_Phase + Chr$(13) 
+					+ "Iron Loss " + jTX_found.Iron_loss + " W" + Chr$(13)
+					+ "Copper Loss " + jTX_found.Copper_loss + " W" + Chr$(13)
+					+ "Average LT Loss " + jTX_found.AVG_LT_loss + " W" + Chr$(13)
+					+ "Total 3 PHASE = " + jThreePHASE.COL2 + " with " + jThreePHASE.COL3 + " Kwh" + Chr$(13)
+					+ "Total on RED PHASE = " + jR_PHASE.COL2 + " with " + jR_PHASE.COL3 + " Kwh" + Chr$(13)
+					+ "Total on YELLOW PHASE = " + jY_PHASE.COL2 + " with " + jY_PHASE.COL3 + " Kwh" + Chr$(13)
+					+ "Total on BLUE PHASE = " + jB_PHASE.COL2 + " with " + jB_PHASE.COL3 + " Kwh" + Chr$(13)
+					+ "Total Consumption " + jTX_found.cur_consum_kWh + " kWH"  
+				
+					Add Column "jTX_found" (count_ABC_Phase )From jThreePHASE Set To COL2 Where COL1 = COL1
+					Add Column "jTX_found" (count_A_Phase )From jR_PHASE Set To COL2 Where COL1 = COL1
+					Add Column "jTX_found" (count_B_Phase )From jY_PHASE Set To COL2 Where COL1 = COL1
+					Add Column "jTX_found" (count_C_Phase )From jB_PHASE Set To COL2 Where COL1 = COL1
+					Add Column "jTX_found" (Kwh_ABC_Phase )From jThreePHASE Set To COL3 Where COL1 = COL1
+					Add Column "jTX_found" (Kwh_A_Phase )From jR_PHASE Set To COL3 Where COL1 = COL1
+					Add Column "jTX_found" (Kwh_B_Phase )From jY_PHASE Set To COL3 Where COL1 = COL1
+					Add Column "jTX_found" (Kwh_C_Phase )From jB_PHASE Set To COL3 Where COL1 = COL1
+
+					Commit Table Trans Interactive
+
+					Call LineGridCut_LV(aPole_To,FALSE,CosName)	
+				ElseIf Left$(Str$(aPole_to),2)= "TX" AND Left$(Str$(aPole_From),2)= "PL" Then
+					Call LineGridCut_HV(aPole_to,FALSE,CosName)									
+				Else
+					Call LineGridCut_LV(aPole_From,FALSE,CosName)
+ 				End if
+			End if
+
+			'Run Menu Command M_QUERY_FIND_SELECTION
+			'Set Map center(Selection_HV.XB, Selection_HV.XE) 'smart redraw
+				
+		   	Fetch Next From Selection_HV
+
+  		Loop
+
+		Open Table vt_Path + "\" + "SimLine_HV.TAB" Interactive As Lines_HV2
+		
+		Insert Into Lines_HV2 ( COL1, COL2, COL3, COL4, COL5, COL6, COL7, COL8, COL9, COL10, COL11, COL12, COL13, COL14) 
+			Select COL1, COL2, COL3, COL4, COL5, COL6, COL7, COL8, COL9, COL10, COL11, COL12, COL13, COL14 From Selection_HV
+				
+		Close Table SelName
+
+		For j = 1 to i - 1
+			Call LineGridCut_HV(PoleTo(j),FALSE,CosName)
+		Next
+	End if
+
+	Select * From Selection_HV Where Next_ID <> strTX_ID
+		If SelectionInfo(SEL_INFO_NROWS) = 0 Then
+			Exit Sub
+		End If
+		Fetch First From Selection 
+			Call LineGridCut_HV(PoleFrom,FALSE,CosName)
+
+Res_LineGridCut_HV:
+
+	Exit Sub
+	
+Err_LineGridCut_HV:
+
+	'note "LineGridCut_HV: "+str$(err())+" "+error$()
+	Resume Next
+
+End Sub
+
+'********************************************************************************************
+Sub LineGridCut_LV(ByVal Polefrom as String, ByVal start as Logical, ByVal CosName as String)
+
+Dim aLN_ID			as Alias
+Dim aPole_From		as Alias
+Dim aPole_To			as Alias
+Dim aCable 			as Alias
+Dim aLength			as Alias
+Dim aVoltage 			as Alias
+Dim aPhase 			as Alias
+Dim aUG 				as Alias
+Dim aLoad				as Alias
+Dim aObj				as Alias
+Dim poleto(1)			as String
+Dim i,Map_Win_Id		as Integer
+Dim j 					as Integer
+Dim LineObj			as Object
+Dim SelName			as String
+Dim TableName		As String
+
+	OnError goto Err_LineGridCut_LV
+
+'*************  Getting window ID *************
+
+	Map_Win_Id = FrontWindow()
+	If Map_Win_id = 0 Then
+		Exit Sub
+	End If
+
+'************* Set Message Window *************
+
+	Open Window Message 
+	Set Window Message 
+	Font ("Arial Narrow", 1, 8, BLUE)
+	Position (0.1, 0.10)  
+	Width 2.6  
+	Height 6.3
+
+	aLN_ID = "Lines_LV.LN_ID"
+	aPole_From = "Lines_LV.FROM_ID"
+	aPole_To = "Lines_LV.NEXT_ID"
+	aCable = "Lines_LV.CABLE_ID"
+	aLength = "Lines_LV.LENGTH"
+	aVoltage = "Lines_LV.VOLTAGE"
+	aPhase = "Lines_LV.PHASE_ID"
+
+	aUG = "Lines_LV.UG"
+	aLoad = "Lines_LV.LOAD"
+	aObj = "Lines_LV.obj"
+		
+	If start Then
+	'Print "From" + "," + "To" + "," + "Cable" + "," + "Span" + "," + "Volt" + "," + "Phase" + "," + "UG" + "," + "Load"
+		Select * From Lines_LV into Selection_LV
+			Where LN_ID = Val(Right$(PoleFrom,6))
+			If SelectionInfo(SEL_INFO_NROWS) = 0 Then
+				Exit Sub
+			End if
+		SelName = SelectionInfo(SEL_INFO_SELNAME)
+		Fetch First From Selection_LV
+		
+		If str$(aPole_To) <> "" Then
+			LineObj = aObj
+			Alter Object LineObj
+				Info OBJ_INFO_PEN, MakePen(3,2,BLUE)
+			Insert Into CosName (Obj)
+				Values(LineObj)
+			If Left$(Str$(aPole_To),2)<> "MT" then 
+				Call LineGridCut_LV(aPole_To,FALSE,CosName)
+			End if
+		End if
+
+		If left$(str$(aPole_To),2) = "MT" Then
+			cKWH = cKWH + Selection_LV.LOAD
+			'Note cKWH
+		End If 		
+				
+		Commit Table Selection_LV As vt_Path + "\" + "SimLine_LV.TAB" Interactive
+
+		Close Table SelName
+	Else
+		Select * From Lines_LV into Selection_LV
+			Where FROM_ID = polefrom
+		If SelectionInfo(SEL_INFO_NROWS) = 0 Then
+			Exit Sub
+		End if
+		SelName = SelectionInfo(SEL_INFO_SELNAME)
+		Fetch First From Selection_LV
+		i = 1
+
+  		Do While Not EOT(Selection_LV)
+			If str$(aPole_to) <> "" Then
+				Print poleFrom + "," + str$(aPole_To) + "," + aCable + "," + aLength + "," + aVoltage + "," + aPhase + "," + aUG + "," + aLoad
+				LineObj = aObj
+				Alter Object LineObj
+					Info OBJ_INFO_PEN, MakePen(3,2,BLUE)
+				Insert into CosName (Obj)
+					Values(LineObj)
+				If left$(str$(aPole_To),2) <> "MT" Then
+					ReDim PoleTo(i)
+					poleTo(i)=str$(aPole_To)
+					i = i + 1
+				End If
+			End if
+			If left$(str$(aPole_To),2) = "MT" Then
+				cKWH = cKWH + Selection_LV.LOAD
+				'Note cKWH
+			End If 	
+		
+		   	Fetch Next From Selection_LV
+  		Loop
+ 
+		Open Table vt_Path + "\" + "SimLine_LV.TAB" Interactive As Lines_LV2
+		
+		Insert Into Lines_LV2 ( COL1, COL2, COL3, COL4, COL5, COL6, COL7, COL8, COL9, COL10, COL11, COL12, COL13, COL14) 
+			Select COL1, COL2, COL3, COL4, COL5, COL6, COL7, COL8, COL9, COL10, COL11, COL12, COL13, COL14 From Selection_LV
+	
+		Close Table SelName
+
+		For j = 1 to i - 1
+			Call LineGridCut_LV(PoleTo(j),FALSE,CosName)
+		Next
+		
+	End if
+
+	Select * from Selection_LV where left$(FROM_ID,2) = "TX" Into Temp1
+	If SelectionInfo(SEL_INFO_NROWS) = 0 Then
+		Exit Sub
+	End If
+	Fetch First From Temp1
+		Call LineGridCut_LV(PoleTo,FALSE,CosName)
+
+	Select * from Lines_LV2 where left$(FROM_ID,2) = "TX" Into Temp2
+	If SelectionInfo(SEL_INFO_NROWS) = 0 Then
+		Exit Sub
+	End If
+	Fetch First From Temp2
+		Call LineGridCut_HV(PoleFrom,FALSE,CosName)
+
+	Select * from Lines_LV2 where left$(NEXT_ID,2) = "TX" Into Temp3
+	If SelectionInfo(SEL_INFO_NROWS) = 0 Then
+		Exit Sub
+	End If
+	Fetch First From Temp3
+		Call LineGridCut_HV(PoleFrom,FALSE,CosName)
+	
+Res_LineGridCut_LV:
+
+	Exit Sub
+	
+Err_LineGridCut_LV:
+
+	'note "LineGridCut_LV: "+str$(err())+" "+error$()
+	Resume Next
+
+End Sub
+
+					

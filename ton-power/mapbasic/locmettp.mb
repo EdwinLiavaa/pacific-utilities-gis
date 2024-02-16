@@ -1,0 +1,224 @@
+'********************************************************
+'*                                                      *
+'*     HVTypeTr.MBO                Paula, 24.08.98      *
+'*                                                      *
+'*  This program locates and displays The Meter of a    *
+'*  special type that the user has chosen.              *
+'*                                                      *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required files:                                      *
+'*		MAPBASIC.DEF                                *
+'*		MENU.DEF                                    *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required tables:                                     *
+'*                  - Consumer.tab                      *
+'*                  - Meter.tab                         *
+'********************************************************
+
+
+	include "C:\program files\mapinfo\mapbasic\MENU.DEF"
+	include "C:\program files\mapinfo\mapbasic\MAPBASIC.DEF"
+
+
+	Global passw as String 
+	Global MapPath as string
+	Global CadaPath as String
+
+	Declare Sub LocMetTp
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Sub LocMetTp
+
+
+	Dim  ivar1, ivar2, ivar3 As Integer
+	Dim meterty 	As String
+	Dim imeter 		As SmallInt
+	Dim more 		As Logical
+	Dim iCounter 	as Integer
+	Dim aRowId 		as Alias
+	Dim aMeter 		as Alias
+	Dim aMeterName 	as Alias
+	Dim sMeterType(1) as String
+	Dim sMeterName(1) as String
+	Dim Map_Win_id 	as Integer
+	Dim i_lay_type	As SmallInt
+	Dim iz, ln		As SmallInt
+	Dim MapName		As String
+
+	OnError goto Err_Lo_Mtyp
+
+' ++++++++++++++++++++++++ Open Table Statement +++++++++++++++++++++++++++++
+
+	MapName = MapPath +"customer.tab"
+	open table MapName as customer Password Passw
+	MapName = MapPath +"Meter.tab"
+	open table MapName as Meter Password Passw
+	map from customer Max
+	Mapname = Cadapath + "n_cad.tab"
+	open table MapName as n_cad interactive
+
+	add map layer n_cad
+
+
+
+
+	Map_Win_id= FrontWindow()
+	if WindowInfo(Map_Win_id,WIN_INFO_TYPE)<>WIN_MAPPER then
+		note "You must Select a Map Window first"
+		Exit Sub
+	End If
+
+	ln = MapperInfo(Map_Win_id, MAPPER_INFO_LAYERS)
+	iz = 1
+
+	Do 
+		i_lay_type = LayerInfo(Map_Win_id, iz, LAYER_INFO_TYPE)
+		If i_lay_type = LAYER_INFO_TYPE_THEMATIC Then
+			set map redraw off
+		 	Set Map Layer iz Display Off
+		 	set map redraw on
+		End If
+		iz = iz + 1
+
+	Loop While iz <= ln
+
+' +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+	Select MET_TYPE,NAME from Meter order by MET_TYPE Group By MET_TYPE
+		Into MeterList NoSelect
+
+	aRowId="Meter.rowid"
+	aMeter="MeterList.MET_TYPE"
+	aMeterName="MeterList.NAME"
+
+	Fetch First from MeterList		' cursor to first record
+	iCounter=1
+	Do While NOT EOT( MeterList )
+		Redim sMeterType(iCounter)
+		Redim sMeterName(iCounter)
+		if iCounter=1 then
+			sMeterType(iCounter)=aMeter
+			sMeterName(iCounter)=aMeterName
+			iCounter=2
+		else
+			if sMeterType(iCounter-1)<>aMeter then
+				sMeterType(iCounter)=aMeter
+				sMeterName(iCounter)=aMeterName
+				iCounter=iCounter+1
+			end if	
+		end if
+		Fetch Next from MeterList 		' cursor to the next record
+	Loop
+	Close Table Meterlist
+	Close Table Meter
+
+
+'+++++++++++++++++++++++++++  DIALOG ++++++++++++++++++++++++++++++++++
+
+	Dialog
+
+	Title "select type:"
+
+	Control StaticText
+		Title "select meter type:"
+		Position 5, 10
+
+	Control PopUpMenu
+		Title From Variable sMeterName
+'		Title "F2K_10B;F2K_100;M3;FMm;E89C2;C11B2A;C11B2F;FNEA34Q;FL;F2Q_100;FNN2Q;F4K-10B;F4K-100;C11B2;F2Q-10B;F2K-10;FNE12Q;S200.31;E43B3E;FNE12B;FMMQ;S3012;2.0;FNAA34Q;HMT;S301;E43B2-D;F4K-11B;FLX;C11B2N" 
+   		Value 1
+		Position 20,20 Width 60
+		Into imeter
+
+	Control OKButton
+		Position 20, 40
+	Control CancelButton
+		Position 65, 40
+
+	If not CommandInfo(CMD_INFO_DLG_OK) Then 	'The user just cancelled.
+  		Exit Sub
+	End If 
+
+'	If more <> 0 Then
+
+
+'		Dialog
+'
+'			Title "select type:"
+'
+'			Control StaticText
+'				Title "select meter type:"
+'				Position 5, 10
+'
+'			Control ListBox
+'			Title "F2Q;E43B3B;E43B3D;FMMX;FNAB;FNAB34Q;FNE34Q;FNN12Q;S.3019;
+' S200;SUNDRIES;S.D;AP4A;FNA34Q;S301.6;SF;X.T.1;FNAA2Q;FNEA12Q;FNN2A;M2;CA75441;7CA54;EA3B3C;D43R-R\M;AB3A-K10;B.530.10;C11B3F"
+'
+' 				Value 28
+'				Position 20,20 Width 60 Height 200
+'				Into imeter
+'
+'		Control OKButton
+'			Position 25, 240
+'
+'	End If
+'
+'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+'++++++++++++++++ creating the right variable +++++++++++++++++++++++++
+ 
+
+	meterty = sMeterType(imeter)
+
+
+'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+'++++++++++++++++++++ creating the map window +++++++++++++++++++++++++
+
+	'Open Table "C:\USERS\TESTWOLF\Locat007" 
+	'Open Table "C:\USERS\TESTWOLF\N_cad" 
+
+	'Map From "N_cad"
+	'Position (1,1)Units "cm" 
+	'Width 25 Units "cm"
+	'Height 15 Units "cm"
+	'Add Map Layer "Locat007"
+	'Set Map  Zoom Entire Layer 1
+	'ivar1 = WindowID(1)
+
+'++++++++++++++++++++++++++ Shade statements +++++++++++++++++++++++++
+
+	Shade Window Map_Win_Id "Customer" with MET_TYPE Values meterty Symbol 
+		(60,Black,9) default Symbol (60,red,9)
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+'+++++++++++++++++++++++++ Legend statements +++++++++++++++++++++++++
+
+	Set Legend Window Map_Win_Id layer prev display on shades off symbols on 
+		lines off count on title "Meter types" 
+		Font ("MS Sans Serif",0,10,0) subtitle "" 
+		Font ("MS Sans Serif",0,8,0) ascending on ranges 
+		Font ("MS Sans Serif",0,8,0) "all others" display on ,
+		sMeterName(imeter) display on
+ 
+
+	Set Window WIN_LEGEND 
+	Position (1,4) Units "cm"
+	Width 6 Units "cm"
+	Height 3 Units "cm"
+
+	Open Window Legend
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Res_Lo_Mtyp:
+	Exit Sub
+
+Err_Lo_Mtyp:
+	note "Lo_Mtyp: "+str$(err())+" "+error$()
+	Resume Res_Lo_Mtyp
+
+End Sub
+

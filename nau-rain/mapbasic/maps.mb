@@ -1,0 +1,36 @@
+	'***********************************************************
+	'*                  Maps                  Wolf 29.10.07    *
+	'*                                                         *
+	'* This program creates a drop down menu from which the    *
+    '* can select executable program to create thematic maps  * 
+	'***********************************************************
+
+		Declare Sub Maps
+       Declare Sub MapRoofConnect
+		Declare Sub MapRoofMaterial
+		Declare Sub MapStoragePerson
+		Declare Sub MapRoofPartGutter
+
+		Sub Maps
+
+			OnError Goto Err_Manage
+
+		Create Menu "Thematic Maps" As 
+			"Display Roofs connected to water tanks" Calling MapRoofConnect,
+			"Display Roof Material" Calling MapRoofMaterial,
+			"Show available water per person" Calling MapStoragePerson,
+			"Show roofs coloured regarding gutter %" Calling MapRoofPartGutter,
+			"(-",
+			" * not ready yet"
+
+		Alter Menu Bar Remove "Help"
+		Alter Menu Bar Add "Thematic Maps", "Help"
+
+			Res_Main:
+				Exit Sub
+			Err_Manage:
+				note "Error: " + str$(err()) + ", " + error$()
+				Resume Res_Main		
+
+		End Sub
+

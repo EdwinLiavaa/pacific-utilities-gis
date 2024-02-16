@@ -1,0 +1,32 @@
+	'***********************************************************
+	'*                 Utilities          Edwin 25.09.08   *
+	'*                                    						 *
+	'* This program Create Utilities Menu  						 *
+	'***********************************************************
+
+		Declare Sub Utilities
+		Declare Sub Update_Roofs
+		Declare Sub Layout_Preview
+      
+
+		Sub Utilities  
+
+			OnError Goto Err_Manage
+
+		Create Menu "Utilities" As 
+			"Commit Roof_MI" Calling Update_Roofs,
+			"Print Layout" Calling Layout_Preview,
+			"(-",
+			" * not ready yet"
+
+		Alter Menu Bar Remove "Help"
+		Alter Menu Bar Add "Utilities", "Help"
+
+			Res_Main:
+				Exit Sub
+			Err_Manage:
+				note "Error: " + str$(err()) + ", " + error$()
+				Resume Res_Main		
+
+		End Sub
+

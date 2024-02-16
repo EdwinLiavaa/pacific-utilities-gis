@@ -1,0 +1,81 @@
+'*****************************************************************
+'*  Name   : DispGN
+'*  Purpose: Display Generators
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Les Allinson, Edwin Liava'a
+'*  Date   : 26-Feb-2007
+'*  Mods   : 
+'*           
+'*****************************************************************
+
+Include "mapbasic.def"
+Include "menu.def"
+
+Declare Sub DispGN
+
+Global AC_Path As String	'	Access
+Global BD_Path As String	'	MapInfo Raster Layers (BackDrops)
+GLobal MI_Path As String	'	MapInfo Vector Layers
+Global db_MIS As String	'	MIS database
+
+Sub DispGN
+
+OnError Goto Err_Manage
+
+	'	+++++++++++++++ declarations +++++++++++++++
+
+	Dim layer_num, mapID, num_layers As Integer
+	Dim layer_already_disp As Logical
+	Dim strlayer As String
+
+	'	+++++++++++++++ display selected layer +++++++++++++++
+
+	strlayer = "GN"
+
+	mapId = FrontWindow()
+	If mapId = 0 Then ' no layers displayed
+		Register Table AC_PATH + "\" + db_MIS Type ACCESS Table strlayer Into AC_PATH + "\" + strlayer
+		Open Table AC_Path + "\" + strlayer Interactive
+		Map From strlayer
+		Set Map Distance Units "m"
+		set map redraw off
+		Set Map Layer strLayer 
+			Label Position Below Font ("Arial",257,6,0) 
+			With GN_ID+":"+NAME Auto On Visibility Zoom (0, 300) Units "m" 
+			Activate Using PIC On Objects Relative Path On
+		Set Map Zoom Entire Layer 1	 
+		set map redraw on
+	Else
+		mapID = FrontWindow()
+		layer_already_disp = "FALSE"
+		num_layers	= MapperInfo( mapID , MAPPER_INFO_LAYERS)
+		For layer_num = 1 To num_layers
+			If strlayer = LayerInfo( mapID , layer_num , LAYER_INFO_NAME ) Then
+				layer_already_disp = "TRUE"
+			End If
+		Next
+		If layer_already_disp = "TRUE" Then
+			Note "Layer already displayed"
+		Else
+			Register Table AC_PATH + "\" + db_MIS Type ACCESS Table strlayer Into AC_PATH + "\" + strlayer
+			Open Table AC_Path + "\" + strlayer Interactive
+			Add Map Auto Layer strlayer
+			Set Map Distance Units "m"
+			set map redraw off
+			Set Map Layer strLayer 
+				Label Position Below Font ("Arial",257,6,0) 
+				With GN_ID+":"+NAME Auto On Visibility Zoom (0, 300) Units "m" 
+				Activate Using PIC On Objects Relative Path On 
+			set map redraw on
+		End If
+	End If
+
+Res_DispGN:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executin the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Res_DispGN
+End Sub

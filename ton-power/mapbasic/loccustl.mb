@@ -1,0 +1,166 @@
+'********************************************************
+'*                                                      *
+'*     LocCustL.MBO                Edwin, 24.08.98      *
+'*                                                      *
+'*  This program asks the operator to type in a Location*
+'*  number and zoom in, display customers connected	  *	
+'*  to that transformer location in red colour.         *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required files:                                      *
+'*                MAPBASIC.DEF                          *
+'*			MENU.DEF                              *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required tables:                                     *
+'*                  - customers.tab                     *
+'*                                                      *
+'********************************************************
+
+	include "C:\Program Files\MapInfo\MapBasic\MAPBASIC.DEF"
+	include "C:\Program Files\MAPINFO\MAPBASIC\MENU.DEF"
+
+	Global passw as String 
+	Global MapPath as string
+	Global CadaPath as String
+
+	Declare Sub LocCustL
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++*
+
+	Sub LocCustL
+
+	
+	Dim  ivar1, ivar2, ivar3 	As Integer
+	Dim locno				As String
+	Dim Map_Win_Id 			As Integer
+	Dim ixv, iyv			As Float
+	Dim iz, ln 				As SmallInt
+	Dim i_lay_type			As SmallInt
+	Dim MapName				As String
+
+
+
+	OnError goto Err_LocCustL
+
+' ++++++++++++++++++++++++++ close some toolbars ++++++++++++++++++++
+
+	Alter ButtonPad "Tools" Hide
+	Alter ButtonPad "Drawing" Hide
+	Alter ButtonPad "Main" Show Fixed
+	Alter ButtonPad "ODBC" Hide
+
+
+' ++++++++++++++++++++++++++ close and open map layers ++++++++++++++
+'             
+                                    	
+
+
+	MapName = MapPath +"CUSTOMER.TAB"
+
+	Close All
+	
+	Open Table MapName As "Customer" password passw 
+
+	Map From Customer
+
+	Mapname = Cadapath + "n_cad.tab"
+	open table MapName as n_cad interactive
+
+	add map layer n_cad
+'+++++++++++++++++++++++++++  Getting window ID +++++++++++++++++++++
+
+	Map_Win_id = FrontWindow()
+
+
+	If Map_Win_id = 0 Then
+		Exit Sub
+	End If
+
+
+' +++++++++++++++++++  Dialog ++++++++++++++++++++++++++++++++++++++++
+
+	Dialog
+
+	Title "Location No."
+
+	Control StaticText
+		Title "type in Location No.:"
+		Position 5, 10
+
+	Control EditText
+		Position 20,20 Width 40
+		Into locno
+	
+	Control OKButton
+		Position 5, 40
+
+	Control CancelButton
+		Position 45, 40
+
+	If not CommandInfo(CMD_INFO_DLG_OK) Then 	'The user just cancelled.
+  		Exit Sub
+	End If
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	Select * From Customer Where LOCAT_NO = locno
+
+	Run Menu Command M_QUERY_FIND_SELECTION
+
+
+		ixv = CentroidX(Customer.obj)
+		iyv = CentroidY(Customer.obj)
+
+'++++++++++++++++++++++++++ Shade statements +++++++++++++++++++++++++
+
+	Shade Window Map_Win_Id "Customer" with LOCAT_NO 
+		Values locno
+		Symbol (34,RED,8) 
+		default Symbol (34,BLACK,8)
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+'+++++++++++++++++ Set Centre and Zoom of Map ++++++++++++++++++++++++
+
+	Set Map Window Map_Win_Id
+		Center (ixv,iyv)
+		Zoom 900 Units "m"
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	Set Window Map_Win_id Max
+
+'+++++++++++++++++++++++++ Legend statements +++++++++++++++++++++++++
+
+	Set Legend Window Map_Win_Id layer prev display on 
+		shades off 
+		symbols on 
+		lines off 
+		count on 
+		title "Location no."
+		Font ("MS Sans Serif",0,10,0) subtitle "" 
+		Font ("MS Sans Serif",0,8,0) ascending on ranges 
+		Font ("MS Sans Serif",0,8,0) "all others" display on ,
+		locno display on
+ 
+
+	Set Window WIN_LEGEND 
+	Position (1,4) Units "cm"
+	Width 4 Units "cm"
+	Height 2 Units "cm"
+
+	Open Window Legend
+
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Res_LocCustL:
+	Exit Sub
+
+Err_LocCustL:
+	note "LocCustL: "+str$(err())+" "+error$()
+	Resume Next
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+	End Sub

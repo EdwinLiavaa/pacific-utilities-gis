@@ -1,0 +1,84 @@
+	'*****************************************************************
+	'*                RainwaterMain                                  *
+	'*                                                               *
+	'* This is the MAIN program of the project programs LeaseDisplay *
+	'* This program:                                                 *
+	'*                - Calls the Create Menu programs               *
+	'*                - Sets the tool bars                           *
+	'*                - Settings for Global Variables                *
+	'*                                                               *
+	'*****************************************************************
+
+Include "mapbasic.def"
+Include "menu.def"
+			
+
+			Declare Sub Main
+			Declare Sub Asset_Items
+			Declare Sub Water_Catch
+			Declare Sub Water_Consumption
+			Declare Sub Utilities
+			Declare Sub Update_Roofs
+			
+			Global PathVectorL As String
+			Global PathBackdrop As String
+			Global PathAccess As String
+			Global DatabaseName As String
+			Global VarExit As String
+			Global PathDatabaseN As String
+
+			Dim ilen As Integer
+			Dim frontPath As String
+
+	'	+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
+
+			Sub Main
+		
+				OnError Goto Err_Manage
+
+	'	+++++++++++++++++++++ ToolBar Settings ++++++++++++++++
+
+			Alter ButtonPad "Main" Show Fixed
+			Alter ButtonPad "Drawing" Show Float
+			Alter ButtonPad "ODBC" Hide Float
+			Alter ButtonPad "VM" Hide Float
+
+	'	+++++++++++++++++++++ Setting Database Name +++++++++++++++++++
+
+           DatabaseName = "TV_CatchRain.mde"
+
+	'	++++++++++++++++++++ Setting Table Path +++++++++++++++++++++
+
+			frontPath = ApplicationDirectory$()		' get directory where this MapBasic program located
+			ilen = len(frontPath)
+			frontPath = mid$(frontpath, 1, ilen - 13)	' remove trailing string "\MB_Programs\"
+
+			PathVectorL = frontPath + "\MI_Layers\"
+			PathBackdrop = frontPath + "\Backdrops\"					
+			PathAccess = frontPath + "\"
+
+	'	+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+	'	++++++++++++++++++ Call Subs ++++++++++++++++++++++++++++++++
+
+			Call Asset_Items
+			Call Water_Catch
+			Call Water_Consumption
+			Call Utilities
+
+	'	+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+				Res_Main:
+					Exit Sub
+
+				Err_Manage:
+					note "Error: " + str$(err()) + ", " + error$()
+					Resume Res_Main
+
+
+
+			End Sub   

@@ -1,0 +1,51 @@
+'********************************************************
+'*                                                      *
+'*     CrMeMetr.MBO                Paula, 24.08.98      *
+'*                                                      *
+'*  This program contains the sub program of the drop   *
+'*  down menu "Meter" which then calls the other        *
+'*  programs of the pull down menus.                    *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required files:                                      *
+'*                                                      *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required tables:                                     *
+'*                  - 		                          *
+'*                  -                                   *
+'********************************************************
+
+
+
+
+Declare Sub CrMeMetr
+Declare Sub InsMonM
+Declare Sub LocaMetr
+Declare Sub TypeMetr 
+Declare Sub LocMetTp
+Declare Sub MetNoCon
+
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+sub CrMeMetr
+
+	OnError Goto Err_MenuCre2
+
+	
+	Create Menu "Meter" As 
+		"Connection Month" 	Calling InsMonM,
+		"Locate meter no" 	Calling LocaMetr,
+		"Display meter type" 	Calling TypeMetr,
+		"Locate a meter type" 	Calling LocMetTp,
+		"Meter removed" 		Calling MetNoCon
+
+	Alter Menu Bar Add "Meter"
+
+Res_MenuCre2:
+	Exit Sub
+
+Err_MenuCre2:
+	note "CrMeMetr: "+str$(err())+" "+error$()
+	Resume Res_MenuCre2	
+
+end sub
+

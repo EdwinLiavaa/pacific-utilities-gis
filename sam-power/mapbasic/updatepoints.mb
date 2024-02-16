@@ -1,0 +1,117 @@
+'*****************************************************************
+'*  Name   : UpdatePoints
+'*  Purpose: Update geometry columns after points moved or created
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Leslie Allinson, Edwin Liava'a
+'*  Date   : 10-Feb-2007
+'*  Mods   : 
+'*           
+'*****************************************************************
+
+Include "mapbasic.def"
+Include "menu.def"
+
+Declare Sub UpdatePoints
+
+Sub UpdatePoints
+
+OnError Goto Err_Manage
+
+'	+++++++++++++++ declarations +++++++++++++++
+
+	Dim i As Integer
+	Dim irow As Integer
+	Dim i_rows_selected As Integer
+	Dim more As Logical
+	Dim i_col_num As Smallint
+	Dim i_col_type As SmallInt
+	Dim icount As Smallint
+	Dim inumtables As Smallint
+	Dim itablecount As Smallint
+	Dim s_col_name As String
+	Dim s_selname As String
+	Dim s_tablename As String
+
+'	+++++++++++++++ initialise +++++++++++++++
+
+	Set ProgressBars Off
+
+'	+++++++++++++++ user dialog +++++++++++++++
+
+	more = Ask("  Update XC and YC after moving objects:" + Chr$(10) +
+				"  table must be mappable" + Chr$(10) +
+				"  table must be editable" + Chr$(10) +
+				"  one or more points must be selected" + Chr$(10) + Chr$(10) +		 
+				"  Do you want to continue?", "OK", "Cancel")
+	If more Then
+	Else
+		Exit Sub
+	End if
+
+'	+++++++++++++++ get info on open tables +++++++++++++++
+
+	If NumTables() < 1 Then 
+		Note "You must open a table before continuing"
+		Print "You must open a table before continuing"
+		Exit Sub 
+	End If
+
+	If SelectionInfo(SEL_INFO_NROWS) = 0 Then
+		Note "You must select objects before continuing"
+		Print "You must select objects before continuing"
+		Exit Sub		
+	End If
+
+	If TableInfo(SelectionInfo(SEL_INFO_TABLENAME), TAB_INFO_MAPPABLE)= FALSE Then
+		Note "You must select objects from a mappable table before continuing"
+		Print "You must select objects from a mappable table before continuing"
+		Exit Sub		
+	End If
+
+'	+++++++++++++++ objects have been selected in a mappable table +++++++++++++++	
+
+	i_rows_selected = SelectionInfo(SEL_INFO_NROWS)
+	i_col_num = NumCols(SelectionInfo(SEL_INFO_TABLENAME))
+	s_selname = SelectionInfo(SEL_INFO_SELNAME)
+	s_tablename = SelectionInfo(SEL_INFO_TABLENAME)
+
+	i = 0
+	For icount = 1 to i_col_num
+		s_col_name = ColumnInfo(s_tablename, "COL" + str$(icount), COL_INFO_NAME)
+		If s_col_name = "XC" Or s_col_name = "YC" Then
+			i = i + 1
+		End If
+	Next
+
+	If i <> 2 Then
+		Note "There must be columns named XC and YC to continue"
+		Exit Sub
+	End If
+
+	more = Ask("  You are about to update " + i_rows_selected + " rows" + Chr$(10) +
+				"  in table " + s_tablename + Chr$(10) + Chr$(10) +		 
+				"  Do you want to continue?", "OK", "Cancel")
+	If more Then
+	Else
+		Exit Sub
+	End if
+
+'	+++++++++++++++ update geometry +++++++++++++++
+	
+	Update s_selname Set XC = CentroidX(obj)
+	Update s_selname Set YC = CentroidY(obj)
+
+'	+++++++++++++++ cleanup +++++++++++++++
+
+	Set ProgressBars On
+	Note i_rows_selected + " rows updated in table " + s_tablename
+
+UpdatePoints:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume UpdatePoints
+End Sub

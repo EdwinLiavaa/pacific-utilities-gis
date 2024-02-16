@@ -1,0 +1,78 @@
+'*****************************************************************
+'*  Name   : EPC_Main
+'*  Purpose: Main program
+'*           Declare Global variables and create user interface
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Les Allinson, Edwin Liava'a
+'*  Date   : 26-Jan-2007
+'*  Mods   : 28-Feb-2007
+'*
+'*****************************************************************
+
+Include "mapbasic.def"
+Include "menu.def"
+
+Declare Sub Main
+Declare Sub CreMeCommon
+Declare Sub CreMeLayers 
+Declare Sub CreMeActions
+Declare Sub CreMeQueries
+
+Global AC_Path As String	'	Access
+Global BD_Path As String	'	MapInfo Raster Layers (BackDrops)
+Global MI_Path As String	'	MapInfo Vector Layers
+Global db_MIS As String	'	MIS database
+
+Dim ilen As Integer
+Dim frontPath As String
+
+Sub Main
+
+OnError Goto Err_Manage
+
+	'	+++++++++++++++ declarations +++++++++++++++
+
+	frontPath = ApplicationDirectory$()		' get directory where this MapBasic program located
+	ilen = len(frontPath)
+	frontPath = mid$(frontpath, 1, ilen - 10)	' remove trailing string "\mapbasic\"
+
+	AC_Path = frontPath + "\access"
+	BD_Path = frontPath + "\backdrops"
+	MI_Path = frontPath + "\mapinfo"
+	db_MIS  = "EPC_MIS.mdb"
+
+	'  +++++++++++++++ define menus ++++++++++++++++++
+
+	Alter Menu Bar Remove "Vertical Mapper"
+	Alter ButtonPad "DBMS" Hide
+	Alter ButtonPad "Tools" Hide
+	Alter ButtonPad "VM" Hide
+	Alter ButtonPad "Web Services" Hide
+	Alter ButtonPad "Standard" Show Fixed ToolbarPosition (0,0)
+	Alter ButtonPad "Main" Show Fixed ToolbarPosition (1,0)
+	Alter ButtonPad "Drawing" Show Fixed ToolbarPosition (0,1)
+	Alter Menu "Maintenance" Remove M_TABLE_DELETE
+	Alter Menu "Maintenance" Remove M_TABLE_PACK
+
+	'	+++++++++++++++ set environment +++++++++++++++
+
+	Set CoordSys Earth 
+		Projection 8, 104, "m", -171, 0, 0.9996, 500000, 10000000 
+
+	'	+++++++++++++++ create user interface +++++++++++++++
+
+	Call CreMeCommon 
+	Call CreMeLayers 
+	Call CreMeActions 
+	Call CreMeQueries 
+	
+Res_Main:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+
+Err_Manage:
+	Note "Error: " + str$(err()) + " " + error$()
+	Resume Res_Main
+End Sub

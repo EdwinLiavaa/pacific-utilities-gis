@@ -1,0 +1,751 @@
+'*****************************************************************
+'*  Name   : UpdateSU1
+'*  Purpose: Update a post survey MI file
+'*
+'*				1. Update symbol
+'*				2. Drop columns not needed
+'*				3. Rename columns
+'*				4. Add new columns
+'*				5. Order columns
+'*				6. If MT save file as DBF that can be read by Excel
+'*					Else save as FIN that can be then imported into AC
+'*
+'*	See MapBasic Reference Manual for MakeSymbol( shape, color, size )
+'*	where shape:
+'*	32	solid square
+'*	33	solid diamond
+'*	34	solid circle
+'*	35	solid star
+'*	36 solid triangle
+'*
+'* 	See MAPBASIC.DEF for table field types 
+'* 	Define COL_TYPE_CHAR			1
+'* 	Define COL_TYPE_DECIMAL		2
+'* 	Define COL_TYPE_INTEGER		3
+'* 	Define COL_TYPE_SMALLINT	4
+'* 	Define COL_TYPE_DATE			5
+'* 	Define COL_TYPE_LOGICAL		6
+'* 	Define COL_TYPE_GRAPHIC		7
+'* 	Define COL_TYPE_FLOAT 		8
+'*
+'*  Inputs : User defined table
+'*  Outputs: 
+'*  Author : Leslie Allinson, Edwin Liava'a
+'*  Date   : 30-Jan-2007
+'*  Mods   : 24-Feb-2007
+'*           
+'*****************************************************************
+
+Include "Atlantis_Lib.def"
+Include "mapbasic.def"
+Include "menu.def"
+
+Declare Sub UpdateSU1
+
+Global db_conn_path As String	'	Access
+Global rs_path As String	'	MapInfo Raster Layers (BackDrops)
+Global vt_Path As String	'	MapInfo Vector Layers
+Global db_name As String	'	MIS database
+
+Sub UpdateSU1
+
+OnError Goto Err_Manage
+
+'	+++++++++++++++ declarations +++++++++++++++
+
+	Dim tableOBJ As Alias
+	Dim i, icol_count, icol_match, irow, irow_symbol, myfound as Integer
+	Dim more As Logical
+	Dim myOBJ As Object
+	Dim i_col_type As SmallInt
+	Dim s_col_name As String
+	Dim alter_col_name As String
+	Dim mycolname, mycolnamenew as String
+	Dim s_col_name_array() As String
+	Dim s_filename As String
+	Dim s_filename_with_path As String
+	Dim s_gpsid As String
+	Dim s_objtype As String
+	Dim s_status As String
+	Dim	 s_surveyid as String
+	Dim s_tablename As String
+	Dim newsymbolstyle As Symbol
+
+'	+++++++++++++++ initialise +++++++++++++++
+
+	Set ProgressBars Off
+
+'	+++++++++++++++ get filename that is prepended with full path +++++++++++++++
+
+	more = Ask("  Process a single post survey table:" + chr$(10) +
+				"  with format MT-yyyymmdda-GPnn" + chr$(10) +
+				"  Update symbols" + chr$(10) +
+				"  Alter columns" + chr$(10) +
+				"  Save table in DBF format" + chr$(10) +
+				"  Detete source table" + chr$(10) + chr$(10) +			 
+				"  Warning - OK will close any open tables." + chr$(10) + 
+				"  Do you want to continue?", "OK", "Cancel")
+	If more Then
+	Else
+		Exit Sub
+	End if
+ 
+	Close All Interactive
+
+	' FileOpenDlg( path, filename, filetype, prompt )
+	s_filename_with_path = FileOpenDlg("","","TAB","Open Table")
+
+'	+++++++++++++++ exit if cancel +++++++++++++++
+
+	If s_filename_with_path = "" Then 
+		Exit Sub
+	End If
+
+'	+++++++++++++++ clear message window and display path + filename selected +++++++++++++++
+
+	Print chr$(12)
+	Print "Start UpdateSU1"
+	Print "Full path and filename: " + s_filename_with_path
+
+'	+++++++++++++++ extract info from filename +++++++++++++++
+
+	For i = Len(s_filename_with_path) To 1 Step -1
+		' Print Mid$(s_filename_with_path, i, 1)
+		If Mid$(s_filename_with_path, i, 1) = "\" Then 
+			Exit For
+		End If
+	Next
+	' Print "Exit For loop with i = " + i
+
+	s_filename = Mid$(s_filename_with_path, i + 1, Len(s_filename_with_path) - i)
+	s_objtype  = UCase$(Mid$(s_filename, 1, 2))
+	s_surveyid = UCase$(Mid$(s_filename, 4, 9))
+	s_gpsid    = UCase$(Mid$(s_filename, 14, 4))
+	s_status   = UCase$(Mid$(s_filename, 19, 3))
+
+	Print "Filename: " + s_filename
+	Print "Object type: " + s_objtype
+	Print "Survey ID: " + s_surveyid
+	Print "GPS ID: " + s_gpsid
+	Print "Status: " + s_status
+
+	If Len(s_filename) <> 21 Then
+		Note "Invalid table name: " + s_filename
+		Print "Invalid table name: " + s_filename
+		Exit Sub
+	End If
+
+'	+++++++++++++++ if valid object type set symbol else exit +++++++++++++++
+
+	If s_objtype = "MT" Then
+		newsymbolstyle = MakeSymbol(33,CYAN,9)
+	ElseIf s_objtype = "ND" Then
+		newsymbolstyle = MakeSymbol(34,8421376,9) ' BROWN
+	ElseIf s_objtype = "PL" Then
+		newsymbolstyle = MakeSymbol(34,GREEN,9)
+	ElseIf s_objtype = "TX" Then
+		newsymbolstyle = MakeSymbol(36,MAGENTA,9)
+	Else
+		Note "Invalid object type: " + s_objtype
+		Exit Sub
+	End if
+
+'	+++++++++++++++ open table and map window +++++++++++++++
+
+	Open Table s_filename_with_path as TMP Interactive
+
+	s_tablename = TableInfo(0, TAB_INFO_NAME)
+
+	Print "Tablename Alias: " + s_tablename
+
+	map from s_tablename
+
+'	+++++++++++++++ update symbols and test for missing spatial data +++++++++++++++
+
+	tableOBJ = TMP.obj
+
+	irow_symbol = 1
+	Fetch First from s_tablename
+	Do While Not EOT(s_tablename)
+		myOBJ = tableOBJ
+		If TMP.obj Then
+'			print TMP.MT_ID + " OK" 
+			Alter Object myOBJ Info OBJ_INFO_SYMBOL, newsymbolstyle
+			Update s_tablename Set obj = myOBJ Where RowID = irow_symbol
+		Else
+			Note "WARNING. No spatial data in record: " + irow_symbol
+		End If
+		Fetch Next From s_tablename
+		irow_symbol = irow_symbol + 1
+	Loop
+	irow_symbol = irow_symbol - 1		'	we exit after row has been incremented
+
+'	+++++++++++++++ get table structure +++++++++++++++
+
+	icol_count = NumCols(s_tablename)
+
+	ReDim s_col_name_array(icol_count)
+
+	Print "Column count: " + icol_count
+
+	For i = 1 to icol_count		
+		s_col_name = ColumnInfo(s_tablename, "COL" + str$(i), COL_INFO_NAME)
+		i_col_type = ColumnInfo(s_tablename, "COL" + str$(i), COL_INFO_TYPE)
+'		Print i + " " + s_col_name + " " + i_col_type
+		s_col_name_array(i) = s_col_name
+	Next
+
+'	+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'	+++++++++++++++ drop, rename, add, order and modify columns +++++++++++++++
+'  	+++++++++++++++ note: cannot drop tables that already exist +++++++++++++++
+'  	+++++++++++++++ note: cannot rename tables that do not exist ++++++++++++++
+'  	+++++++++++++++ note: cannot add tables that already exist ++++++++++++++++
+'  	+++++++++++++++ note: cannot order tables that do not exist +++++++++++++++
+'  	+++++++++++++++ note: cannot modify tables that do not exist ++++++++++++++
+'	+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	Commit Table TMP ' prerequisite to Alter Table
+
+'	++++++++++++++++++++++++++++++++++++++++++++
+' 	+++++++++++++++ COMMON START +++++++++++++++
+'	++++++++++++++++++++++++++++++++++++++++++++
+
+'	+++++++++++++++ drop columns +++++++++++++++
+
+	mycolname = "Corr_Type"
+	Call TestColname(mycolname, myfound, s_tablename)
+	If myfound = 1 Then
+		Alter Table TMP (drop mycolname) Interactive
+	End if
+
+	mycolname = "Data_Dictionary_Name"
+	Call TestColname(mycolname, myfound, s_tablename)
+	If myfound = 1 Then
+		Alter Table TMP (drop mycolname) Interactive
+	End if
+
+	mycolname = "Datafile"
+	Call TestColname(mycolname, myfound, s_tablename)
+	If myfound = 1 Then
+		Alter Table TMP (drop mycolname) Interactive
+	End if
+
+	mycolname = "Feat_Name"
+	Call TestColname(mycolname, myfound, s_tablename)
+	If myfound = 1 Then
+		Alter Table TMP (drop mycolname) Interactive
+	End if
+
+	mycolname = "Filt_Pos"
+	Call TestColname(mycolname, myfound, s_tablename)
+	If myfound = 1 Then
+		Alter Table TMP (drop mycolname) Interactive
+	End if
+
+	mycolname = "GPS_Second"
+	Call TestColname(mycolname, myfound, s_tablename)
+	If myfound = 1 Then
+		Alter Table TMP (drop mycolname) Interactive
+	End if
+
+	mycolname = "GPS_Week"
+	Call TestColname(mycolname, myfound, s_tablename)
+	If myfound = 1 Then
+		Alter Table TMP (drop mycolname) Interactive
+	End if
+
+	mycolname = "Horz_Prec"
+	s_tablename = s_tablename
+	Call TestColname(mycolname, myfound, s_tablename)
+	If myfound = 1 Then
+		Alter Table TMP (drop mycolname) Interactive
+	End if
+
+	mycolname = "Max_HDOP"
+	Call TestColname(mycolname, myfound, s_tablename)
+	If myfound = 1 Then
+		Alter Table TMP (drop mycolname) Interactive
+	End if
+
+	mycolname = "Max_PDOP"
+	Call TestColname(mycolname, myfound, s_tablename)
+	If myfound = 1 Then
+		Alter Table TMP (drop mycolname) Interactive
+
+
+
+	End if
+
+	mycolname = "Rcvr_Type"
+	Call TestColname(mycolname, myfound, s_tablename)
+	If myfound = 1 Then
+		Alter Table TMP (drop mycolname) Interactive
+	End if
+
+	mycolname = "Std_Dev" 
+	s_tablename = s_tablename
+	Call TestColname(mycolname, myfound, s_tablename)
+	If myfound = 1 Then
+		Alter Table TMP (drop mycolname) Interactive
+	End if
+
+	mycolname = "Unfilt_Pos"
+	Call TestColname(mycolname, myfound, s_tablename)
+	If myfound = 1 Then
+		Alter Table TMP (drop mycolname) Interactive
+	End if
+
+	mycolname = "Update_Status"
+	Call TestColname(mycolname, myfound, s_tablename)
+	If myfound = 1 Then
+		Alter Table TMP (drop mycolname) Interactive
+	End if
+
+'	+++++++++++++++ rename columns +++++++++++++++
+
+	mycolname = "Easting"
+	mycolnamenew = "XC"
+	Call TestColname(mycolname, myfound, s_tablename)
+	If myfound = 1 Then
+		Alter Table TMP (Rename mycolname mycolnamenew) Interactive
+	End if
+
+	mycolname = "Northing"
+	mycolnamenew = "YC"
+	Call TestColname(mycolname, myfound, s_tablename)
+	If myfound = 1 Then
+		Alter Table TMP (Rename mycolname mycolnamenew) Interactive
+	End if
+
+'	+++++++++++++++ add columns +++++++++++++++
+
+	mycolname = "PIC"
+	Call TestColname(mycolname, myfound, s_tablename)
+	If myfound = 0 Then
+		Alter Table TMP (Add mycolname Char(30)) Interactive
+	End if
+
+	mycolname = "SU_ID"
+	Call TestColname(mycolname, myfound, s_tablename)
+	If myfound = 0 Then
+		Alter Table TMP (Add mycolname Char(9)) Interactive
+	End if
+
+	mycolname = "GP_ID"
+	Call TestColname(mycolname, myfound, s_tablename)
+	If myfound = 0 Then
+		Alter Table TMP (Add mycolname Char(4)) Interactive
+	End if
+
+'	+++++++++++++++ order columns +++++++++++++++
+
+'	+++++++++++++++ modify columns +++++++++++++++
+
+'	++++++++++++++++++++++++++++++++++++++++++++
+' 	+++++++++++++++ COMMON END +++++++++++++++++
+'	++++++++++++++++++++++++++++++++++++++++++++
+
+'	++++++++++++++++++++++++++++++++++++++++++++
+' 	+++++++++++++++ METERS START +++++++++++++++
+'	++++++++++++++++++++++++++++++++++++++++++++
+	
+	If s_objtype = "MT" Then
+
+'	+++++++++++++++ drop columns +++++++++++++++
+
+'	+++++++++++++++ rename columns +++++++++++++++
+
+'	+++++++++++++++ add columns +++++++++++++++
+
+
+		mycolname = "CU_ID_CIS"
+		Call TestColname(mycolname, myfound, s_tablename)
+		If myfound = 0 Then
+			Alter Table TMP (Add mycolname Char(10)) Interactive
+		End if
+
+		mycolname = "FD_ID"
+		Call TestColname(mycolname, myfound, s_tablename)
+		If myfound = 0 Then
+			Alter Table TMP (Add mycolname Char(5)) Interactive
+		End if
+
+		mycolname = "LOC1"
+		Call TestColname(mycolname, myfound, s_tablename)
+		If myfound = 0 Then
+			Alter Table TMP (Add mycolname Char(20)) Interactive
+		End if
+
+		mycolname = "LOC2"
+		Call TestColname(mycolname, myfound, s_tablename)
+		If myfound = 0 Then
+			Alter Table TMP (Add mycolname Char(20)) Interactive
+		End if
+
+		mycolname = "MT_ID_CIS"
+		Call TestColname(mycolname, myfound, s_tablename)
+		If myfound = 0 Then
+			Alter Table TMP (Add mycolname Char(20)) Interactive
+		End if
+
+		mycolname = "ND_ID"
+		Call TestColname(mycolname, myfound, s_tablename)
+		If myfound = 0 Then
+			Alter Table TMP (Add mycolname Char(5)) Interactive
+		End if
+
+		mycolname = "NEXT_ID"
+		Call TestColname(mycolname, myfound, s_tablename)
+		If myfound = 0 Then
+			Alter Table TMP (Add mycolname Char(30)) Interactive
+		End if
+
+		mycolname = "TX_ID"
+		Call TestColname(mycolname, myfound, s_tablename)
+		If myfound = 0 Then
+			Alter Table TMP (Add mycolname Char(5)) Interactive
+		End if
+
+'	+++++++++++++++ order columns +++++++++++++++
+
+		Alter Table TMP (Order
+    						MT_ID_SU,
+    						MT_ID_CIS,
+    						CU_ID_SU,
+    						CU_ID_CIS,
+    						PREPAID,
+    						PIC,
+    						LOC1,
+    						LOC2,
+							FD_ID,
+							TX_ID,
+    						PL_ID,
+							ND_ID,
+							NEXT_ID,
+    						PHASE_ID,
+							MAKE_ID,
+							ACCESS_ID,
+							DISCONNECT,
+							SEALED,
+							LOCKED,
+    						PL_FUSE,
+    						UG,
+    						GPS_DATE,
+    						GPS_TIME,
+    						GPS_HEIGHT,
+    						VERT_PREC,
+    						YC,
+    						XC,
+    						POINT_ID,
+    						PHOTO_ID,
+    						SU_ID,
+   							GP_ID,
+							COMMENTS
+							) Interactive
+	End If
+
+'	+++++++++++++++ modify columns +++++++++++++++
+
+'	++++++++++++++++++++++++++++++++++++++++++++
+' 	+++++++++++++++ METERS END +++++++++++++++++
+'	++++++++++++++++++++++++++++++++++++++++++++
+
+'	++++++++++++++++++++++++++++++++++++++++++++
+' 	+++++++++++++++ NODES START +++++++++++++++
+'	++++++++++++++++++++++++++++++++++++++++++++
+	
+	If s_objtype = "ND" Then
+
+'	+++++++++++++++ drop columns +++++++++++++++
+
+'	+++++++++++++++ rename columns +++++++++++++++
+
+'	+++++++++++++++ add columns +++++++++++++++
+
+		mycolname = "NEXT_ID"
+		Call TestColname(mycolname, myfound, s_tablename)
+		If myfound = 0 Then
+			Alter Table TMP (Add mycolname Char(30)) Interactive
+		End if
+
+'	+++++++++++++++ order columns +++++++++++++++
+
+		Alter Table TMP (Order
+							HVLV_ID,
+							DEPTH,
+    						PHASE_ID,
+							NEXT_ID,
+							FD_ID,
+    						GPS_DATE,
+    						GPS_TIME,
+    						GPS_HEIGHT,
+    						VERT_PREC,
+    						YC,
+    						XC,
+    						POINT_ID,
+							PHOTO_ID,
+    						SU_ID,
+   							GP_ID,
+							COMMENTS
+							) Interactive
+	End If
+
+'	+++++++++++++++ modify columns +++++++++++++++
+
+'	++++++++++++++++++++++++++++++++++++++++++++
+' 	+++++++++++++++ NODES END +++++++++++++++++
+'	++++++++++++++++++++++++++++++++++++++++++++
+
+'	++++++++++++++++++++++++++++++++++++++++++++
+' 	+++++++++++++++ POLES START ++++++++++++++++
+'	++++++++++++++++++++++++++++++++++++++++++++
+	
+	If s_objtype = "PL" Then
+
+'	+++++++++++++++ drop columns +++++++++++++++
+
+'	+++++++++++++++ rename columns +++++++++++++++
+
+'	+++++++++++++++ add columns +++++++++++++++
+
+		mycolname = "INSTALL_YR"
+		Call TestColname(mycolname, myfound, s_tablename)
+		If myfound = 0 Then
+			Alter Table TMP (Add mycolname Smallint) Interactive
+		End if
+
+		mycolname = "ND_ID"
+		Call TestColname(mycolname, myfound, s_tablename)
+		If myfound = 0 Then
+			Alter Table TMP (Add mycolname Char(5)) Interactive
+		End if
+
+		mycolname = "NEXT_ID"
+		Call TestColname(mycolname, myfound, s_tablename)
+		If myfound = 0 Then
+			Alter Table TMP (Add mycolname Char(30)) Interactive
+		End if
+
+		mycolname = "PL_ID"
+		Call TestColname(mycolname, myfound, s_tablename)
+		If myfound = 0 Then
+			Alter Table TMP (Add mycolname Char(8)) Interactive
+		End if
+
+		mycolname = "SW_ID"
+		Call TestColname(mycolname, myfound, s_tablename)
+		If myfound = 0 Then
+			Alter Table TMP (Add mycolname Char(6)) Interactive
+		End if
+
+'	+++++++++++++++ order columns +++++++++++++++
+
+		Alter Table TMP (Order
+    						PL_ID,
+							PIC,
+							HVLV_ID,
+							TYPE_ID,
+    						STRUCT_ID,
+							HEIGHT,
+    						PHASE_ID,
+    						ND_ID,
+							NEXT_ID,
+							FD_ID,
+							TX_POLE,
+							HV_FUSE,
+							SW_ID,
+							EXTRA_ID, 
+							STAY_ID,
+							TERMINATE,
+							PL_FUSES,
+    						SILVERLINK,					
+							LIGHT_ID,
+    						UG_ID,
+							COND_ID,
+							OWNER_ID,
+							TELCO_ID,
+							CT_NUM,
+							INSTALL_YR,
+    						GPS_DATE,
+    						GPS_TIME,
+    						GPS_HEIGHT,
+    						VERT_PREC,
+    						YC,
+    						XC,
+    						POINT_ID,
+    						PHOTO_ID,
+    						SU_ID,
+   							GP_ID,
+							COMMENTS
+							) Interactive
+	End If
+
+'	+++++++++++++++ modify columns +++++++++++++++
+
+'	++++++++++++++++++++++++++++++++++++++++++++
+' 	+++++++++++++++ POLES END ++++++++++++++++++
+'	++++++++++++++++++++++++++++++++++++++++++++
+
+'	++++++++++++++++++++++++++++++++++++++++++++
+' 	+++++++++++++++ TRANSFORMERS START +++++++++
+'	++++++++++++++++++++++++++++++++++++++++++++
+
+	If s_objtype = "TX" Then
+
+'	+++++++++++++++ drop columns +++++++++++++++
+
+'	+++++++++++++++ rename columns +++++++++++++++
+
+'	+++++++++++++++ add columns +++++++++++++++
+
+		mycolname = "TX_ID"
+		Call TestColname(mycolname, myfound, s_tablename)
+		If myfound = 0 Then
+			Alter Table TMP (Add mycolname Char(6)) Interactive
+		End if
+
+		mycolname = "COND_ID"
+		Call TestColname(mycolname, myfound, s_tablename)
+		If myfound = 0 Then
+			Alter Table TMP (Add mycolname Char(1)) Interactive
+		End if
+
+		mycolname = "LOC_ID"
+		Call TestColname(mycolname, myfound, s_tablename)
+		If myfound = 0 Then
+			Alter Table TMP (Add mycolname Char(5)) Interactive
+		End if
+
+		mycolname = "INSTALL_YR"
+		Call TestColname(mycolname, myfound, s_tablename)
+		If myfound = 0 Then
+			Alter Table TMP (Add mycolname Smallint) Interactive
+		End if
+
+		mycolname = "MAKE_ID"
+		Call TestColname(mycolname, myfound, s_tablename)
+		If myfound = 0 Then
+			Alter Table TMP (Add mycolname Char(1)) Interactive
+		End if
+
+		mycolname = "NEXT_ID"
+		Call TestColname(mycolname, myfound, s_tablename)
+		If myfound = 0 Then
+			Alter Table TMP (Add mycolname Char(30)) Interactive
+		End if
+
+		mycolname = "PL_ID"
+		Call TestColname(mycolname, myfound, s_tablename)
+		If myfound = 0 Then
+			Alter Table TMP (Add mycolname Char(8)) Interactive
+		End if
+
+'	+++++++++++++++ order columns +++++++++++++++
+
+		Alter Table TMP (Order
+    						TX_ID,
+							PIC,
+							NEXT_ID,
+							LOC_ID,
+							FD_ID,
+							MOUNT_ID,
+							PL_ID,
+							UG,
+							PHASE_ID,
+							KVA	,				
+							PRI_VOLT,
+							SEC_VOLT,
+							MAKE_ID,
+							SERIAL_NO,
+							COND_ID,
+							INSTALL_YR,
+    						GPS_DATE,
+    						GPS_TIME,
+    						GPS_HEIGHT,
+    						VERT_PREC,
+    						YC,
+    						XC,
+    						POINT_ID,
+    						PHOTO_ID,
+    						SU_ID,
+   							GP_ID,
+							COMMENTS
+							) Interactive
+	End If
+
+'	+++++++++++++++ modify columns +++++++++++++++
+
+'	++++++++++++++++++++++++++++++++++++++++++++
+' 	+++++++++++++++ TRANSFORMERS END +++++++++++
+'	++++++++++++++++++++++++++++++++++++++++++++
+
+'	+++++++++++++++ upshift column names +++++++++++++++
+
+	icol_count = NumCols(s_tablename)
+	For i = 1 to icol_count		
+		Alter Table TMP (Rename 
+							ColumnInfo(s_tablename, "COL" + str$(i), COL_INFO_NAME)
+							UCase$(ColumnInfo(s_tablename, "COL" + str$(i), COL_INFO_NAME))) Interactive
+	Next
+
+'	+++++++++++++++ populate SU_ID and GP_ID +++++++++++++++
+
+	If s_surveyid <> "" Then
+		Update TMP Set SU_ID = s_surveyid
+	End If
+	If s_gpsid <> "" Then
+		Update TMP Set GP_ID = s_gpsid
+	End If
+
+'	+++++++++++++++ format column PHOTO_ID into column PIC +++++++++++++++
+' 	+++++++++++++++ PHOTO_ID 4 numeric char or 0           +++++++++++++++
+ 
+	irow = 1
+	Fetch First from TMP
+	Do While Not EOT(TMP)
+		If TMP.photo_id = 0 Then
+			Update TMP Set pic = "..\pics\nopic.jpg" Where RowID = irow
+		Else
+			Update TMP Set pic = "..\pics\DSCN" + TMP.photo_id + ".jpg" Where RowID = irow 
+		End If
+		Fetch Next From TMP
+		irow = irow + 1
+	Loop
+	irow = irow - 1		'	we exit after row has been incremented
+
+'	+++++++++++++++ save and close tables +++++++++++++++
+
+	If s_objtype = "MT" Then
+		Commit Table TMP 
+			As Mid$(s_filename, 1, 17) + "-DBF.TAB" TYPE DBF 
+			Charset "WindowsLatin1" 
+	Else
+		Commit Table TMP 
+			As Mid$(s_filename, 1, 17) + "-FIN.TAB" TYPE DBF 
+			Charset "WindowsLatin1"
+	End If	
+
+	Drop Table TMP
+
+	Close All
+
+'	+++++++++++++++ cleanup +++++++++++++++
+
+	If s_objtype = "MT" Then
+		Print "Finished: " + Mid$(s_filename, 1, 17) + "-DBF.TAB" + " saved"
+		Note "Finished: " + Mid$(s_filename, 1, 17) + "-DBF.TAB" + " saved"
+	Else
+		Print "Finished: " + Mid$(s_filename, 1, 17) + "-FIN.TAB" + " saved"
+		Note "Finished: " + Mid$(s_filename, 1, 17) + "-FIN.TAB" + " saved"
+	End If
+
+	Set ProgressBars On
+
+UpdateSU1:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume UpdateSU1
+End Sub

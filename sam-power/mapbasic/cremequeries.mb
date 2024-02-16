@@ -1,0 +1,67 @@
+'*****************************************************************
+'*  Name   : CreMeQueries
+'*  Purpose: Create user interface for Queries drop down menu
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Leslie Allinson, Edwin Liava'a
+'*  Date   : 25-Jan-2007
+'*  Mods   : 28-Feb-2007
+'*
+'*****************************************************************
+Include "mapbasic.def"
+Include "menu.def"
+
+Global AC_Path As String	'	Access
+Global BD_Path As String	'	MapInfo Raster Layers (BackDrops)
+Global MI_Path As String	'	MapInfo Vector Layers
+
+Declare Sub CreMeQueries			 
+Declare Sub CutLN_LV
+Declare Sub Find_EPCAsset
+Declare Sub DispHV_FEEDER
+Declare Sub DispHV_UG
+Declare Sub DispLV_FEEDER
+Declare Sub DispLN_PHASE
+Declare Sub DispMT_PRECON
+Declare Sub DispPL_LIGHT
+Declare Sub DispPL_OWNER
+Declare Sub DispPL_TELCO
+Declare Sub DispTX_TOTALCONSUMP
+Declare Sub DispTX_ByFD
+Declare Sub NotYetReleased
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++*
+
+Sub CreMeQueries
+	
+OnError Goto Err_Manage
+
+	Create Menu "EPC Queries" As
+		"Display:",
+		"(-",
+			"Find EPC Asset"							Calling Find_EPCAsset, 
+			"Simulate Cutting a Line"				Calling CutLN_LV,
+			"HV Lines by Feeder"						Calling DispHV_FEEDER,
+			"HV Lines Underground"					Calling DispHV_UG,
+			"LV Lines by Feeder"						Calling DispLV_FEEDER,
+			"Lines by Phase"							Calling DispLN_PHASE,
+			"Meters Prepaid and Conventional"		Calling DispMT_PRECON, 
+			"Poles by Street Lights"				Calling DispPL_LIGHT,
+			"Poles by Owner"							Calling DispPL_OWNER,
+			"Poles with Telco Assets"				Calling DispPL_TELCO,
+			"Transformers by Feeder"				Calling DispTX_ByFD,
+			"Transformers by Total Consumption"	Calling DispTX_TOTALCONSUMP,
+			"(-",
+			"* Not Yet Released"
+	
+	Alter Menu Bar Add "EPC Queries"
+
+Res_CreMeQueries:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Res_CreMeQueries
+	
+End Sub

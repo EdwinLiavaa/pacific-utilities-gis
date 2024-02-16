@@ -1,0 +1,258 @@
+'*****************************************************************
+'*  Name   : UpdateSU2c
+'*  Purpose: Update a post survey MI file that has been processed
+'*				and saved in the format MT-yyyymmdda-GPnn-FIN
+'*
+'*				1. Determine AC table to load
+'*				2. Get last row loaded for type of object
+'*				3. Check that table not already loaded from log file 
+'*					where this will abort process
+'*				4. Load table
+'*				5. Update last row loaded table
+'*				6. Update log file 
+'*
+'*  Inputs : User defined table
+'*  Outputs: Updated tables
+'*  Author : Edwin Liava'a
+'*  Date   : 13-Feb-2007
+'*  Mods   : 27-Feb-2007
+'*           
+'*****************************************************************
+
+Include "PPL_Lib.def"
+Include "mapbasic.def"
+Include "menu.def"
+
+Declare Sub UpdateSU2c (s_filename_with_path As String, s_filename As String,
+							s_objtype As String, ivalid As Integer)
+
+Global db_conn_path As String	'	Access
+Global rs_path As String	'	MapInfo Raster Layers (BackDrops)
+Global vt_Path As String	'	MapInfo Vector Layers
+Global db_name As String	'	MIS database
+
+Sub UpdateSU2c (s_filename_with_path As String, s_filename As String,
+							s_objtype As String, ivalid As Integer)
+
+OnError Goto Err_Manage
+
+'	+++++++++++++++ declarations +++++++++++++++
+
+	Dim tableOBJ As Alias
+	Dim i, icol_count, icol_match, irow, irow_symbol, myfound As Integer
+	Dim more As Logical
+	Dim myOBJ As Object
+	Dim i_col_type As SmallInt
+	Dim s_col_name As String
+	Dim alter_col_name As String
+	Dim mycolname, mycolnamenew as String
+	Dim s_col_name_array() As String
+'	Dim s_filename As String
+'	Dim s_filename_with_path As String
+'	Dim s_gpsid As String
+'	Dim s_objtype As String
+	Dim s_status As String
+'	Dim	 s_surveyid as String
+	Dim s_tablename As String
+	Dim newsymbolstyle As Symbol
+
+'	+++++++++++++++ declarations +++++++++++++++
+
+	Dim i_last_id, i_last_id_save, irow_log, irow_process as Integer
+	Dim s_gpsid, s_last, s_last_id, s_log, s_objtype_id, s_surveyid, s_table, s_zero, table_id as String
+	Dim s_nopic As String
+	Dim source_filename, source_filename_with_path As String 
+	Dim target_filename, target_filename_with_path As String
+
+'	+++++++++++++++ initialise +++++++++++++++
+
+	ivalid = 1
+
+	s_last = "LAST_ROW"
+	s_log = "LOG_LOAD"
+	s_zero = "00000"
+	s_nopic = "nopic.jpg"
+
+	If s_objtype = "MT" Then
+		s_table = "MT"
+		table_id = "MT_ID"
+	ElseIf s_objtype = "ND" Then
+		s_table = "ND"
+		table_id = "ND_ID"
+	ElseIf s_objtype = "PL" Then
+		s_table = "PL"
+		table_id = "PL_ID"
+	ElseIf s_objtype = "TX" Then
+		s_table = "TX"
+		table_id = "TX_ID"
+	Else
+		Note "Invalid object type: " + s_objtype
+		ivalid = 0
+		Exit Sub
+	End if
+
+	Close All Interactive
+
+'	+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'	+++++++++++++++ load AC non spatial tables linked to MI +++++++++++++++
+'	+++++++++++++++ last ID and log tables                  +++++++++++++++
+' 	+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	Register Table db_conn_path + "\" + db_name Type ACCESS Table s_last Into db_conn_path + "\" + s_last
+	Open Table db_conn_path + "\" + s_last Interactive
+	Register Table db_conn_path + "\" + db_name Type ACCESS Table s_log  Into db_conn_path + "\" + s_log
+	Open Table db_conn_path + "\" + s_log Interactive
+
+'	+++++++++++++++ get survey id and gps id from filename  
+
+	s_surveyid = mid$(s_filename,4, 9) 
+	s_gpsid = mid$(s_filename, 14, 4)
+
+	Print s_objtype + " " + s_surveyid + " " + s_gpsid 
+
+'	+++++++++++++++ ensure post survey table has not already been loaded in AC +++++++++++++++
+
+		irow = 1
+		Fetch First From s_log
+		Do While Not EOT(s_log)
+			If s_objtype  = LOG_LOAD.ITEM_ID And 
+		   		s_surveyid = LOG_LOAD.SU_ID   And
+		   		s_gpsid    = LOG_LOAD.GP_ID   Then
+				Note 	"ABORT. Table has already been loaded" + Chr$(10) +
+						"See LOG_LOAD table record: " + irow + Chr$(10) +
+						"With time/date: " + LOG_LOAD.TIME + " " + LOG_LOAD.DATE
+				ivalid = 0
+				Exit Sub
+			End If
+			Fetch Next From s_log
+			irow = irow + 1
+		Loop
+
+
+		irow = irow - 1		'	we exit after row has been incremented
+
+'	+++++++++++++++ get the ITEM_ID of last row loaded for appropriate object +++++++++++++++
+
+	irow = 1
+	Fetch First From s_last
+	Do While Not EOT(s_last)
+		If LAST_ROW.ITEM_ID = s_objtype Then
+			s_last_id = LAST_ROW.LAST_ID
+		End If
+		Fetch Next From s_last
+		irow = irow + 1
+	Loop
+	irow = irow - 1		'	we exit after row has been incremented
+
+	i_last_id = Val(Mid$(s_last_id, 3, Len(s_last_id) - 2))
+	i_last_id_save = i_last_id
+
+	Print "Last row in " + s_table + " table: " + s_last_id + " " + i_last_id
+
+'	++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'	+ using table to be processed:                         +
+'	+ populate ID field with set of sequential identifiers +
+'	+ copy pic file from session folder to common folder   +
+'	++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	Open Table s_filename As TMP Interactive
+
+		irow = 1
+		Fetch First From TMP
+		Do While Not EOT(TMP)
+
+			i_last_id = i_last_id + 1
+			s_objtype_id = Left$(s_last_id, 2) + Left$(s_zero, Len(s_last_id) - 2 - Len(Str$(i_last_id))) + Str$(i_last_id)
+			Update TMP Set table_id = s_objtype_id where RowID = irow
+			
+'	+++++++++++++++ ignore records with nopic.jpg +++++++++++++++
+
+			source_filename = Mid$(TMP.PIC, 9, Len(TMP.PIC))
+			IF source_filename <> s_nopic Then
+				source_filename_with_path = Left$(s_filename_with_path, Len(s_filename_with_path) - 7 - Len(s_filename)) +
+													"pics\" + source_filename
+				target_filename = s_objtype_id + ".jpg"
+				Update TMP Set PIC = "..\pics\" + s_objtype_id + ".jpg" where RowID = irow
+				target_filename_with_path = Left$(vt_Path, Len(vt_Path) - 7) + "pics\" + target_filename
+
+'				Print source_filename + " " + source_filename_with_path
+'				Print target_filename + " " + target_filename_with_path
+
+				Save File source_filename_with_path As target_filename_with_path
+			End If
+
+			Fetch Next From TMP
+			irow = irow + 1
+		Loop
+		irow = irow - 1		'	we exit after row has been incremented
+		irow_process = irow
+
+		'Print "Object Type: " + s_objtype
+		'Print "Survey ID: " + s_surveyid
+		'Print "GPS ID: " + s_gpsid
+		'Print "Rows: " + irow_process
+
+'	++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'	+ load into AC:                                        +
+'	+ if first time then Commit                            +
+'	+ else Insert
+'	+ Why bother as table MUST have been created in AC prior to population +
+'	++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+		'If i_last_id_save = 0 Then
+			'Print "Commit to Access with last" + table_id + ": " + s_objtype_id
+			'Print vt_Path + "\" + s_table + " Type ACCESS Database " + db_conn_path + "\" + db_name + " Table " + s_table
+			'Commit Table TMP	As db_conn_path + "\" + s_table Type ACCESS Database db_conn_path + "\" + db_name Table s_table
+		'Else
+			Register Table db_conn_path + "\" + db_name Type ACCESS Table s_table Into db_conn_path + "\" + s_table
+			Open Table db_conn_path + "\" + s_table Interactive
+			Insert Into s_table Select * From TMP
+			Commit Table s_table Interactive
+		'End If
+
+'	+++++++++++++++ update LAST_ROW table +++++++++++++++
+
+		irow = 1
+		Fetch First From s_last
+		Do While Not EOT(s_last)
+			If LAST_ROW.ITEM_ID = s_objtype Then
+				Update s_last Set LAST_ID = s_objtype_id Where RowID = irow
+				Update s_last Set LAST_DATE = CurDate() Where RowID = irow
+				Update s_last Set LAST_TIME = Time(24) Where RowID = irow
+			End If
+			Fetch Next From s_last
+			irow = irow + 1
+		Loop
+		irow = irow - 1		'	we exit after row has been incremented
+
+'	+++++++++++++++ update LOG_LOAD table +++++++++++++++
+
+	Insert Into s_log (DATE, TIME, ITEM_ID, SU_ID, GP_ID, ROWS) 
+						Values (FormatDate$(CurDate()), Time(24), s_objtype, s_surveyid, s_gpsid, irow_process)
+	Note irow_process + " records from survey " +
+						s_objtype + "-" + s_surveyid + "-" + s_gpsid +
+						" added to AC table " + s_objtype
+
+'	+++++++++++++++ save and close all other tables +++++++++++++++
+
+		Commit Table TMP Interactive
+		Commit Table s_log Interactive
+		Commit Table s_last Interactive
+		Close All Interactive
+
+UpdateSU2c:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+
+	ivalid = 0
+	Rollback Table TMP
+	Rollback Table s_last
+	Rollback Table s_log
+	Close All
+	Note "Rollback and close all tables"
+
+	Resume UpdateSU2c
+End Sub

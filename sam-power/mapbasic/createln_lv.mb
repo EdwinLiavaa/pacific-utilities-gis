@@ -1,0 +1,432 @@
+'*****************************************************************
+'*  Name   : CreateLN_LV
+'*  Purpose: Create Lines Low Voltage
+'*
+'*				1. Select Feeder and Transformer
+'*				2. Open relevant points tables to connect LV Lines
+'*				3. Connect points with lines
+'*				4. Populate LV Lines Table with data
+'*
+'*  Inputs : Relevant points tables
+'*  Outputs: LN_LV
+'*  Author : Leslie Allinson, Edwin Liava'a
+'*  Date   : 13-Feb-2007
+'*  Mods   : 25-Feb-2007
+'*           
+'*****************************************************************
+
+Include "EPC_Lib.def"
+Include "mapbasic.def"
+Include "menu.def"
+Include "Icons.def"  
+
+'*****************************************************************
+
+' Sub Program (Procedure) Declarations
+
+declare sub CreateLN_LV			
+declare sub PickID2
+declare sub LetsContinue2(byval x1 as float, byval y1 as float, byval nextID as string)
+
+' Declare Global Variables
+
+Global AC_Path 														As String	 'Access
+Global BD_Path 														As String	 'MapInfo Raster Layers (BackDrops)
+Global MI_Path 														As String	 'MapInfo Vector Layers
+Global feederID,fromID,nextID,phaseID,cableID,ugID,txID		As String
+Global lineID															As Integer
+Global voltID															As Float
+Global WIA																As Logical 'Work In Action
+Global x1,y1,x2,y2													As Float 
+
+
+'******************************CreateLN_LV Procedure********************************
+' this procedure open the tables and display the tools
+
+Sub CreateLN_LV
+
+	Dim Map_Win_id 	As Integer
+	Dim i,j			As Integer
+	Dim TableName		As String
+	Dim strFD_ID		As String
+	Dim strTX_ID		As String
+	Dim iXC, iYC		As Float
+	Dim iRowid		As integer
+
+	WIA = FALSE
+	
+	Close All
+
+OnError Goto err_sub
+
+	TableName = AC_Path + "\" + "TX.tab"
+	Open Table TableName As TX Interactive
+	TableName = AC_Path + "\" + "PL.tab"
+	Open Table TableName As PL Interactive
+	TableName = AC_Path + "\" + "MT.tab"
+	Open Table TableName As MT Interactive
+	TableName = AC_Path + "\" + "ND.tab"
+	Open Table TableName As ND Interactive
+	TableName = AC_Path + "\" + "LN_LV.tab"
+	Open Table TableName As LN_LV Interactive
+	TableName = AC_Path + "\" + "FD.tab"
+	Open Table Tablename As Feeders 
+		
+	Map From   LN_LV, TX, PL, ND, MT Max
+	
+	Set Map Distance Units "m"
+	Set Map Redraw Off
+	Set Map Layer LN_LV Editable On
+	Set Map Redraw On
+	set map redraw off
+	Set Map Layer 1 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+	set map redraw on
+	set map redraw off
+	Set Map Layer 2 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+		Activate Using PIC On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 3 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+		Activate Using PIC On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 4 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+		Activate Using PIC On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 5 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+		Activate Using PIC On Labels Objects Relative Path On
+	set map redraw on
+
+	Create ButtonPad "Line" As ToolButton	
+	Icon MI_ICON_TRANSPORT_25
+	Cursor MI_CURSOR_FINGER_UP
+	DrawMode DM_CUSTOM_POINT
+	ID 23	
+	Calling PickID2
+	Position (5,5)
+	Width 10
+	Float
+	Show
+
+'+++++++++++++++++++++++++++  Getting window ID +++++++++++++++++++++
+
+	Map_Win_id = FrontWindow()
+
+	If Map_Win_id = 0 Then
+		Exit Sub
+	End If
+
+'+++++++++++++++++++++++++++ Dialog +++++++++++++++++++++++
+'Dialog Box for Feeder_ID
+
+	Dialog
+	Title "EPC MIS-GIS" 
+	Control StaticText
+		Title "Please Enter Feeder_ID:"  ' FD001, FD002, etc
+	Control EditText 
+		Value strFD_ID		'this is a Global String variable
+		Into strFD_ID	
+	Control OKButton
+	Control CancelButton  
+			
+	If Not CommandInfo(CMD_INFO_DLG_OK) Then 
+		' ...then the user clicked CANCEL
+		Note "Program will now close!"
+		Close All Interactive
+		Goto after_error
+	End If
+	If CommandInfo(CMD_INFO_DLG_OK) And strFD_ID = "" Then
+		Note "Invalid Feerder_ID!"
+		Call CreateLN_LV
+	Else	' ...the user clicked OK
+		Select FD_ID from Feeders where FD_ID = Ucase$(str$(strFD_ID)) into Temp1
+		If Temp1.COL1 = Ucase$(str$(strFD_ID)) Then
+			feederID = Ucase$(Str$(strFD_ID))			
+		Else
+			Note "Invalid Feerder_ID!"
+			Call CreateLN_LV
+		End If
+	End If
+
+'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'Dialog Box for Transformer ID
+
+	Dialog
+	Title "EPC MIS-GIS" 
+	Control StaticText
+		Title "Please Enter TXformer_ID:"  ' FD001, FD002, etc
+	Control EditText 
+		Value strTX_ID		'this is a Global String variable
+		Into strTX_ID
+	Control OKButton
+	Control CancelButton  
+			
+	If Not CommandInfo(CMD_INFO_DLG_OK) Then 
+		' ...the user clicked CANCEL
+		Note "Program will now close!"
+		Close All Interactive
+		Exit Sub
+	End If
+	If CommandInfo(CMD_INFO_DLG_OK) And strTX_ID = "" Then
+		Note "Invalid Transformer_ID!"
+		Call CreateLN_LV
+	Else
+		' ...the user clicked OK
+		Select TX_ID from TX where TX_ID = Ucase$(str$(strTX_ID)) into Temp2
+		If Temp2.COL1 = Ucase$(str$(strTX_ID)) Then
+			txID = Ucase$(Str$(strTX_ID))			
+			Note "Pick LV Asset to Connect LV Line" 
+		Else
+			Note "Invalid Transformer_ID!"
+			Call CreateLN_LV
+		End If
+	End If
+
+'+++++++++++++++++ Set Centre and Zoom of Map ++++++++++++++++++++++++
+
+		iXC = CentroidX(TX.obj)
+		iYC = CentroidY(TX.obj)
+		Set Map Center (iXC,iYC)
+		Set Map Zoom Entire 
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+after_error:
+
+	Exit Sub 
+
+err_sub:
+	note "WARNING! An Error Has Occured!"
+	Resume after_error
+
+End Sub
+
+'*****************************PickID2 Procedure*********************************
+' this procedure selects a pole or transformer to connect a HV line from and to
+
+Sub PickID2
+
+	Dim Map_Win_id 	As Integer
+	Dim x,x1			As Float
+	Dim y,y1			As Float
+	Dim iFound			As Integer
+	Dim i				As Integer
+	Dim j				As Integer
+	Dim sTable			As String
+	Dim iRowid			As Integer
+	Dim aTable			As Alias
+	Dim lFound			As Logical
+	Dim Counter		As Integer
+	Dim xyUnits		As String
+	Dim CosName		As String
+	Dim ofound			As Object
+	
+OnError GoTo err_sub
+
+	Map_Win_id = FrontWindow()
+	If WindowInfo(Map_Win_id,WIN_INFO_TYPE) <> WIN_MAPPER Then
+		Note "You must Select a Map Window first"
+		Exit Sub
+	End If
+
+	CosName = WindowInfo(Map_Win_Id,WIN_INFO_TABLE)
+
+	Set CoordSys Window Map_Win_id
+	
+	x = CommandInfo(CMD_INFO_X)
+	y = CommandInfo(CMD_INFO_Y)
+
+	xyunits = MapperInfo(Map_Win_id,MAPPER_INFO_XYUNITS)
+	
+	ifound = SearchPoint(Map_Win_Id,x,y)
+	
+	If ifound = 0 Then
+		lFound = FALSE
+	Else
+		lFound = FALSE
+		For i = 1 to ifound
+      		' Get the name of the table containing a "hit".
+	      	stable = SearchInfo(i, SEARCH_INFO_TABLE)
+   
+	      	' Get the row ID number of the object that was a hit.
+	      	irowid = SearchInfo(i, SEARCH_INFO_ROW)
+	      	
+			If sTable = "TX" Then 
+	        		' Fetch the row of the object the user clicked on.
+	        		Fetch rec iRowid From sTable
+	        		ofound = TX.obj
+					x1 = centroidX(ofound)
+					y1 = centroidY(ofound)
+					nextID = TX.TX_ID
+					ugID = TX.UG
+					lFound = TRUE
+			ElseIf sTable = "PL" Then 
+	        		' Fetch the row of the object the user clicked on.
+	        		Fetch rec iRowid From sTable
+	        		ofound = PL.obj
+					x1 = centroidX(ofound)
+					y1 = centroidY(ofound)
+					nextID = PL.PL_ID
+					phaseID = PL.PHASE_ID
+					ugID = "N"
+					lFound = TRUE			
+			ElseIf sTable = "ND" Then 
+	        		' Fetch the row of the object the user clicked on.
+	        		Fetch rec iRowid From sTable
+	        		ofound = ND.obj
+					x1 = centroidX(ofound)
+					y1 = centroidY(ofound)
+					nextID = ND.ND_ID
+					phaseID = ND.PHASE_ID
+					ugID = "Y"
+					lFound = TRUE			
+			ElseIf sTable = "MT" Then 
+	        		' Fetch the row of the object the user clicked on.
+	        		Fetch rec iRowid From sTable
+	        		ofound = MT.obj
+					x1 = centroidX(ofound)
+					y1 = centroidY(ofound)
+					nextID = MT.MT_ID
+					phaseID = MT.PHASE_ID
+					ugID = MT.UG
+					lFound = TRUE
+      		End If 
+    	Next
+	End If
+
+	If lFound = FALSE Then
+		Print chr$(12)
+		Note "Sorry, No Pole, Node, Transformer or Customer There!"
+		Note "Please Try Again!"
+	else
+		call LetsContinue2(x1, y1, nextID)
+	End If
+	
+after_error:
+
+Exit Sub 
+
+err_sub:
+note "WARNING! An Error Has Occured!"
+Resume after_error
+
+End Sub 
+
+'*********************************LetsContinue2 procedure*********************************
+' this procedure allows you to continue connecting PL with LN_LV
+
+Sub LetsContinue2(Byval x1 As Float, byval y1 As Float, Byval nextID As String)
+
+	Dim i,j, irow1			As Integer
+	Dim newline				As Object
+	Dim counter				As Integer
+	Dim dist					As Float
+
+OnError Goto err_sub
+
+	If WIA = FALSE then 
+		x2 = x1 
+		y2 = y1
+		fromID = nextID 
+		WIA = TRUE
+		Note "Pick the NextID to Connect LV Line!"
+		Exit Sub
+	End If
+	
+	dist = Distance(x2,y2,x1,y1,"m")
+	cableID = "U"
+	Select Max(LN_ID) from LN_LV into MaxID
+	lineID = MaxID.COL1 + 1
+
+	Insert Into LN_LV(LN_ID,FD_ID,FROM_ID,NEXT_ID,PHASE_ID,CABLE_ID,UG,XB,YB,XE,YE,LENGTH)
+	Values (lineID, feederID, fromID, nextID, phaseID, cableID, ugID, x2, y2, x1, y1, dist)
+	
+	counter = tableinfo(LN_LV, TAB_INFO_NROWS)	
+
+	Create Line
+			Into Variable newline
+			(x2, y2) (x1, y1)
+			Pen MakePen(2, 2, BLUE)
+
+	Update LN_LV
+		Set Obj = newline
+		where  RowID = counter
+		Open Window WIN_INFO
+		Set Window WIN_INFO Table LN_LV Rec counter
+	
+	If Left$(nextID,2) = "MT" And Left$(fromID,2) = "PL" Then
+		irow1 = 1
+		Fetch First From MT
+			Do while Not EOT(MT)
+				If MT.MT_ID = nextID Then
+					Update MT Set PL_ID = fromID where rowid = irow1
+					Update MT Set Next_ID = fromID where rowid = irow1
+					Update MT Set TX_ID = txID where rowid = irow1
+				End If
+				'Commit Table MT
+				Fetch Next From MT
+				irow1 = irow1 + 1
+			Loop
+	ElseIf Left$(nextID,2) = "MT" And Left$(fromID,2) = "TX" Then
+		irow1 = 1
+		Fetch First From MT
+		Do while Not EOT(MT)
+			If MT.MT_ID = nextID Then
+				Update MT Set TX_ID = txID where rowid = irow1
+				Update MT Set PL_ID = fromID where rowid = irow1
+				Update MT Set Next_ID = fromID where rowid = irow1
+			End If
+			'Commit Table MT
+			Fetch Next From MT
+			irow1 = irow1 + 1
+		Loop
+ 	ElseIf Left$(nextID,2) = "MT" And Left$(fromID,2) = "MT" Then
+		irow1 = 1
+		Fetch First From MT
+		Do while Not EOT(MT)
+			If MT.MT_ID = nextID Then
+				Update MT Set PL_ID = fromID where rowid = irow1
+				Update MT Set Next_ID = fromID where rowid = irow1
+				Update MT Set TX_ID = txID where rowid = irow1
+			End If
+			'Commit Table MT
+			Fetch Next From MT
+			irow1 = irow1 + 1
+		Loop
+	ElseIf Left$(nextID,2) = "MT" And Left$(fromID,2) = "ND" Then
+		irow1 = 1
+		Fetch First From MT
+		Do while Not EOT(MT)
+			If MT.MT_ID = nextID Then
+				Update MT Set ND_ID = fromID where rowid = irow1
+				Update MT Set Next_ID = fromID where rowid = irow1
+				Update MT Set TX_ID = txID where rowid = irow1
+			End If
+			'Commit Table MT
+			Fetch Next From MT
+			irow1 = irow1 + 1
+		Loop
+	End If
+
+	WIA = FALSE
+
+after_error:
+
+	Exit Sub
+
+err_sub:
+	note "WARNING! An Error Has Occured!"
+	Resume after_error
+
+End Sub

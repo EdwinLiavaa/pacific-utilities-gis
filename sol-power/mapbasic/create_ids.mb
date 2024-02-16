@@ -1,0 +1,140 @@
+'*****************************************************************
+'*  Name   : Create Create_IDs
+'*  Purpose: Create Unique_IDs for all Layers
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Edwin Liava'a
+'*  Date   : 01-11-2011
+'*  Mods   : 
+'*           
+'*****************************************************************
+Include "SIEA_Lib.def"
+Include "mapbasic.def"
+Include "menu.def"
+
+
+Declare Sub CreatePL_IDs
+
+Sub CreatePL_IDs
+
+OnError Goto Err_Manage
+
+	Dim counter As Integer
+	Dim V_UniqueID As string
+	Dim IDInfo As String
+	Dim RecNumber As Integer
+	Dim s_filename1,strID As String
+
+	Close All
+
+	Note "Open Poles Table!"
+
+	s_filename1 = FileOpenDlg("","","TAB","Open Table") 
+	
+	Open Table s_filename1 As NewTable
+
+	Dialog
+
+	Title "Question"		
+
+		Control StaticText		
+			Title "Is table packed? if YES -> OK"
+			Position 5, 10
+	
+		Control OKButton			'adds a push-button control to a dialog
+			Position 5, 40
+
+		Control CancelButton
+			Position 100, 40
+
+	If not CommandInfo(CMD_INFO_DLG_OK) Then
+
+		Pack Table NewTable Data
+
+	End If			
+
+	'++++++++++++++++++++++++++++ Dialog statement ++++++++++++++++++++++++++++++
+
+	Dialog
+  			Control StaticText 
+  				Title  "Enter Last ID:" 
+  				Position  5, 10
+
+			Control EditText
+   				Position 65, 8    Width 40 
+   				Into  IDInfo
+
+ 			Control OKButton 
+   				Position  10, 25 
+ 
+			Control CancelButton 
+   				Position  60, 25 
+				If not CommandInfo(CMD_INFO_DLG_OK) Then 
+  					Exit Sub
+				End If	
+	'++++++++++++++++++++++++++++ End dialog statement ++++++++++++++++++++++++++++++
+
+	'++++++++++++++++++++++++++++ adding UniqueID      ++++++++++++++++++++++++++++++
+
+	Fetch First From NewTable
+
+		strID = left(s_filename1,2)
+		counter = IDInfo
+		RecNumber = 0
+
+		Fetch First From NewTable
+
+		Do While Not EOT(NewTable)
+
+  			counter = counter + 1
+			RecNumber = RecNumber + 1
+
+			If counter < 10 Then 
+				V_UniqueID = strID + "000000" + Str$(Counter)
+			ElseIf counter < 100  Then
+				V_UniqueID = strID + "00000" + Str$(Counter)
+			ElseIf counter < 1000  Then
+				V_UniqueID = strID + "0000" + Str$(Counter)
+			ElseIf counter < 10000  Then
+				V_UniqueID = strID + "000" + Str$(Counter)
+			ElseIf counter < 100000  Then
+				V_UniqueID = strID + "00" + Str$(Counter)
+			ElseIf counter < 1000000  Then
+				V_UniqueID = strID + "0" + Str$(Counter)
+			Else 
+				V_UniqueID = strID + Str$(Counter)
+			End If
+
+			Select Case strID 
+				Case "GN"
+					Update NewTable Set GN_ID = V_UniqueID Where RowID = RecNumber
+				Case "MT"
+					Update NewTable Set MT_ID = V_UniqueID Where RowID = RecNumber	
+				Case "PL"
+					Update NewTable Set PL_ID = V_UniqueID Where RowID = RecNumber		
+				Case "TW"
+					Update NewTable Set TW_ID = V_UniqueID Where RowID = RecNumber	
+				Case "TX"
+					Update NewTable Set TX_ID = V_UniqueID Where RowID = RecNumber	
+				Case "ND"
+					Update NewTable Set ND_ID = V_UniqueID Where RowID = RecNumber
+				Case Else
+					Exit
+			End Case				
+				
+			Fetch Next From NewTable
+
+		Loop 
+
+	'	++++++++++++++++++++++++++++ 		End adding UniqueID      ++++++++++++++++++++++++++++++
+
+	Browse * FROM NewTable
+
+Res_CreatePL_IDs:
+	Exit Sub
+
+Err_Manage:
+	note "Error: " + str$(Err()) + ", " + Error$()
+	Resume Res_CreatePL_IDs
+
+End Sub

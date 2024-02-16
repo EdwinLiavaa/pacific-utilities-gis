@@ -1,0 +1,112 @@
+'***********************************************************
+'*       MapRoofPartGutter           Wolf  31.10.07        *
+'*   Modified: Edwin 28.09.08                              *
+'*   This program                                          *
+'*           - imports the TMP_RoofGutter from Access      *
+'*           - links Roof_MI to TMP_RoofGutter             *
+'*           - adds the linked tables to mapwindow         *
+'*           - creates a thematic map from the linked TAB  *
+'***********************************************************
+Include "MapBasic.DEF"
+Include "Menu.DEF"
+
+	Declare Sub MapRoofPartGutter
+				
+	Global PathVectorL As String
+	Global PathBackdrop As String
+	Global PathAccess As String
+	Global DatabaseName As String
+
+	Sub MapRoofPartGutter
+
+	OnError Goto Err_Manage
+
+	Dim MapWinID As Integer
+	Dim PathTab As String
+
+	Close All
+
+	PathTab = PathVectorL + "Roof_MI.TAB"
+
+	Open Table PathTab As Roof_MI
+
+	Map From Roof_MI Max
+
+	MapWinID = FrontWindow()
+
+	Open Table PathBackdrop + "nauru050515.TAB" Interactive
+	
+	Add Map Auto Layer nauru050515
+
+	Set Map Window MapWinID Zoom 1.0 Units "km" Center (166.9354, -0.504205)
+
+'	++++++++++++++++ import Access Table +++++++++++++++++++++++++++++++++++++++++
+
+	Register Table PathAccess + DatabaseName   
+	Type ACCESS Table "TMP_RoofDetails" 
+	Into PathVectorL + "TMP_RoofDetails.TAB"
+
+	Open Table PathVectorL + "TMP_RoofDetails.TAB" Interactive
+
+'	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'	++++++++++++++++ Link MapInfo and Access Table +++++++++++++++++++++++++++++++
+
+	Select * from Roof_MI, TMP_RoofDetails 
+	where Roof_MI.Roof_ID = TMP_RoofDetails.Roof_ID 
+	into LinkTable
+
+'	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'	++++++++++++++++++++++++ Add to current mapper +++++++++++++++++++++++++++++++
+
+	set map redraw off
+	Add Map Layer LinkTable
+	Set Map Layer Roof_MI Display Global Global Brush (2,16711680,16777215)  Label Auto On
+	set map redraw on
+
+'	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'	++++++++++++++++++++++++ Create thematic Map +++++++++++++++++++++++++++++++
+
+	shade window MapWinID LinkTable with RoofSizeGutter ranges 
+		apply all use color Brush (2,16711680,16777215)  
+		0: 10 Brush (2,12632256,16777215) Pen (1,2,0) ,
+		10: 80 Brush (2,13664384,16777215) Pen (1,2,0) ,
+		80: 130 Brush (2,15745088,16777215) Pen (1,2,0) ,
+		130: 2590 Brush (2,16711680,16777215) Pen (1,2,0) 
+		default Brush (2,16777215,16777215) Pen (1,2,0)  
+
+'	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'	++++++++++++++++++++++++ Create Map Legend +++++++++++++++++++++++++++++++
+
+	set legend window MapWinID layer prev 
+		display on 
+		shades on 
+		symbols off 
+		lines off 
+		count on 
+		title "Roof Area Conneceted to Gutter" Font ("Arial",1,10,0) 
+		subtitle auto Font ("Arial",0,8,0) 
+		ascending off 
+		ranges Font ("Arial",0,8,0) 
+		auto display off ,
+		"0 to 10 m2" display on  ,
+		"10 to 80 m2" display on ,
+		"80 to 130 m2" display on ,
+		"130 to 2,590 m2" display on 
+
+	Set Window WIN_LEGEND 
+		Position (0.5,3) Units "cm"
+		Width 6.5 Units "cm"
+		Height 3 Units "cm"
+
+	Open Window Legend
+
+	Run Menu Command M_QUERY_UNSELECT
+
+		Res_Main:
+			Exit Sub
+
+		Err_Manage:
+			note "Error: " + str$(Err()) + ", " + Error$()
+			Resume Res_Main
+
+	End sub

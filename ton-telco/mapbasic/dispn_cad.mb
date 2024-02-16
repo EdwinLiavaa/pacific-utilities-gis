@@ -1,0 +1,75 @@
+'*****************************************************************
+'*  Name   : DispN_CAD
+'*  Purpose: Display Nuku'alfa Cadastral
+'*           Set units and zoom
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Edwin Liava'a
+'*  Date   : 06/05/2011
+'*  Mods   : 
+'*
+'*****************************************************************
+
+Include "TCC_Lib.def"
+Include "mapbasic.def"
+Include "menu.def"
+
+Declare Sub DispN_CAD
+
+Global AC_Path As String	'	Access
+Global BD_Path As String	'	MapInfo Raster Layers (BackDrops)
+Global MI_Path As String	'	MapInfo Vector Layers
+Global db_MIS As String	'	MIS database
+
+Sub DispN_CAD
+
+OnError Goto Err_Manage
+
+	'	+++++++++++++++ declarations +++++++++++++++
+
+	Dim layer_num, mapID, num_layers As Integer
+	Dim layer_already_disp As Logical
+	Dim strLayer As String
+
+	'	+++++++++++++++ display selected layer +++++++++++++++
+
+	strLayer = "N_CAD"
+
+	mapId = FrontWindow()
+
+	Open Table MI_Path + "\" + strlayer
+
+	layer_already_disp = "FALSE"
+	If mapId = 0 Then ' no other layers displayed
+		Map From strLayer Max
+		Call ZoomSet (strLayer)
+	Else
+		mapID = FrontWindow()
+		num_layers = MapperInfo( mapID , MAPPER_INFO_LAYERS)
+		For layer_num = 1 To num_layers
+			If strlayer = LayerInfo( mapID , layer_num , LAYER_INFO_NAME ) Then
+				layer_already_disp = "TRUE"
+			End If
+		Next
+		If layer_already_disp = "TRUE" Then
+			Note "Layer already displayed"
+		Else
+
+			'	+++++++++++++++ Other layer(s) already displayed +++++++++++++++
+			'	+++++++++++++++	Use Auto keyword to ensure backdrops at bottommost layers +++++++++++++++
+
+			Set Map Redraw Off
+			Add Map Auto Layer strLayer
+			Call ZoomSet (strLayer)
+			Set Map Redraw On
+		End If
+	End If
+
+Res_DisN_CAD:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Res_DisN_CAD
+End Sub

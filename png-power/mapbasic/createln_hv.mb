@@ -1,0 +1,494 @@
+'*****************************************************************
+'*  Name   : CreateLN_HV
+'*  Purpose: Create Lines High Voltage 
+'*
+'*				1. Select Feeder
+'*				2. Open relevant points tables to connect HV Lines
+'*				3. Connect points with lines
+'*				4. Populate HV Lines Table with data
+'*
+'*  Author : Edwin Liava'a 21/01/2013
+'*  Inputs : Relevant points tables
+'*  Outputs: LN_HV
+'*           
+'*****************************************************************
+
+Include "PPL_Lib.def"
+Include "mapbasic.def"
+Include "menu.def"
+Include "Icons.def"  
+
+'*****************************************************************
+
+' Sub Program (Procedure) Declarations
+
+declare sub CreateLN_HV			
+declare sub PickID
+declare sub LetsContinue(byval x1 as float, byval y1 as float, byval nextID as string)
+
+' Declare Global Variables
+
+Global db_conn_path 												As String	 		 
+Global rs_path 													As String			 
+Global vt_Path 													As String			 
+Global feederID,fromID,nextID,phaseID,cableID,ugID  		As String
+Global lineID														As Integer
+Global voltID														As float
+Global WIA															As Logical			 
+Global x1,y1,x2,y2												As Float
+
+
+'******************************CreateLN_HV Procedure********************************
+' this procedure open the tables and display the tools
+
+Sub CreateLN_HV
+
+	Dim Map_Win_id 	As Integer
+	Dim i,j			As Integer
+	Dim TableName		As String
+	Dim strFD_ID		As String
+ 
+	WIA = FALSE
+
+	Close All
+	
+	TableName = vt_path + "\" + "LN_HV.tab"
+	Open Table TableName As LN_HV Interactive
+	TableName = vt_path + "\" + "TT.tab"
+	Open Table TableName As TT Interactive
+	TableName = vt_path + "\" + "TX.tab"
+	Open Table TableName As TX Interactive
+	TableName = vt_path + "\" + "PL.tab"
+	Open Table TableName As PL Interactive
+	TableName = vt_path + "\" + "FD.tab"
+	Open Table TableName As Feeders Interactive
+	TableName = vt_path + "\" + "GN.tab"
+	Open Table TableName As GN Interactive
+	TableName = vt_path + "\" + "SG.tab"
+	Open Table TableName As SG Interactive
+	TableName = vt_path + "\" + "BU.tab"
+	Open Table TableName As BU Interactive
+	TableName = vt_path + "\" + "BR.tab"
+	Open Table TableName As BR Interactive
+	TableName = vt_path + "\" + "ES.tab"
+	Open Table TableName As ES Interactive
+	TableName = vt_path + "\" + "IS.tab"
+	Open Table TableName As IS Interactive
+	TableName = vt_path + "\" + "LA.tab"
+	Open Table TableName As LA Interactive
+	TableName = vt_path + "\" + "BL.tab"
+	Open Table TableName As BL Interactive
+
+			
+	Map From LN_HV, GN, BR, ES, IS, LA, SG, BU, TX, TT, PL, BL max
+
+	Set Map Distance Units "m"
+	Set Map Redraw Off
+	Set Map Layer LN_HV Editable On
+	Set Map Redraw On
+	set map redraw off
+	Set Map Layer 1 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 1000) Units "m"
+	set map redraw on
+	set map redraw off
+	Set Map Layer 2 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 1000) Units "m"
+		Activate Using Tag_Target_Photo On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 3 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 1000) Units "m"
+		Activate Using Tag_Target_Photo On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 4 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 1000) Units "m"
+		Activate Using Tag_Target_Photo On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 5 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 1000) Units "m"
+		'Activate Using Tag_Target_Photo On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 6 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 1000) Units "m"
+		'Activate Using Tag_Target_Photo On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 7 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 1000) Units "m"
+		'Activate Using Tag_Target_Photo On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 8 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 1000) Units "m"
+		'Activate Using Tag_Target_Photo On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 9 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 1000) Units "m"
+		'Activate Using Tag_Target_Photo On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 10 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 1000) Units "m"
+		'Activate Using Tag_Target_Photo On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 11 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 1000) Units "m"
+		'Activate Using Tag_Target_Photo On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 12 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 1000) Units "m"
+		'Activate Using Tag_Target_Photo On Labels Objects Relative Path On
+	set map redraw on
+		
+	Create ButtonPad "Line" As ToolButton	
+	Icon MI_ICON_HOT_LINK
+	Cursor MI_CURSOR_FINGER_UP
+	DrawMode DM_CUSTOM_POINT
+	ID 23	
+	Calling PickID
+	Position (5,5)
+	Width 10
+	Float
+	Show
+
+'+++++++++++++++++++++++++++  Getting window ID +++++++++++++++++++++
+
+	Map_Win_id = FrontWindow()
+
+	If Map_Win_id = 0 Then
+		Exit Sub
+	End If
+
+'+++++++++++++++++++++++++++ Dialog Feeder+++++++++++++++++++++++
+
+	Dialog
+	Title "PPL MIS-GIS" 
+	Control StaticText
+		Title "Please Enter Feeder_ID:"  
+	Control EditText 
+		Value strFD_ID		'this is a Global String variable
+		Into strFD_ID	
+	Control OKButton
+	Control CancelButton  
+			
+	If Not CommandInfo(CMD_INFO_DLG_OK) Then 
+		' ...then the user clicked CANCEL
+		Note "Program will now close!"
+		Close All Interactive
+		Exit Sub
+	End If
+	If CommandInfo(CMD_INFO_DLG_OK) And strFD_ID = "" Then
+		Note "Invalid Feerder_ID!"
+		Call CreateLN_HV
+	Else	' ...the user clicked OK
+		Select FD_ID,KV from Feeders where FD_ID = Ucase$(str$(strFD_ID)) into Temp1
+		If Temp1.COL1 = Ucase$(str$(strFD_ID)) Then
+			feederID = Ucase$(Str$(strFD_ID))
+			voltID = Temp1.COL2
+			Note "Pick HV Asset to Connect HV Line" 			
+		Else
+			Note "Invalid Feerder_ID!"
+			Call CreateLN_HV
+		End If
+	End If
+
+'+++++++++++++++++ Set Centre and Zoom of Map ++++++++++++++++++++++++
+
+		Set Map Window Map_Win_id Layer 1 Arrows On
+		Set Map Window Map_Win_id Zoom Entire Layer 1 
+		
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+End Sub
+
+
+'*****************************PickID Procedure*********************************
+' this procedure selects a pole or transformer to connect a HV line from and to
+
+Sub PickID
+
+	Dim Map_Win_id 	As Integer
+	Dim x,x1			As Float
+	Dim y,y1			As Float
+	Dim iFound		As Integer
+	Dim i				As Integer
+	Dim j				As Integer
+	Dim sTable		As String
+	Dim iRowid		As Integer
+	Dim aTable		As Alias
+	Dim lFound		As Logical
+	Dim Counter		As Integer
+	Dim xyUnits		As String
+	Dim CosName		As String
+	Dim ofound		As Object
+
+OnError Goto Err_Manage
+
+	Map_Win_id = FrontWindow()
+	If WindowInfo(Map_Win_id,WIN_INFO_TYPE) <> WIN_MAPPER Then
+		Note "You must Select a Map Window first"
+		Exit Sub
+	End If
+
+	CosName = WindowInfo(Map_Win_Id,WIN_INFO_TABLE)
+
+	Set CoordSys Window Map_Win_id
+	
+	x = CommandInfo(CMD_INFO_X)
+	y = CommandInfo(CMD_INFO_Y)
+
+	xyunits = MapperInfo(Map_Win_id,MAPPER_INFO_XYUNITS)
+	
+	ifound = SearchPoint(Map_Win_Id,x,y)
+	
+	If ifound = 0 Then
+		lFound = FALSE
+	Else
+		lFound = FALSE
+		For i = 1 to ifound
+      		' Get the name of the table containing a "hit".
+	      	stable = SearchInfo(i, SEARCH_INFO_TABLE)
+			  
+	      	' Get the row ID number of the object that was a hit.
+	      	irowid = SearchInfo(i, SEARCH_INFO_ROW)
+			
+			If sTable = "GN" Then 
+	        		' Fetch the row of the object the user clicked on.
+	        		Fetch rec iRowid From sTable
+	        		ofound = GN.obj
+					x1 = centroidX(ofound)
+					y1 = centroidY(ofound)
+					nextID = GN.GN_ID
+					phaseID = "3"
+					ugID = "U"
+					'voltID = GN.MW
+					lFound = TRUE
+			ElseIf sTable = "SG" Then 
+	        		' Fetch the row of the object the user clicked on.
+	        		Fetch rec iRowid From sTable
+	        		ofound = SG.obj
+					x1 = centroidX(ofound)
+					y1 = centroidY(ofound)
+					nextID = SG.SG_ID
+					phaseID = "3"
+					'voltID = SG.kV
+					ugID = "U"
+					lFound = TRUE
+			ElseIf sTable = "ST" Then 
+	        		' Fetch the row of the object the user clicked on.
+	        		Fetch rec iRowid From sTable
+	        		ofound = ST.obj
+					x1 = centroidX(ofound)
+					y1 = centroidY(ofound)
+					nextID = ST.Zone_SubID
+					phaseID = "3"
+					voltID = ST.Voltage_KV
+					ugID = "U"
+					lFound = TRUE
+			ElseIf sTable = "BU" Then 
+	        		' Fetch the row of the object the user clicked on.
+	        		Fetch rec iRowid From sTable
+	        		ofound = BU.obj
+					x1 = centroidX(ofound)
+					y1 = centroidY(ofound)
+					phaseID = "3"
+					nextID = BU.BU_ID
+					voltID = BU.KV
+					ugID = "Y"
+					lFound = TRUE
+			ElseIf sTable = "BR" Then 
+	        		' Fetch the row of the object the user clicked on.
+	        		Fetch rec iRowid From sTable
+	        		ofound = BR.obj
+					x1 = centroidX(ofound)
+					y1 = centroidY(ofound)
+					phaseID = "3"
+					nextID = BR.BR_ID
+					voltID = BR.KV
+					ugID = "Y"
+					lFound = TRUE
+			ElseIf sTable = "ES" Then 
+	        		' Fetch the row of the object the user clicked on.
+	        		Fetch rec iRowid From sTable
+	        		ofound = ES.obj
+					x1 = centroidX(ofound)
+					y1 = centroidY(ofound)
+					phaseID = "3"
+					nextID = ES.ES_ID
+					voltID = ES.KV
+					ugID = "Y"
+					lFound = TRUE
+			ElseIf sTable = "IS" Then 
+	        		' Fetch the row of the object the user clicked on.
+	        		Fetch rec iRowid From sTable
+	        		ofound = IS.obj
+					x1 = centroidX(ofound)
+					y1 = centroidY(ofound)
+					phaseID = "3"
+					nextID = IS.IS_ID
+					voltID = IS.KV
+					ugID = "Y"
+					lFound = TRUE
+			ElseIf sTable = "LA" Then 
+	        		' Fetch the row of the object the user clicked on.
+	        		Fetch rec iRowid From sTable
+	        		ofound = LA.obj
+					x1 = centroidX(ofound)
+					y1 = centroidY(ofound)
+					phaseID = "3"
+					nextID = LA.LA_ID
+					voltID = LA.KV
+					ugID = "Y"
+					lFound = TRUE
+			ElseIf sTable = "TX" Then 
+	        		' Fetch the row of the object the user clicked on.
+	        		Fetch rec iRowid From sTable
+	        		ofound = TX.obj
+					x1 = centroidX(ofound)
+					y1 = centroidY(ofound)
+					phaseID = TX.Tx_Phase
+					'voltID = TX.System_Voltage
+					nextID = TX.TX_ID
+					ugID = "U"
+					lFound = TRUE
+			ElseIf sTable = "TT" Then 
+	        		' Fetch the row of the object the user clicked on.
+	        		Fetch rec iRowid From sTable
+	        		ofound = TT.obj
+					x1 = centroidX(ofound)
+					y1 = centroidY(ofound)
+					nextID = TT.TT_ID
+					If TT.Circuit_Type <> "Double" Then
+						phaseID = "3"
+					Else
+						phaseID = "6"
+					End If
+					'voltID = TT.Voltage_KVA
+					ugID = "N"
+					lFound = TRUE
+			ElseIf sTable = "PL" Then 
+	        		' Fetch the row of the object the user clicked on.
+	        		Fetch rec iRowid From sTable
+	        		ofound = PL.obj
+					x1 = centroidX(ofound)
+					y1 = centroidY(ofound)
+					If PL.Reticulation_Type = "LV" Then
+						lFound = FALSE
+						Note "Sorry! HV Line cannot connect to LV Pole"
+					Else	
+						lineID = tableinfo(LN_HV,TAB_INFO_NROWS)
+						nextID = PL.PL_ID
+						If PL.HV_Pin_Insullator < 2 Then
+							phaseID = 1
+						ElseIf PL.HV_Pin_Insullator = 2 Then
+							phaseID = 2
+						Else
+							phaseID = 3
+						End If
+						'voltID = PL.Voltage_System
+						ugID = "U"
+					
+						lFound = TRUE
+					End If
+			End If 
+    	Next
+	End If
+
+	If lFound = FALSE Then
+		Print chr$(12)
+		'Note "Sorry, No Pole or Transformer There!"
+		Note "Please Try Again!"
+	else
+		call LetsContinue(x1, y1, nextID)
+	End If
+	
+PickID:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume PickID
+
+End Sub 
+
+'*********************************LetsContinue procedure*********************************
+' this procedure allows you to continue connecting PL with LN_HV
+
+Sub LetsContinue(Byval x1 As Float, byval y1 As Float, Byval nextID As String)
+
+	Dim i,j				As Integer
+	Dim newline			As Object
+	Dim counter			As Integer
+	Dim dist 				As Float
+
+OnError Goto Err_Manage
+
+	If WIA = FALSE then 
+		x2 = x1 
+		y2 = y1
+		fromID = nextID 
+		WIA = TRUE
+		Note "Pick the NextID to Connect HV Line!"
+		Exit Sub
+	End If
+	
+	dist = Distance(x2,y2,x1,y1,"m")
+	cableID = "HT"
+	Select Max(LN_ID) from LN_HV into MaxID
+	lineID = MaxID.COL1 + 1
+		
+	Insert Into LN_HV(LN_ID,FD_ID,FROM_ID,NEXT_ID,PHASE_ID,CABLE_ID,UG,XB,YB,XE,YE,LENGTH,VOLTAGE)
+	Values (lineID, feederID, fromID, nextID, phaseID, cableID, ugID, x2, y2, x1, y1, dist, voltID)
+	
+	Update LN_HV Set LN_ID = rowid		
+
+	counter = tableinfo(LN_HV,TAB_INFO_NROWS)
+	
+	Create Line
+			Into Variable newline
+			(x2, y2) (x1, y1)
+			Pen MakePen(2, 2, RED)
+
+	Update LN_HV
+		Set Obj = newline
+		where  RowID = counter
+
+'Set Message Window
+		Set Window WIN_INFO Table LN_HV Rec counter
+		Set Window WIN_INFO
+		Position (0.20, 0.20) ' place in upper left 
+		Font ("Arial", 1, 12, BLUE) ' Arial bold...
+		Width 3.0 ' make window 3" wide 
+		Height 5.0 ' make window 1" high
+		Open Window WIN_INFO
+				
+	WIA = FALSE
+
+LetsContinue:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume LetsContinue
+
+End Sub
+

@@ -1,0 +1,117 @@
+'*****************************************************************
+'*  Name   : DispLN_PHASE
+'*  Purpose: Display Lines by Phase 
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Les Allinson, Edwin Liava'a
+'*  Date   : 26-Feb-2007
+'*  Mods   : 
+'*           
+'*****************************************************************
+
+Include "mapbasic.def"
+Include "menu.def"
+
+Declare Sub DispLN_PHASE
+
+Global db_conn_path As String	'	Access
+Global rs_path As String	'	MapInfo Raster Layers (BackDrops)
+GLobal vt_Path As String	'	MapInfo Vector Layers
+
+Sub DispLN_PHASE
+
+OnError Goto Err_Manage
+
+	'	+++++++++++++++ declarations +++++++++++++++
+
+	Dim Map_Win_id 				As Integer
+	Dim i,j						As Integer
+	Dim TableName				 	As String
+
+	'	+++++++++++++++ display selected layer +++++++++++++++
+
+	Close All
+
+	TableName = db_conn_path + "\" + "TX.tab"
+	Open Table TableName As TX Interactive
+	TableName = db_conn_path + "\" + "PL.tab"
+	Open Table TableName As PL Interactive
+	TableName = db_conn_path + "\" + "MT.tab"
+	Open Table TableName As MT Interactive
+	TableName = db_conn_path + "\" + "LN_HV.tab"
+	Open Table TableName As HV_Lines Interactive
+	TableName = db_conn_path + "\" + "LN_LV.tab"
+	Open Table TableName As LV_Lines Interactive
+		
+	Map From TX, PL, MT , HV_Lines, LV_Lines Max
+
+	Set Map Distance Units "m"
+	set map redraw off
+	Set Map Layer 1 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+	set map redraw on
+	set map redraw off
+	Set Map Layer 2 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+	set map redraw on
+	set map redraw off
+	Set Map Layer 3 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+	set map redraw on
+	set map redraw off
+	Set Map Layer 4 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+	set map redraw on
+
+	'++++++++++++++++++  Getting window ID +++++++++++++++++++++
+
+	Map_Win_id = FrontWindow()
+
+	'++++++++++++++++++  Shade Statement  ++++++++++++++++++++++
+
+	Shade Window Map_Win_id "LV_Lines" with PHASE_ID values  
+		"A" Brush (2,65280,16777215) Pen (1,2,0) Line (3,2,65280) Symbol (34,65280,12) ,
+		"B" Brush (2,255,16777215) Pen (1,2,0) Line (2,2,255) Symbol (34,255,12) ,
+		"R" Brush (2,16711680,16777215) Pen (1,2,0) Line (2,2,16711680) Symbol (34,16711680,12) ,
+		"RB" Brush (2,16732415,16777215) Pen (1,2,0) Line (2,2,16732415) Symbol (34,16732415,12) ,
+		"RY" Brush (2,16770192,16777215) Pen (1,2,0) Line (2,2,16770192) Symbol (34,16770192,12) ,
+		"U" Brush (2,0,16777215) Pen (1,2,0) Line (2,5,0) Symbol (34,0,12) ,
+		"Y" Brush (2,16776960,16777215) Pen (1,2,0) Line (2,2,16776960) Symbol (34,16776960,12) ,
+		"YB" Brush (2,65535,16777215) Pen (1,2,0) Line (2,2,65535) Symbol (34,65535,12)
+
+'+++++++++++++++++++++++++ Legend statements +++++++++++++++++++++++++
+
+	Set Legend Window Map_Win_id layer prev display on shades off symbols off 
+		lines on count on title "Atlantis MIS-GIS" 
+		Font ("MS Sans Serif",0,10,0) subtitle "Lines by Phases" 
+		Font ("MS Sans Serif",0,8,0) ascending on ranges 
+		Font ("MS Sans Serif",0,8,0)
+		"All Others" display on, 
+		"A = 3 Phase" display on ,
+		"B = Blue" display on ,
+		"R = Red" display on ,
+		"RB = Red Blue" display on ,
+		"RY = Red Yellow" display on ,
+		"U = Unknown" display on ,
+		"Y = Yellow" display on ,
+		"YB = Yellow Blue" display on
+		
+	Set Window WIN_LEGEND 
+		Position (20,3) Units "cm"
+		Width 6 Units "cm"
+		Height 6 Units "cm"
+
+	Open Window Legend
+
+Res_DispLN_PHASE:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executin the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Res_DispLN_PHASE
+End Sub

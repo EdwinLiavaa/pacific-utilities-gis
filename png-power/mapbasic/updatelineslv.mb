@@ -1,0 +1,347 @@
+'*****************************************************************
+'*  Name   : UpdateLinesLV
+'*  Purpose: Update geometry columns of LN_LV Lines
+'*  Inputs : LN_LV, TX, PL, ND, MT
+'*  Outputs: LN_LV
+'*  Author : Edwin Liava'a
+'*  Date   : 10-Feb-2007
+'*  Mods   : 28-Feb-2007
+'*           
+'*****************************************************************
+
+Include "PPL_Lib.def"
+Include "mapbasic.def"
+Include "menu.def"
+Include "Icons.def"  
+
+'*****************************************************************
+
+Declare Sub UpdateLinesLV
+
+' Declare Global Variables
+
+Global vt_Path 									As String	 'MapInfo Vector Layers
+Global strFD_ID 									As String	
+Global x1,y1,x2,y2								As Float
+
+Sub UpdateLinesLV
+
+OnError Goto Err_Manage
+
+'	+++++++++++++++ declarations +++++++++++++++
+
+	Dim more 										As Logical
+	Dim Map_Win_id 								As Integer
+	Dim i, irow1 									As Integer
+	Dim i_obj_type 								As Integer
+	Dim b_x, b_y, e_x, e_y 				 	As Float
+	Dim pole_x, pole_y						 	As Float
+	Dim trans_x, trans_y					 	As Float
+	Dim meter_x, meter_y					 	As Float
+	Dim TableName									As String
+	Dim feederID 									As String
+	Dim LineFromID								As String
+	Dim LineToID									As String
+
+'	+++++++++++++++ user dialog +++++++++++++++
+
+	more = Ask(" 1. Update Spatial Geometry of LV Lines.           " +
+				 " 2. Update Tabular Data of Lines." +
+				 "                     " +
+				 " Please run Test_NoSpatial_LN_LV.MBX" +
+				 " Before Updating Lines." +
+				 "                                    " + 
+				 "                                    " + 
+			    "                                    " +                              
+				 " Do you want to continue?", "OK", "Cancel")
+
+	If more Then
+	Else
+		Exit Sub
+	End if
+
+'	+++++++++++++++ open Lines tables +++++++++++++++
+
+	Close All
+
+	Set ProgressBars Off
+
+	TableName = vt_Path + "\" + "LN_LV.tab"
+	Open Table TableName As LV Interactive
+	TableName = vt_Path + "\" + "PL.tab"
+	Open Table TableName As POL Interactive
+	TableName = vt_Path + "\" + "TX.tab"
+	Open Table TableName As Trans Interactive
+	TableName = vt_Path + "\" + "MT.tab"
+	Open Table TableName As Meters Interactive
+	TableName = vt_Path + "\" + "FD.tab"
+	Open Table TableName As Feeders Interactive
+	
+	Map From LV, Trans, POL, Meters Max
+
+	'*************  Getting window ID *************
+
+	Map_Win_Id = FrontWindow()
+	If Map_Win_id = 0 Then
+		Exit Sub
+	End If
+
+
+	'*************  Dialog Feeder *************  
+
+	Dialog
+	Title "PPL MIS-GIS" 
+	Control StaticText
+		Title "Please Enter Feeder_ID:"  
+	Control EditText 
+		Value strFD_ID		'this is a Global String variable
+		Into strFD_ID	
+	Control OKButton
+	Control CancelButton  
+			
+	If Not CommandInfo(CMD_INFO_DLG_OK) Then 
+		' ...then the user clicked CANCEL
+		Note "Program will now close!"
+		Close All Interactive
+		Exit Sub
+	End If
+	If CommandInfo(CMD_INFO_DLG_OK) And strFD_ID = "" Then
+		Note "Invalid Feerder_ID!"
+		Call UpdateLinesLV
+	Else	' ...the user clicked OK
+		Select FD_ID,KV from Feeders 
+			where FD_ID = Ucase$(str$(strFD_ID)) into Temp1
+		Select * from Feeders, LV
+			where Feeders.FD_ID = LV.FD_ID
+			And Feeders.FD_ID = Ucase$(str$(strFD_ID)) into Temp2
+		If Temp1.COL1 = Ucase$(str$(strFD_ID)) And Temp2.COL1 <> "" Then
+			feederID = Ucase$(Str$(strFD_ID))
+			'voltID = Temp1.COL2
+			Note "Ready to Update LV Lines" 			
+		Else
+			Note "Invalid Feerder_ID!"
+			Call UpdateLinesLV
+		End If
+	End If
+
+'************* Change Map, Set Centre and Zoom to Feeder ******************
+
+	Select * from LV where FD_ID = Ucase$(str$(strFD_ID)) into Lines
+	Select * from POL where Feeder_ID = Ucase$(str$(strFD_ID)) into Poles
+
+	Set Map redraw off
+	Set Map Distance Units "m" XY Units "m" 
+	Set Map Window Map_Win_Id Layer 1 Display Off
+	Set Map Window Map_Win_Id Layer 3 Display Off
+	Add Map Window Map_Win_Id Layer "Lines"
+	Add Map Window Map_Win_Id Layer "Poles"
+	Set Map Layer Lines Editable On
+	Set Map Layer "Lines"  Display Global Global Line (1,2,255)
+	Set Map Window Map_Win_Id Layer 1 Arrows On
+	Set Map Window Map_Win_Id Zoom Entire Layer 1
+	Set Window Map_Win_Id Max
+	Set map redraw on
+
+	'***********Set Message Window****************
+
+	Open Window Message ' open Message window 
+	Set Window Message 
+	Font ("Arial Narrow", 1, 10, BLUE) ' Arial bold...
+	Position (0.25, 0.25) ' place in upper left 
+	Width 4.0 ' make window 3" wide 
+	Height 6.5 ' make window 1" high 
+
+	Print "Start Update LV Lines: Please Wait..."
+
+	'+++++++++++++++ Update X and Y of Poles +++++++++++++++	
+
+	irow1 = 1
+	Fetch First From Poles
+
+' at this point, the expression: "Poles.obj" represents the graphical object that's attached 
+' to the first record of the Poles table. 
+
+	Do While Not EOT(Poles) 
+		i_obj_type = ObjectInfo(Poles.obj, OBJ_INFO_TYPE)
+		If i_obj_type = OBJ_POINT Then
+			pole_x = ObjectGeography(Poles.obj, OBJ_GEO_POINTX)
+			pole_y = ObjectGeography(Poles.obj, OBJ_GEO_POINTY) 
+			Update Poles Set Eastings = pole_x where rowid = irow1
+			Update Poles Set Nortings = pole_y where rowid = irow1
+			'Print pole_x + " " + pole_y
+			Fetch Next From Poles
+			irow1 = irow1 + 1
+		End If
+	Loop 
+
+	Commit Table Poles Interactive	
+
+	'+++++++++++++++ Update X and Y of Transformers +++++++++++++++	
+
+	irow1 = 1
+	Fetch First From Trans
+
+' at this point, the expression: "Trans.obj" represents the graphical object that's attached 
+' to the first record of the Poles table. 
+
+	Do While Not EOT(Trans) 
+		i_obj_type = ObjectInfo(Trans.obj, OBJ_INFO_TYPE)
+		If i_obj_type = OBJ_POINT Then
+			trans_x = ObjectGeography(Trans.obj, OBJ_GEO_POINTX)
+			trans_y = ObjectGeography(Trans.obj, OBJ_GEO_POINTY) 
+			Update Trans Set Eastings = trans_x where rowid = irow1
+			Update Trans Set Northings = trans_y where rowid = irow1
+			Fetch Next From Trans
+			irow1 = irow1 + 1
+		End If
+	Loop 
+
+	Commit Table Trans Interactive	
+
+'+++++++++++++++ Update X and Y of Meters +++++++++++++++	
+
+	irow1 = 1
+	Fetch First From Meters
+
+' at this point, the expression: "Meters.obj" represents the graphical object that's attached 
+' to the first record of the Poles table. 
+
+	Do While Not EOT(Meters) 
+		i_obj_type = ObjectInfo(Meters.obj, OBJ_INFO_TYPE)
+		If i_obj_type = OBJ_POINT Then
+			meter_x = ObjectGeography(Meters.obj, OBJ_GEO_POINTX)
+			meter_y = ObjectGeography(Meters.obj, OBJ_GEO_POINTY) 
+			Update Meters Set Eastings = meter_x where rowid = irow1
+			Update Meters Set Northings = meter_y where rowid = irow1
+			Fetch Next From Meters
+			irow1 = irow1 + 1
+		End If
+	Loop 
+
+	Commit Table Meters Interactive	
+
+' +++++++++++++++ Update Lines +++++++++++++++	
+
+	Select * From Lines where LENGTH = 0 into Temp0
+
+	irow1 = 1
+	Fetch First From Temp0
+	
+	Do While Not EOT(Temp0) 
+		Delete From Temp0 Where RowID = irow1
+		Print "Table " + Temp0 + " rows " + irow1 + " No Line " 
+		Commit Table Lines Interactive
+		Pack Table Lines Graphic Data Interactive
+		Commit Table Lines Interactive
+		Fetch Next From Temp0
+		irow1 = irow1 + 1
+	Loop 
+
+	Add Column "Lines" (FROM_ID )From Trans Set To TX_ID Where intersects
+	Add Column "Lines" (NEXT_ID )From Meters Set To MT_ID Where intersects
+	
+	Commit Table Lines Interactive
+
+	Select * From Lines where FROM_ID = "" into Temp1
+
+	irow1 = 1
+	Fetch First From Temp1
+
+	Do While Not EOT(Temp1) 
+		i_obj_type = ObjectInfo(Temp1.obj, OBJ_INFO_TYPE)
+		If i_obj_type = OBJ_LINE Then 
+			b_x = ObjectGeography(Temp1.obj, OBJ_GEO_LINEBEGX)
+			b_y = ObjectGeography(Temp1.obj, OBJ_GEO_LINEBEGY)
+			e_x = ObjectGeography(Temp1.obj, OBJ_GEO_LINEENDX)
+			e_y = ObjectGeography(Temp1.obj, OBJ_GEO_LINEENDY)
+			Update Temp1 Set XB = b_x where rowid = irow1
+			Update Temp1 Set YB = b_y where rowid = irow1
+			Update Temp1 Set XE = e_x where rowid = irow1
+			Update Temp1 Set YE = e_y where rowid = irow1
+			Select PL_ID From Poles Where Poles.Eastings = b_x And Poles.Nortings = b_y Into LineFromP
+			LineFromID = LineFromP.COL1
+			Update Temp1 Set FROM_ID = LineFromID where rowid = irow1
+			Print "From: " + LineFromID
+			Select PL_ID From Poles Where Poles.Eastings = e_x And Poles.Nortings = e_y Into LineToP
+			LineToID = LineToP.COL1
+			Update Temp1 Set NEXT_ID = LineToID where rowid = irow1 
+			Print "Next: " + LineToID  
+			Fetch Next From Temp1
+			irow1 = irow1 + 1
+		End If
+	Loop 
+
+	Commit Table Temp1 Interactive	
+
+	'Select * From Lines where FROM_ID = "" OR NEXT_ID = "" into Temp0
+
+		'Objects Snap From Temp0 
+			'Tolerance Node 3 Vector 3 
+		   		'Units "m" 
+			'Thin Bend 0 Distance 0 
+		    	'Units "m" 
+			'Cull Area 0 
+			 	'Units "sq m"
+
+	'Commit Table Temp0 Interactive
+
+	Select * From Lines where NEXT_ID = "" into Temp2
+	Add Column "Temp2" (NEXT_ID )From Meters Set To MT_ID Where intersects
+	Commit Table Temp2 Interactive
+	Select * From Lines where FROM_ID = "" into Temp3
+	Add Column "Temp3" (FROM_ID )From Meters Set To MT_ID Where intersects
+	Commit Table Temp3 Interactive
+	Select * From Lines where FROM_ID = "" into Temp4
+	Add Column "Temp4" (FROM_ID )From Poles Set To PL_ID Where intersects
+	Commit Table Temp4 Interactive
+	Select * From Lines where NEXT_ID = "" into Temp5
+	Add Column "Temp5" (NEXT_ID )From Poles Set To PL_ID Where intersects
+	Commit Table Temp5 Interactive
+	Select * From Lines where FROM_ID = NEXT_ID into Temp6
+	Add Column "Temp6" (FROM_ID )From Poles Set To PL_ID Where intersects
+	Commit Table Temp6 Interactive
+
+	Select * From Lines where left$(FROM_ID,2) = "TX" into Temp7
+
+	irow1 = 1
+	Fetch First From Temp7
+
+	Do While Not EOT(Temp7) 
+		i_obj_type = ObjectInfo(Temp7.obj, OBJ_INFO_TYPE)
+		If i_obj_type = OBJ_LINE Then 
+			b_x = ObjectGeography(Temp7.obj, OBJ_GEO_LINEBEGX)
+			b_y = ObjectGeography(Temp7.obj, OBJ_GEO_LINEBEGY)
+			e_x = ObjectGeography(Temp7.obj, OBJ_GEO_LINEENDX)
+			e_y = ObjectGeography(Temp7.obj, OBJ_GEO_LINEENDY)
+			Update Temp7 Set XB = b_x where rowid = irow1
+			Update Temp7 Set YB = b_y where rowid = irow1
+			Update Temp7 Set XE = e_x where rowid = irow1
+			Update Temp7 Set YE = e_y where rowid = irow1
+			'Select PL_ID From Poles Where Poles.Eastings = b_x And Poles.Nortings = b_y Into LineFromP
+			'LineFromID = LineFromP.COL1
+			'Update Temp7 Set FROM_ID = LineFromID where rowid = irow1
+			'Print "From: " + LineFromID
+			Select PL_ID From Poles Where Poles.Eastings = e_x And Poles.Nortings = e_y Into LineToP
+			LineToID = LineToP.COL1
+			Update Temp7 Set NEXT_ID = LineToID where rowid = irow1 
+			Print "Next: " + LineToID  
+			Fetch Next From Temp7
+			irow1 = irow1 + 1
+		End If
+	Loop 
+
+	Commit Table Temp7 Interactive
+
+
+	Note  "Finished Updating: " + Lines
+	'Commit Table LV Interactive
+	'Pack Table LV Graphic Data Interactive
+
+Main:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Print "Error: " + str$(err()) + ", " + error$()
+	Resume Main
+End Sub

@@ -1,0 +1,80 @@
+'*****************************************************************
+'*  Name   : PPL_Main
+'*  Purpose: PPL GIS Main Procedure
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Edwin Liava'a
+'*  Date   : 16-02-2007
+'*  Mods   : 28-10-2015
+'*           
+'*****************************************************************
+
+
+Include "PPL_Lib.def"
+Include "mapbasic.def"
+Include "menu.def"
+Include "Icons.def"  
+
+'	******************* global variables ***********************
+
+Global db_conn_path As String		' database connection path	 
+Global rs_path As String	 			' raster path
+Global vt_Path As String				' vector path 
+Global db_name As String				' database name
+Global tp_path As String				' topo path
+Global ph_path As String				' photos path	 
+
+'	******************* declarations ***************************
+
+Declare Sub Main
+Declare Sub Main_Menu
+
+Sub Main
+
+'	***************** declare and initialize ********************
+
+	Dim frontPath As String
+	Dim ilen As Integer
+	
+	OnError Goto Err_Manage
+	
+	frontPath = ApplicationDirectory$()		' get directory where this MapBasic program located
+	ilen = len(frontPath)
+	frontPath = mid$(frontpath, 1, ilen - 10)	' remove trailing string "\mapbasic\"
+
+	db_conn_path = frontPath + "\mapinfo"
+	tp_path = frontPath + "\topomaps"
+	rs_path = frontPath + "\backdrops"
+	vt_Path = frontPath + "\mapinfo"
+	ph_path = frontPath + "\photos"
+	db_name  = "PPL_MIS.mdb"
+
+'	***************** alter menu items ********************
+
+	Alter ButtonPad "DBMS" Hide
+	Alter ButtonPad "Tools" Hide
+	Alter ButtonPad "VM" Hide
+	Alter ButtonPad "Web Services" Hide
+	Alter ButtonPad "Standard" Show Fixed ToolbarPosition (0,0)
+	Alter ButtonPad "Main" Show Fixed ToolbarPosition (1,0)
+	Alter ButtonPad "Drawing" Show Fixed ToolbarPosition (0,1)
+	'Alter Menu "Maintenance" Remove M_TABLE_DELETE
+	'Alter Menu "Maintenance" Remove M_TABLE_PACK
+
+	'	+++++++++++++++ set environment +++++++++++++++
+
+	Set CoordSys Earth Projection 8, 104, "m", 147, 0, 0.9996, 500000, 10000000 Bounds (-7745844.29597, 2035.05676326) (8745844.29597, 19997964.9432)
+
+	'	+++++++++++++++ create user interface +++++++++++++++
+
+	Call Main_Menu 
+	
+Res_Main:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+
+Err_Manage:
+	Note "Error: " + str$(err()) + " " + error$()
+	Resume Res_Main
+End Sub

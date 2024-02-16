@@ -1,0 +1,246 @@
+'*****************************************************************************
+'*  Name   : Create CreatePPL_IDs
+'*  Purpose: Create Unique_IDs for PPL Assets and update Tag_Target_Photo Path
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Edwin Liava'a
+'*  Date   : 22-01-2013
+'*  Mods   : 
+'*           
+'*****************************************************************************
+
+Include "PPL_Lib.def"
+Include "mapbasic.def"
+Include "menu.def"
+Include "Icons.def"  
+
+Global db_conn_path As String	'	Access
+Global rs_path As String	'	MapInfo Raster Layers (BackDrops)
+GLobal vt_Path As String	'	MapInfo Vector Layers
+Global ph_Path As String	'	Photos
+
+
+Declare Sub CreatePPL_IDs
+Declare Sub CreateIDs(ByVal str_ID as String, ByVal iRec as integer, ByVal strLayer As string, ByVal strLayer_ID As string)
+Declare Sub CreateNums(ByVal strFD_ID as String, ByVal strLayer As string, ByVal strTable as string, ByVal strTable_ID as string)
+
+
+Sub CreatePPL_IDs
+
+OnError Goto Err_Manage
+
+	Dim RecNumber As Integer
+	Dim T_UniqueID As string
+	Dim A_UniqueID As string
+	Dim IDInfo As Integer
+	Dim s_filename As String
+	Dim iCount as Integer
+	Dim strFD_ID as String
+
+	Close All
+
+	Note "Open Layer to Update Unigue IDs!"
+
+	s_filename = FileOpenDlg("","","TAB","Open Table") 
+	
+	Open Table s_filename As NewTable
+
+	Dialog
+
+	Title "Question"		
+
+		Control StaticText		
+			Title "Is table packed? if YES -> OK"
+			Position 5, 10
+	
+		Control OKButton			'adds a push-button control to a dialog
+			Position 5, 40
+
+		Control CancelButton
+			Position 100, 40
+
+	If not CommandInfo(CMD_INFO_DLG_OK) Then
+
+		Pack Table NewTable Data
+
+	End If			
+
+	'++++++++++++++++++++++++++++ Dialog statement ++++++++++++++++++++++++++++++
+
+	Dialog
+  			Control StaticText 
+  				Title  "Enter Last ID:" 
+  				Position  5, 10
+
+			Control EditText
+   				Position 65, 8    Width 40 
+   				Into  IDInfo
+
+ 			Control OKButton 
+   				Position  10, 25 
+ 
+			Control CancelButton 
+   				Position  60, 25 
+				If not CommandInfo(CMD_INFO_DLG_OK) Then 
+  					Exit Sub
+				End If	
+	'++++++++++++++++++++++++++++ End dialog statement ++++++++++++++++++++++++++++++
+
+	'Update NewTable Set Tag_Target_Photo = ph_Path + "\" + Tag_Target_Photo
+
+	'++++++++++++++++++++++++++++ adding UniqueID      ++++++++++++++++++++++++++++++
+
+	Do Case s_filename
+		Case mid$(s_filename,20,2) = "MT" 
+ 			Call CreateIDs("MT", IDInfo, NewTable, "MT_ID")
+		Case mid$(s_filename,20,2) = "PL" 
+ 			Call CreateIDs("PL", IDInfo, NewTable, "PL_ID")
+			Select Feeder_ID from NewTable group by Feeder_ID into Feeders
+				RecNumber = 0
+				Fetch First From Feeders
+				Do While Not EOT(Feeders)
+					strFD_ID = Feeders.COL1
+					Select * from NewTable where NewTable.Feeder_ID = strFD_ID into Selection2 ORDER by NewTable.Location
+					Call CreateNums(strFD_ID, Selection2, "PL", "PL_NUM")
+					RecNumber = RecNumber + 1	
+					Fetch Next From Feeders
+				Loop 
+		Case mid$(s_filename,20,2) = "TX" 
+			Call CreateIDs("TX", IDInfo, NewTable, "TX_ID")
+			Select Feeder_ID from NewTable group by Feeder_ID into Feeders
+				RecNumber = 0
+				Fetch First From Feeders
+				Do While Not EOT(Feeders)
+					strFD_ID = Feeders.COL1
+					Select * from NewTable where NewTable.Feeder_ID = strFD_ID into Selection2 ORDER by NewTable.Location
+					Call CreateNums(strFD_ID, Selection2, "TX", "TX_NUM")
+					RecNumber = RecNumber + 1	
+					Fetch Next From Feeders
+				Loop 
+		Case mid$(s_filename,20,2) = "SG" 
+			Call CreateIDs("SG", IDInfo, NewTable, "SG_ID")
+			Select Feeder_ID from NewTable group by Feeder_ID into Feeders
+				RecNumber = 0
+				Fetch First From Feeders
+				Do While Not EOT(Feeders)
+					strFD_ID = Feeders.COL1
+					Select * from NewTable where NewTable.Feeder_ID = strFD_ID into Selection2 ORDER by NewTable.Location
+					Call CreateNums(strFD_ID, Selection2, "SG", "SG_NUM")
+					RecNumber = RecNumber + 1	
+					Fetch Next From Feeders
+				Loop 
+		Case mid$(s_filename,20,2) = "TT" 
+ 			Call CreateIDs("TT", IDInfo, NewTable, "TT_ID")
+		Case mid$(s_filename,20,2) = "BU" 
+			Call CreateIDs("BU", IDInfo, NewTable, "BU_ID")
+ 		Case mid$(s_filename,20,2) = "ST" 
+ 			Call CreateIDs("ZN", IDInfo, NewTable, "ST_ID")
+		Case mid$(s_filename,20,2) = "GN" 
+ 			Call CreateIDs("GN", IDInfo, NewTable, "GN_ID")
+		Case mid$(s_filename,20,2) = "BL" 
+			Call CreateIDs("BL", IDInfo, NewTable, "BL_ID")
+		Case mid$(s_filename,20,2) = "BR" 
+			Call CreateIDs("BR", IDInfo, NewTable, "BR_ID")
+		Case mid$(s_filename,20,2) = "ES" 
+			Call CreateIDs("ES", IDInfo, NewTable, "ES_ID")
+		Case mid$(s_filename,20,2) = "IS" 
+			Call CreateIDs("IS", IDInfo, NewTable, "IS_ID")
+		Case mid$(s_filename,20,2) = "LA" 
+			Call CreateIDs("LA", IDInfo, NewTable, "LA_ID")
+		Case mid$(s_filename,20,2) = "HY" 
+			Call CreateIDs("HY", IDInfo, NewTable, "HY_ID")
+		Case mid$(s_filename,20,2) = "TH" 
+			Call CreateIDs("TH", IDInfo, NewTable, "TH_ID")
+		Case Else
+			Note "Please check, No Table Exist"
+	End Case 
+
+	'	++++++++++++++++++++++++++++ 		End adding UniqueID      ++++++++++++++++++++++++++++++
+
+	Browse * FROM NewTable
+
+Res_CreatePPL_IDs:
+
+	Exit Sub
+
+Err_Manage:
+	note "Error: Blank Table!" + str$(Err()) + ", " + Error$()
+	Resume Res_CreatePPL_IDs
+
+End Sub
+
+'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Sub CreateIDs(ByVal str_ID as String, ByVal IDInfo as integer, ByVal strLayer As string, ByVal strLayer_ID As string)
+
+	Dim iRec, iCount as integer
+	Dim strID as string
+
+			iCount = IDInfo
+			iRec = 1
+	
+			Fetch first from strLayer
+			Do While Not EOT(strLayer)
+
+				'If iCount < 10 Then 
+					'strID = str_ID + "000000" + Str$(iCount)
+				'ElseIf iCount < 100  Then
+					'strID = str_ID + "00000" + Str$(iCount)
+				'ElseIf iCount < 1000  Then
+					 'strID = str_ID + "0000" + Str$(iCount)
+				'ElseIf iCount < 10000  Then
+					'strID = str_ID + "000" + Str$(iCount)
+				'ElseIf iCount < 100000  Then
+					'strID = str_ID + "00" + Str$(iCount)
+				'ElseIf iCount < 1000000  Then
+					'strID = str_ID + "0" + Str$(iCount)
+				'Else 
+					strID = str_ID + Str$(iCount)
+				'End If
+
+				Update strLayer Set strLayer_ID = strID Where RowID = iRec	
+				iCount = iCount + 1
+				iRec = iRec + 1
+				Fetch Next From strLayer
+			Loop
+
+
+End Sub
+
+'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Sub CreateNums(ByVal strFD_ID as String, ByVal strLayer As string, ByVal strTable as string, ByVal strTable_ID as string)
+
+	Dim iCount, iRec As integer
+	Dim strUID As string
+
+	iCount = 0
+	iRec = 1
+
+	Fetch first From strLayer
+		Do While Not EOT(strLayer)
+			iCount = iCount + 1
+			'If iCount < 10 Then 
+				'strUID = strTable + strFD_ID + "000000" + Str$(iCount)
+			'ElseIf iCount < 100  Then
+				'strUID = strTable + strFD_ID + "00000" + Str$(iCount)
+			'ElseIf iCount < 1000  Then
+				'strUID = strTable + strFD_ID + "0000" + Str$(iCount)
+			'ElseIf iCount < 10000  Then
+				'strUID = strTable + strFD_ID + "000" + Str$(iCount)
+			'ElseIf iCount < 100000  Then
+				'strUID = strTable + strFD_ID + "00" + Str$(iCount)
+			'ElseIf iCount < 1000000  Then
+				'strUID = strTable + strFD_ID + "0" + Str$(iCount)
+			'Else 
+				strUID = strTable + strFD_ID + Str$(iCount)
+			'End If
+			
+			Update strLayer Set strTable_ID = strUID Where RowID = iRec
+			
+			iRec = iRec + 1
+			Fetch Next From strLayer
+		Loop 
+
+End Sub
+

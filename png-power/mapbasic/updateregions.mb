@@ -1,0 +1,208 @@
+'*****************************************************************
+'*  Name   : UpdateRegions
+'*  Purpose: Update X1, X2, Y1, Y2, XC and YC after or moving or 
+'*				creating a region
+'*
+'* 	See MAPBASIC.DEF for table field types 
+'* 	Define COL_TYPE_CHAR			1
+'* 	Define COL_TYPE_DECIMAL		2
+'* 	Define COL_TYPE_INTEGER		3
+'* 	Define COL_TYPE_SMALLINT	4
+'* 	Define COL_TYPE_DATE			5
+'* 	Define COL_TYPE_LOGICAL		6
+'* 	Define COL_TYPE_GRAPHIC		7
+'* 	Define COL_TYPE_FLOAT 		8
+'*
+''	Define OBJ_INFO_TYPE
+'*  
+'*	Define OBJ_TYPE_ARC			1
+'*	Define OBJ_TYPE_ELLIPSE		2
+'*	Define OBJ_TYPE_LINE			3
+'*	Define OBJ_TYPE_PLINE		4
+'*	Define OBJ_TYPE_POINT		5
+'*	Define OBJ_TYPE_FRAME		6
+'*	Define OBJ_TYPE_REGION		7
+'*	Define OBJ_TYPE_RECT			8
+'*	Define OBJ_TYPE_ROUNDRECT	9
+'*	Define OBJ_TYPE_TEXT			10
+'*	Define OBJ_TYPE_MPOINT		11
+'*	Define OBJ_TYPE_COLLECTION	12
+'*
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Edwin Liava'a
+'*  Date   : 4-Mar-2007
+'*  Mods   : 
+'*           
+'*****************************************************************
+
+Include "mapbasic.def"
+Include "menu.def"
+
+Declare Sub UpdateRegions
+
+Sub UpdateRegions
+
+OnError Goto Err_Manage
+
+'	+++++++++++++++ declarations +++++++++++++++
+
+	Dim a_col_name1 As Alias
+	Dim a_col_name2 As Alias
+	Dim i As Integer
+	Dim irow As Integer
+	Dim i_rows_selected As Integer
+	Dim more As Logical
+	Dim myOBJ as Object
+	Dim i_col_num As Smallint
+	Dim i_col_type As SmallInt
+	Dim icount As Smallint
+	Dim inumtables As Smallint
+	Dim itablecount As Smallint
+	Dim s_col_name As String
+	Dim s_filename As String
+	Dim s_selname As String
+	Dim s_tablename As String
+
+'	+++++++++++++++ initialise +++++++++++++++
+
+	Print chr$(12)
+	Print "Start Test_UpdateRegion"
+	Set CoordSys Earth 
+		Projection 8, 104, "m", -171, 0, 0.9996, 500000, 10000000 
+
+'	+++++++++++++++ user dialog +++++++++++++++
+
+	more = Ask("  Update Bounds and Centroids for" + Chr$(10) +
+				"  Rectangle or Region:" + Chr$(10) +
+				"  table must be mappable" + Chr$(10) +
+				"  one or more regions must be selected" + Chr$(10) +
+				"  via Browser check box or" + Chr$(10) + 
+				"  Mapper select pointer" + Chr$(10) + 
+				"  immediately after opening table" + Chr$(10) + Chr$(10) +		 
+				"  Do you want to continue?", "OK", "Cancel")
+	If more Then
+	Else
+		Exit Sub
+	End if
+
+'	+++++++++++++++ get info on open tables +++++++++++++++
+
+	Print "NumTables(): " + NumTables()
+'	Print "TableInfo(0, TAB_INFO_NAME): " + TableInfo(0, TAB_INFO_NAME)
+	For itablecount = 1 To NumTables()
+		Print "TableInfo(" + itablecount + ", TAB_INFO_NAME): " + TableInfo(itablecount, TAB_INFO_NAME)
+	Next
+	Print "SelectionInfo(SEL_INFO_NROWS): " + SelectionInfo(SEL_INFO_NROWS)
+	Print "SelectionInfo(SEL_INFO_SELNAME): " + SelectionInfo(SEL_INFO_SELNAME)
+	Print "SelectionInfo(SEL_INFO_TABLENAME): " + SelectionInfo(SEL_INFO_TABLENAME)
+
+	If NumTables() < 1 Then 
+		Note "You must open a table before continuing"
+		Print "You must open a table before continuing"
+		Exit Sub 
+	End If
+
+	If SelectionInfo(SEL_INFO_NROWS) = 0 Then
+		Note "You must select objects before continuing"
+		Print "You must select objects before continuing"
+		Exit Sub		
+	End If
+
+	If TableInfo(SelectionInfo(SEL_INFO_TABLENAME), TAB_INFO_MAPPABLE)= FALSE Then
+		Note "You must select objects from a mappable table before continuing"
+		Print "You must select objects from a mappable table before continuing"
+		Exit Sub		
+	End If
+
+	If SelectionInfo(SEL_INFO_SELNAME) <> "Query1" Then
+		Note "This selection must be the first after opening the table"
+		Print "This selection must be the first after opening the table"
+		Exit Sub		
+	End If
+
+'	+++++++++++++++ objects have been selected in a mappable table +++++++++++++++	
+
+	Print "NumCols(SelectionInfo(SEL_INFO_TABLENAME)): " + 
+			NumCols(SelectionInfo(SEL_INFO_TABLENAME))
+
+	i_rows_selected = SelectionInfo(SEL_INFO_NROWS)
+	i_col_num = NumCols(SelectionInfo(SEL_INFO_TABLENAME))
+	s_selname = SelectionInfo(SEL_INFO_SELNAME)
+	s_tablename = SelectionInfo(SEL_INFO_TABLENAME)
+
+	i = 0
+	For icount = 1 to i_col_num
+		s_col_name = ColumnInfo(s_tablename, "COL" + str$(icount), COL_INFO_NAME)
+		i_col_type = ColumnInfo(s_tablename, "COL" + str$(icount), COL_INFO_TYPE)
+		Print icount + " " + s_col_name + " " + i_col_type
+		If	s_col_name = "X1" Or s_col_name = "X2" Or
+			s_col_name = "Y1" Or s_col_name = "Y2" Or
+			s_col_name = "XC" Or s_col_name = "YC" Then
+				i = i + 1
+		End If
+	Next
+
+	Print "i: " + i
+
+	If i <> 6 Then
+		Note "There must be columns named X1, X2, Y1, Y2, XC and YC to continue"
+		Print "There must be columns named X1, X2, Y1, Y2, XC and YC to continue"
+		Exit Sub
+	End If
+
+	more = Ask("  You are about to update " + i_rows_selected + " rows" + Chr$(10) +
+				"  in table " + s_tablename + Chr$(10) + Chr$(10) +		 
+				"  Do you want to continue?", "OK", "Cancel")
+	If more Then
+	Else
+		Exit Sub
+	End if
+
+'	+++++++++++++++ update geometry +++++++++++++++
+	
+'	s_col_name = "MT_ID"
+'	a_col_name1 = s_selname + "." + s_col_name
+'	a_col_name2 = s_tablename + "." + s_col_name
+
+'	irow = 1
+'	Fetch First from s_selname
+'	Do While Not EOT(s_selname)
+'		Print "s_selname: " + s_selname + " irow: " + irow + " MT_ID: " + a_col_name1
+'		Fetch Next From s_selname
+'		irow = irow + 1
+'	Loop
+'	irow = irow - 1		'	we exit after row has been incremented
+
+	Print "s_selname: " + s_selname
+	a_col_name1 = s_selname + ".obj"
+	Print "a_col_name1: " + a_col_name1
+	myOBJ = a_col_name1
+	Print "myOBJ: " + myOBJ
+
+	Print "s_selname: " + s_selname
+	s_col_name = s_selname + ".obj"
+	Print "s_col_name: " + s_col_name
+ 
+	Print ObjectInfo(Query1.obj, OBJ_INFO_TYPE)
+
+	Update s_selname Set X1 = ObjectGeography(Query1.obj, OBJ_GEO_MINX)
+	Update s_selname Set X2 = ObjectGeography(Query1.obj, OBJ_GEO_MAXX)	
+	Update s_selname Set Y1 = ObjectGeography(Query1.obj, OBJ_GEO_MINY)
+	Update s_selname Set Y2 = ObjectGeography(Query1.obj, OBJ_GEO_MAXY)
+	Update s_selname Set XC = CentroidX(obj)
+	Update s_selname Set YC = CentroidY(obj)
+
+	Commit Table s_selname
+	Close Table s_selname
+
+	Note i_rows_selected + " rows updated in table " + s_tablename
+
+UpdateRegions:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume UpdateRegions
+End Sub

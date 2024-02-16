@@ -1,0 +1,85 @@
+'*****************************************************************
+'*  Name   : DispMT_PRECON
+'*  Purpose: Display Meters by Connection Type
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Edwin Liava'a
+'*  Date   : 26-Feb-2007
+'*  Mods   : 04-Nov-2013
+'*           
+'*****************************************************************
+
+Include "PPL_Lib.def"
+Include "mapbasic.def"
+Include "menu.def"
+Include "Icons.def"  
+
+Declare Sub DispMT_PRECON
+
+Global db_conn_path As String	'	Access
+Global rs_path As String	'	MapInfo Raster Layers (BackDrops)
+GLobal vt_Path As String	'	MapInfo Vector Layers
+
+Sub DispMT_PRECON
+
+OnError Goto Err_Manage
+
+	'	+++++++++++++++ declarations +++++++++++++++
+
+	Dim Map_Win_id 				As Integer
+	Dim i,j						As Integer
+	Dim TableName				 	As String
+
+	'	+++++++++++++++ display selected layer +++++++++++++++
+
+	Close All
+
+	TableName = db_conn_path + "\" + "MT.tab"
+	Open Table TableName As MT Interactive
+			
+	Map From MT Max
+
+	Set Map Distance Units "m"
+	set map redraw off
+	Set Map Layer 1 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 1000) Units "m"
+		Activate Using Tag_Target_Photo On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	
+	'++++++++++++++++++  Getting window ID +++++++++++++++++++++
+
+	Map_Win_id = FrontWindow()
+
+	'++++++++++++++++++  Shade Statement  ++++++++++++++++++++++
+
+	Shade window Map_Win_id "MT" with CS_CON_TYPE ignore "" values
+	"Credit" Symbol (34,16711680,12) ,
+	"Easypay" Symbol (34,65280,12)
+ 	default Symbol (40,0,12)  
+
+'+++++++++++++++++++++++++ Legend statements +++++++++++++++++++++++++
+
+	Set Legend Window Map_Win_id layer prev display on shades off symbols on lines off count on 
+	title "PPL MIS-GIS" Font ("Arial",0,9,0) 
+	subtitle "Meters by Credit and Easypay" Font ("Arial",0,8,0) 
+	ascending on ranges Font ("Arial",0,8,0) auto display off ,
+	"Credit" display on ,
+	"Easypay" display on 
+	
+	Set Window WIN_LEGEND 
+		Position (1,1) Units "cm"
+		Width 6 Units "cm"
+		Height 6 Units "cm"
+
+	Open Window Legend
+
+Res_DispMT_PRECON:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executin the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Res_DispMT_PRECON
+End Sub

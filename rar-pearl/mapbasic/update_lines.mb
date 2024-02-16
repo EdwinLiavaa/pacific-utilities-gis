@@ -1,0 +1,84 @@
+'**************************************************************************************
+'*  Name   : Update_Lines
+'*  Purpose: Find begining and end of Lines and update table Lines coordinates and span
+'*  Inputs : Lines 
+'*  Outputs: X1, Y1, X2, Y2
+'*  Author : Edwin Liava'a 
+'*  Date   : 28/08/2011
+'*  Mods   : 
+'*           
+'**************************************************************************************
+
+Include "MMR_Lib.def"
+Include "mapbasic.def"
+Include "menu.def"
+
+Global AC_Path As String	'	Access
+Global BD_Path As String	'	MapInfo Raster Layers (BackDrops)
+Global MI_Path As String	'	MapInfo Vector Layers
+Global db_MIS As String	'	MIS database
+
+Declare Sub Update_Lines
+
+Sub Update_Lines
+
+OnError Goto Err_Manage
+
+	Dim myOBJ As Object
+	Dim Map_Win_id, irow, counter, i, obj_type As Integer
+	Dim x, y As Float
+	Dim new_pnt As Object
+	Dim s_filename1 As String
+
+	Close All
+
+	Note "Open Lines Layer!"
+
+	s_filename1 = FileOpenDlg("","","TAB","Open Table") 
+	
+	Open Table s_filename1 As s_table1 Interactive
+	
+	Map from s_table1
+
+	'*************************** Getting window ID *****************************
+
+	Map_Win_id = FrontWindow()
+
+	If Map_Win_id = 0 Then
+		Exit Sub
+	End If
+
+	Set map redraw off
+	Set Map Layer 1 Editable On
+	Set map redraw on
+
+	Update s_table1 Set Line_ID = RowID
+	Update s_table1 Set Length = ObjectLen(obj, "m")
+
+	irow = 1
+
+	Fetch First From s_table1
+	
+	Do While Not EOT(s_table1)
+ 		myOBJ = s_table1.obj
+		Update s_table1 Set X1 = ObjectGeography(myOBJ, OBJ_GEO_LINEBEGX) Where RowID = irow
+		Update s_table1 Set Y1 = ObjectGeography(myOBJ, OBJ_GEO_LINEBEGY) Where RowID = irow
+		Update s_table1 Set X2 = ObjectGeography(myOBJ, OBJ_GEO_LINEENDX) Where RowID = irow
+		Update s_table1 Set Y2 = ObjectGeography(myOBJ, OBJ_GEO_LINEENDY) Where RowID = irow
+		Fetch Next From s_table1
+		irow = irow + 1
+	Loop
+
+	Commit Table s_table1 Interactive
+	Commit Table s_table1 As "C:\MMR\Gis\MapInfo\Lines_BAK.tab" Type ACCESS Database "C:\MMR\Gis\Access\Back_End\MMR_GIS_be.mdb" Table "Lines_MI"
+
+	Print "Finished updating Lines!" 
+
+Main:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Next
+End Sub

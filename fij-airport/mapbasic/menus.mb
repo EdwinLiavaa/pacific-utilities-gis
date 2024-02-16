@@ -1,0 +1,86 @@
+'*****************************************************************
+'*  Name   : Menus
+'*  Purpose: Create user interface for Actions drop down menus
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Edwin Liava'a
+'*  Date   : 18/07/2011
+'*  Mods   :  
+'*
+'*****************************************************************
+Include "mapbasic.def"
+Include "menu.def"
+
+Global AC_Path As String	'	Access
+Global BD_Path As String	'	MapInfo Raster Layers 
+Global MI_Path As String	'	MapInfo Vector Layers
+
+Declare Sub Menus
+Declare Sub Layout_Preview
+Declare Sub About
+Declare Sub Finish
+Declare Sub NotYetReleased
+
+Sub Menus
+
+	OnError goto Err_Manage
+
+	Create Menu "Common" 
+    	As 	
+			"Backdrops",
+			"(-",
+			"* Not yet released!"
+	Alter Menu Bar Add "Common" 
+
+	Create Menu "Layers" 
+    	As 
+			"AFL Layers",
+			"* Not yet released!"
+	
+	Alter Menu Bar Add "Layers"
+
+ 	Create Menu "Actions" 
+    	As 	
+			"* Update Survey" Calling NotYetReleased,
+			"Print Layout" Calling Layout_Preview,
+			"(-",
+			"* Not yet released!"
+
+	Alter Menu Bar Add "Actions"  
+
+	Create Menu "Queries" 
+    	As 
+			"* AFL Thematic Maps" Calling NotYetReleased,
+			"(-",
+			"* Not yet released!"
+	
+	Alter Menu Bar Add "Queries"
+	
+	Create Menu "About" 
+    	As 	
+			"(-",
+			"About" Calling About,
+			"(-"
+	Alter Menu Bar Add "About" 	
+
+	Create Menu "Exit" 
+    	As 	
+			"(-",
+			"Exit" Calling Finish,
+			"(-"
+	Alter Menu Bar Add "Exit" 	
+
+
+Res_Menus:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Res_Menus
+End Sub Menus
+
+
+
+
+

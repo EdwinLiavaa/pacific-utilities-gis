@@ -1,0 +1,46 @@
+'********************************************************
+'*                                                      *
+'*     CrMeTran.MBO                Edwin, 20.08.98      *
+'*                                                      *
+'*  This program contains the sub program of the drop   *
+'*  down menu "Transformers" which then calls the other *
+'*  programs of the pull down menus.                    *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required files:                                      *
+'*                                                      *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required tables:                                     *
+'*                  - poles.tab                         *
+'*                  -                                   *
+'********************************************************
+
+Declare Sub CrMeTran
+Declare Sub InsMonT
+Declare Sub LocaTran
+Declare Sub NbConsTr
+Declare Sub MaxPowTr
+Declare Sub AgeTrans
+Declare Sub TypInsTr
+Declare Sub HVTypeTr
+Declare Sub LVTypeTr
+Declare Sub ConsTran
+
+'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Sub CrMeTran
+
+Create Menu "Transformers" as
+	
+		"Installation month"   		Calling InsMonT,
+		"Locate transformer"   		Calling LocaTran, 	
+		"Display KVA grouping"		Calling MaxPowTr,
+		"Display transformer age" 	Calling AgeTrans,
+		"On pole, pad or in stock" 	Calling TypInsTr,
+		"High voltage type" 		Calling HVTypeTr,
+		"Low voltage type" 		Calling LVTypeTr,
+		"Transformer Consumption"	Calling ConsTran,
+		"(-",
+		"Cost of Power Failure" calling NbConsTr
+
+Alter Menu Bar Add "Transformers"
+
+End Sub 

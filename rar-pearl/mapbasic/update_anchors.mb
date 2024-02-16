@@ -1,0 +1,71 @@
+'*******************************************************************************
+'*  Name   : Update_Anchors
+'*  Purpose: Update data from lines
+'*  Inputs : Lines and Anchors 
+'*  Outputs: Nodes
+'*  Author : Edwin Liava'a 
+'*  Date   : 11/08/2011
+'*  Mods   : 
+'*           
+'*******************************************************************************
+
+Include "MMR_Lib.def"
+Include "mapbasic.def"
+Include "menu.def"
+
+Global AC_Path As String	'	Access
+Global BD_Path As String	'	MapInfo Raster Layers (BackDrops)
+Global MI_Path As String	'	MapInfo Vector Layers
+Global db_MIS As String	'	MIS database
+
+Declare Sub Update_Anchors
+
+Sub Update_Anchors
+
+OnError Goto Err_Manage
+
+	Dim myOBJ As Object
+	Dim Map_Win_id, irow, counter, i, obj_type As Integer
+	Dim x, y As Float
+	Dim new_pnt As Object
+	Dim s_filename1, s_filename2 As String
+
+	Close All
+
+	Note "Open Lines Layer!"
+
+	s_filename1 = FileOpenDlg("","","TAB","Open Table") 
+	
+	Open Table s_filename1 As s_table1 Interactive
+	
+	Map from s_table1
+
+	Note "Now, Open Anchors Layer!"
+
+	s_filename2 = FileOpenDlg("","","TAB","Open Table") 
+	
+	Open Table s_filename2 As s_table2 Interactive
+	
+	Add Map Auto Layer s_table2
+
+	Add Column "s_table2" (FARM_ID)From s_table1 Set To FARM_ID Where intersects
+	Add Column "s_table2" (Line_Type)From s_table1 Set To Line_Type Where intersects
+	Update s_table2 Set Status = "Operational"
+	Update s_table2 Set Depth = 3
+	Update s_table2 Set ID = RowID
+	Update s_table2 Set Northing = CentroidY(obj)
+	Update s_table2 Set Easting = CentroidX(obj)
+
+	Commit Table s_table2 Interactive
+	Commit Table s_table2 As "C:\MMR\Gis\MapInfo\Anchors_BAK.tab" Type ACCESS Database "C:\MMR\Gis\Access\Back_End\MMR_GIS_be.mdb" Table "Anchors_MI"
+
+	Print "Finished updating Anchors!" 
+
+Main:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Next
+End Sub

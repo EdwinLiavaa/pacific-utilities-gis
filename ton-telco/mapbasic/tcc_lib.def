@@ -1,0 +1,14 @@
+'*****************************************************************
+'*  Name   : TCC_Lib.def
+'*  Purpose: Defines subroutines and functions in TCC_Lib library
+'*    
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Edwin Liava'a
+'*  Date   : 06/05/2011
+'*  Mods   : 
+'*           
+'*****************************************************************
+
+Declare Sub TestColname (mycolname As String, myfound As Integer, s_tablename As String)
+Declare Sub ZoomSet (strLayer As String)

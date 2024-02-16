@@ -1,0 +1,86 @@
+'*****************************************************************
+'*  Name   : DispPL_OWNER
+'*  Purpose: Display Poles by Owner 
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Les Allinson, Edwin Liava'a
+'*  Date   : 26-Feb-2007
+'*  Mods   : 
+'*           
+'*****************************************************************
+
+Include "mapbasic.def"
+Include "menu.def"
+
+Declare Sub DispPL_OWNER
+
+Global db_conn_path As String	'	Access
+Global rs_path As String	'	MapInfo Raster Layers (BackDrops)
+GLobal vt_Path As String	'	MapInfo Vector Layers
+
+Sub DispPL_OWNER
+
+OnError Goto Err_Manage
+
+	'	+++++++++++++++ declarations +++++++++++++++
+
+	Dim Map_Win_id 				As Integer
+	Dim i,j						As Integer
+	Dim TableName				 	As String
+
+	'	+++++++++++++++ display selected layer +++++++++++++++
+
+	Close All
+
+	TableName = db_conn_path + "\" + "PL.tab"
+	Open Table TableName As PL Interactive
+			
+	Map From PL Max
+
+	Set Map Distance Units "m"
+	set map redraw off
+	Set Map Layer 1 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+		Activate Using PIC On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	
+	'++++++++++++++++++  Getting window ID +++++++++++++++++++++
+
+	Map_Win_id = FrontWindow()
+
+	'++++++++++++++++++  Shade Statement  ++++++++++++++++++++++
+
+	Shade window Map_Win_id "PL" with OWNER_ID ignore "" 
+	values 
+		"C" Symbol (34,65535,12) ,
+		"E" Symbol (34,32768,12) ,
+		"S" Symbol (34,16711680,12) 
+	default Symbol (40,0,12) 
+
+'+++++++++++++++++++++++++ Legend statements +++++++++++++++++++++++++
+
+	Set Legend Window Map_Win_id layer prev display on shades off symbols on lines off count on 
+	title "EPC MIS-GIS" Font ("Arial",0,9,0)
+	subtitle "Poles by Owner" Font ("Arial",0,8,0) 
+	ascending on ranges Font ("Arial",0,8,0) auto display off ,
+	"C - Customer" display on ,
+	"E - EPC" display on ,
+	"S - TELCO" display on  
+		
+	Set Window WIN_LEGEND 
+		Position (20,3) Units "cm"
+		Width 6 Units "cm"
+		Height 6 Units "cm"
+
+	Open Window Legend
+
+Res_DispPL_OWNER:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executin the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Res_DispPL_OWNER
+End Sub

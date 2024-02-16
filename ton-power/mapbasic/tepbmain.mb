@@ -1,0 +1,61 @@
+'********************************************************
+'*                                                      *
+'*     TEPBMAIN.MBO                Edwin, 20.08.98      *
+'*                                                      *
+'*  This program contains the main module declaring the *
+'*  following sub-programs  and calling the programs of *
+'*  the pull down menus.                                *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required files:                                      *
+'*                                                      *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required tables:                                     *
+'*                                                      *
+'********************************************************
+	Declare Sub Password
+	Declare Sub CrMePole
+	Declare Sub CrMeCust
+	Declare Sub CrMeLine
+	Declare Sub CrMeTran
+	Declare Sub CrMeMetr
+	Declare Sub Main
+	Declare Sub CutaLine
+
+Global passw as String 
+Global MapPath as string
+Global CadaPath as String
+
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++*
+
+	Sub Main
+dim dri,drive as string
+dim lenpath as integer 			
+
+drive = ApplicationDirectory$() 
+lenpath = len(drive)
+lenpath = lenpath-9
+dri = left$(drive,lenpath)
+  MapPath=dri+"tepbdata\" '################## If you want to move your data, change this line
+  Cadapath=dri+"cadastre\"
+
+
+' ++++++++++++++++++++++++++ close some toolbars ++++++++++++++++++++
+
+	Alter ButtonPad "Tools" Hide
+	Alter ButtonPad "Drawing" Hide
+	Alter ButtonPad "Main" Show Fixed
+	Alter ButtonPad "ODBC" Hide
+
+
+	Call Password
+	Call CrMePole
+	Call CrMeLine
+	Call CrMeCust
+	Call CrMeTran
+	Call CrMeMetr
+
+
+
+	End Sub
+

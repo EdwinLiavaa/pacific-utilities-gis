@@ -1,0 +1,281 @@
+'*****************************************************************
+'*  Name   : Find_EPCAsset
+'*  Purpose: Find any EPC Asset
+'*  Inputs : BL, BR, BU, GN, ND, MT, PL, PS, SW, TX 
+'*  Outputs: EPC Asset
+'*  Author : Leslie Allinson, Edwin Liava'a
+'*  Date   : 13-Feb-2007
+'*  Mods   : 25-Feb-2007
+'*           
+'*****************************************************************
+Include "EPC_Lib.def"
+Include "mapbasic.def"
+Include "menu.def"
+Include "Icons.def"  
+
+'*****************************************************************
+
+' Sub Program (Procedure) Declarations
+
+declare sub Find_EPCAsset	
+
+' Declare Global Variables
+
+Global AC_Path 				As String	 'Access
+Global BD_Path 				As String	 'MapInfo Raster Layers (BackDrops)
+Global MI_Path 				As String	 'MapInfo Vector Layers
+												
+'******************************CreateLN_LV Procedure********************************
+' this procedure open the tables and display the tools
+
+Sub Find_EPCAsset
+
+	Dim Map_Win_id 	As Integer
+	Dim i,j			As Integer
+	Dim TableName 	As String
+	Dim Asset 		As String
+	Dim iXC,iYC		As Float
+	Dim aID			As Alias
+	Dim irowid 		As Integer
+	Dim iLayer		As Integer
+
+OnError Goto err_FindEPCAsset
+	
+	Close All
+
+	TableName = AC_Path + "\" + "TX.tab"
+	Open Table Tablename As TX Interactive
+	TableName = AC_Path + "\" + "PL.tab"
+	Open Table TableName As PL Interactive
+	TableName = AC_Path + "\" + "MT.tab"
+	Open Table Tablename As MT Interactive
+	TableName = AC_Path + "\" + "BL.tab"
+	Open Table TableName As BL Interactive
+	TableName = AC_Path + "\" + "BR.tab"
+	Open Table TableName As BR Interactive
+	TableName = AC_Path + "\" + "BU.tab"
+	Open Table TableName As BU Interactive
+	TableName = AC_Path + "\" + "GN.tab"
+	Open Table TableName As GN Interactive
+	TableName = AC_Path + "\" + "ND.tab"
+	Open Table TableName As ND Interactive
+	TableName = AC_Path + "\" + "PS.tab"
+	Open Table TableName As PS Interactive
+	'TableName = AC_Path + "\" + "SW.tab"
+	'Open Table TableName As SW Interactive
+
+	Map From TX, MT, PL, ND, BR, BU, GN, BL, PS Max
+	
+	Set Map Distance Units "m" 
+
+	set map redraw off
+	Set Map Layer 1 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+		Activate Using PIC On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 2 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+		Activate Using PIC On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 3 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+		Activate Using PIC On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 4 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+		Activate Using PIC On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 5 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+		Activate Using PIC On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 6 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+		Activate Using PIC On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 7 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+		Activate Using PIC On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 8 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+		Activate Using PIC On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 9 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+		Activate Using PIC On Labels Objects Relative Path On
+	set map redraw on
+
+'+++++++++++++++++++++++++++  Getting window ID +++++++++++++++++++++
+
+	Map_Win_id = FrontWindow()
+
+	If Map_Win_id = 0 Then
+		Exit Sub
+	End If
+
+
+' ++++++++++++++++++++++++++  Dialog Box +++++++++++++++++++++++++++++
+
+	Dialog
+
+	Title "EPC MIS-GIS Find Asset"
+
+	Control StaticText
+		Title "Type in EPC Asset ID:"
+		Position 5, 10
+
+	Control EditText
+		Position 20,20 Width 40
+		Into Asset
+	
+	Control OKButton
+		Position 5, 40
+
+	Control CancelButton
+		Position 45, 40
+
+	If not CommandInfo(CMD_INFO_DLG_OK) Then 	'The user just cancelled
+		Close All Interactive
+  		Exit Sub
+	End If
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	
+	If Left$(Asset,2) = "TX" Then
+		Select * From TX Where TX.TX_ID = Ucase$(Asset)
+		irowid = CommandInfo(CMD_INFO_ROWID)
+		Run Menu Command M_QUERY_FIND_SELECTION
+		iXC = CentroidX(TX.obj)
+		iYC = CentroidY(TX.obj)
+		Set Map Window Map_Win_id
+			Center (iXC,iYC)
+			Zoom 50 Units "m"
+		Open Window WIN_INFO
+		Set Window WIN_INFO Table TX Rec irowid
+	ElseIf Left$(Asset,2) = "PL" Then
+		Select * From PL Where PL.PL_ID = Ucase$(Asset)
+		irowid = CommandInfo(CMD_INFO_ROWID)
+		Run Menu Command M_QUERY_FIND_SELECTION
+		iXC = CentroidX(PL.obj)
+		iYC = CentroidY(PL.obj)
+		Set Map Window Map_Win_id
+			Center (iXC,iYC)
+			Zoom 50 Units "m"
+		Open Window WIN_INFO
+		Set Window WIN_INFO Table PL Rec irowid
+	ElseIf Left$(Asset,2) = "MT" Then
+		Select * From MT Where MT.MT_ID = Ucase$(Asset)
+		irowid = CommandInfo(CMD_INFO_ROWID)
+		Run Menu Command M_QUERY_FIND_SELECTION
+		iXC = CentroidX(MT.obj)
+		iYC = CentroidY(MT.obj)
+		Set Map Window Map_Win_id
+			Center (iXC,iYC)
+			Zoom 50 Units "m"
+		Open Window WIN_INFO
+		Set Window WIN_INFO Table MT Rec irowid
+   ElseIf Left$(Asset,2) = "BL" Then
+		Select * From BL Where BL.BL_ID = Ucase$(Asset)
+		irowid = CommandInfo(CMD_INFO_ROWID)
+		Run Menu Command M_QUERY_FIND_SELECTION
+		iXC = CentroidX(BL.obj)
+		iYC = CentroidY(BL.obj)
+		Set Map Window Map_Win_id
+			Center (iXC,iYC)
+			Zoom 50 Units "m"
+		Open Window WIN_INFO
+		Set Window WIN_INFO Table BL Rec irowid
+	ElseIf Left$(Asset,2) = "BR" Then
+		Select * From BR Where BR.BR_ID = Ucase$(Asset)
+		irowid = CommandInfo(CMD_INFO_ROWID)
+		Run Menu Command M_QUERY_FIND_SELECTION
+		iXC = CentroidX(BR.obj)
+		iYC = CentroidY(BR.obj)
+		Set Map Window Map_Win_id
+			Center (iXC,iYC)
+			Zoom 50 Units "m"
+		Open Window WIN_INFO
+		Set Window WIN_INFO Table BR Rec irowid
+	ElseIF Left$(Asset,2) = "BU" Then
+		Select * From BU Where BU.BU_ID = Ucase$(Asset)
+		irowid = CommandInfo(CMD_INFO_ROWID)
+		Run Menu Command M_QUERY_FIND_SELECTION
+		iXC = CentroidX(BU.obj)
+		iYC = CentroidY(BU.obj)
+		Set Map Window Map_Win_id
+			Center (iXC,iYC)
+			Zoom 50 Units "m"
+		Open Window WIN_INFO
+		Set Window WIN_INFO Table BU Rec irowid
+	ElseIf Left$(Asset,2) = "GN" Then
+		Select * From GN Where GN.GN_ID = Ucase$(Asset)
+		irowid = CommandInfo(CMD_INFO_ROWID)
+		Run Menu Command M_QUERY_FIND_SELECTION
+		iXC = CentroidX(GN.obj)
+		iYC = CentroidY(GN.obj)
+		Set Map Window Map_Win_id
+			Center (iXC,iYC)
+			Zoom 50 Units "m"
+		Open Window WIN_INFO
+		Set Window WIN_INFO Table GN Rec irowid
+	ElseIf Left$(Asset,2) = "ND" Then
+		Select * From ND Where ND.ND_ID = Ucase$(Asset)
+		irowid = CommandInfo(CMD_INFO_ROWID)
+		Run Menu Command M_QUERY_FIND_SELECTION
+		iXC = CentroidX(ND.obj)
+		iYC = CentroidY(ND.obj)
+		Set Map Window Map_Win_id
+			Center (iXC,iYC)
+			Zoom 50 Units "m"
+		Open Window WIN_INFO
+		Set Window WIN_INFO Table ND Rec irowid
+	ElseIf Left$(Asset,2) = "PS" Then
+		Select * From PS Where PS.PS_ID = Ucase$(Asset)
+		irowid = CommandInfo(CMD_INFO_ROWID)
+		Run Menu Command M_QUERY_FIND_SELECTION
+		iXC = CentroidX(PS.obj)
+		iYC = CentroidY(PS.obj)
+		Set Map Window Map_Win_id
+			Center (iXC,iYC)
+			Zoom 50 Units "m"
+		Open Window WIN_INFO
+		Set Window WIN_INFO Table PS Rec irowid
+
+	'ElseIf Left$(Asset,2) = "SW" Then
+		'TableName = SW
+		'iTableName = SW.obj
+		'aID = SW.SW_ID
+ 	End If
+
+Res_FindEPCAsset:
+
+	Exit Sub
+
+Err_FindEPCAsset:
+	note "FindEPCAsset: No Asset Found!"
+	Resume Res_FindEPCAsset
+
+End Sub
+	
+	
+
+
+	

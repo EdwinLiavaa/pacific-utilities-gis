@@ -1,0 +1,75 @@
+'*****************************************************************
+'*  Name   : DispCEN_COAST
+'*  Purpose: Display Port Moresby NDPC
+'*           Set units and zoom
+'*  Inputs : 
+'*  Outputs: 
+'*           
+'*****************************************************************
+
+Include "PPL_Lib.def"
+Include "mapbasic.def"
+Include "menu.def"
+
+Declare Sub DispCEN_COAST
+
+Global db_conn_path As String	'	Access
+Global rs_path As String	'	MapInfo Raster Layers (BackDrops)
+Global vt_Path As String	'	MapInfo Vector Layers
+Global db_name As String	'	MIS database
+Global tp_Path As String	
+
+Sub DispCEN_COAST
+
+OnError Goto Err_Manage
+
+	'	+++++++++++++++ declarations +++++++++++++++
+
+	Dim layer_num, mapID, num_layers As Integer
+	Dim layer_already_disp As Logical
+	Dim strLayer As String
+
+	'	+++++++++++++++ display selected layer +++++++++++++++
+
+	'	+++++++++++++++ display selected layer +++++++++++++++
+
+	strLayer = "Cen_Coast_UTM"
+
+	mapId = FrontWindow()
+
+	Open Table tp_path + "\" + strlayer
+
+	layer_already_disp = "FALSE"
+	If mapId = 0 Then ' no other layers displayed
+		Map From strLayer Max
+		Call ZoomSet (strLayer)
+	Else
+		mapID = FrontWindow()
+		num_layers = MapperInfo( mapID , MAPPER_INFO_LAYERS)
+		For layer_num = 1 To num_layers
+			If strlayer = LayerInfo( mapID , layer_num , LAYER_INFO_NAME ) Then
+				layer_already_disp = "TRUE"
+			End If
+		Next
+		If layer_already_disp = "TRUE" Then
+			Note "Layer already displayed"
+		Else
+
+			'	+++++++++++++++ Other layer(s) already displayed +++++++++++++++
+			'	+++++++++++++++	Use Auto keyword to ensure backdrops at bottommost layers +++++++++++++++
+
+			Set Map Redraw Off
+			Add Map Auto Layer strLayer
+			Call ZoomSet (strLayer)
+			Set Map Redraw On
+		End If
+	End If
+
+Res_DispCEN_COAST:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Res_DispCEN_COAST
+End Sub

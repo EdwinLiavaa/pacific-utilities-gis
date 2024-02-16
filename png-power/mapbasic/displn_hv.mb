@@ -1,0 +1,85 @@
+'*****************************************************************
+'*  Name   : DispLN_HV
+'*  Purpose: Display Lines High Voltage 
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Edwin Liava'a
+'*  Date   : 1-Feb-2007
+'*  Mods   : 
+'*           
+'*****************************************************************
+
+Include "mapbasic.def"
+Include "menu.def"
+
+Declare Sub DispLN_HV
+
+Global db_conn_path As String	'	Access
+Global rs_path As String	'	MapInfo Raster Layers (BackDrops)
+Global vt_Path As String	'	MapInfo Vector Layers
+Global db_name As String	'	MIS database
+
+Sub DispLN_HV
+
+OnError Goto Err_Manage
+
+	'	+++++++++++++++ declarations +++++++++++++++
+
+	Dim layer_num, mapID, num_layers As Integer
+	Dim layer_already_disp As Logical
+	Dim strlayer As String
+
+	'	+++++++++++++++ display selected layer +++++++++++++++
+
+	strlayer = "LN_HV"
+
+	mapId = FrontWindow()
+	Open Table db_conn_path + "\" + strlayer Interactive
+	If mapId = 0 Then ' no layers displayed
+		Map From strlayer
+		mapId = FrontWindow()
+		Set Map Distance Units "m"
+		set map redraw off
+		Set Map Layer strLayer 
+			Label Position Below Font ("Arial",257,8,0) 
+			With FD_ID Auto On Visibility Zoom (0, 1000) Units "m" 
+			'Activate Using PIC On Objects Relative Path On
+		Set Map Window mapid Layer 1 Arrows On
+		Set Map Zoom Entire Layer 1	 
+		set map redraw on
+	Else
+		mapID = FrontWindow()
+		layer_already_disp = "FALSE"
+		num_layers	= MapperInfo( mapID , MAPPER_INFO_LAYERS)
+		For layer_num = 1 To num_layers
+			If strlayer = LayerInfo( mapID , layer_num , LAYER_INFO_NAME ) Then
+				layer_already_disp = "TRUE"
+			End If
+		Next
+		If layer_already_disp = "TRUE" Then
+			Note "Layer already displayed"
+		Else
+			Add Map Auto Layer strlayer
+			Set Map Distance Units "m"
+			set map redraw off
+			Set Map Layer strLayer 
+				Label Position Below Font ("Arial",257,8,0) 
+				With FD_ID Auto On Visibility Zoom (0, 1000) Units "m" 
+				'Activate Using PIC On Objects Relative Path On 
+			Set Map Window mapid Layer 1 Arrows On
+			Set Map Zoom Entire Layer 1	 
+			set map redraw on
+		End If
+	End If
+
+Set Window FrontWindow( ) Max
+
+
+Res_DispLN_HV:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executin the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Res_DispLN_HV
+End Sub

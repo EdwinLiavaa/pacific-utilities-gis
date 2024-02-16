@@ -1,0 +1,46 @@
+'***********************************************************************************************
+'Title: WL_Count_AM.MB
+'Purpose: Display count of wildlife on AFL Grid
+'Input:
+'Output:
+'Author: Edwin
+'Date: 16/09/2011
+'***********************************************************************************************
+
+Include "Mapbasic.def"
+Include "Menu.def"
+
+Declare Sub WL_Count_AM
+
+Dim map_win_id As Integer
+
+Sub WL_Count_AM
+
+Close All Interactive
+
+Open Table "C:\AFL\gis\mapinfo\WL_GRIDS_MI.TAB" Interactive
+Map From WL_GRIDS_MI
+
+map_win_id = FrontWindow( )
+
+Register Table "C:\AFL\gis\access\AFL_Aerodromes_MIS.mdb"  Type ACCESS Table "WL_COUNT" Into "C:\AFL\gis\access\WL_COUNT.TAB"
+Open Table "C:\AFL\gis\access\WL_COUNT.TAB" Interactive
+
+Select * from WL_GRIDS_MI, WL_COUNT where WL_GRIDS_MI.GRID_REF = WL_COUNT.GRID_REF into LINK_WLCOUNT
+
+set map redraw off
+Add Map Layer LINK_WLCOUNT 
+Set Map Layer 1 Display Graphic Zoom (0, 100000) Units "m" Off Editable Off Selectable On Global Line (1,2,8421504)  Global Pen (1,2,8421504)  Global Brush (15,0,16777215)  Global Symbol (33,12632256,12)  Global Font ("Arial",0,9,0) Label Line None Position Center Font ("Arial",0,9,0) Pen (1,2,0)  With GRID_REF Parallel On Auto Off Overlap Off PartialSegments Off Duplicates On Offset 2 Max Visibility On Nodes Off Arrows Off Centroids Off
+set map redraw on
+
+shade window map_win_id 1 with COUNT_AM values  0 Brush (2,16711680,16777215) Pen (1,2,0) ,10 Brush (2,65280,16777215) Pen (1,2,0) default Brush (1,0,16777215) Pen (1,2,0)   
+set legend window map_win_id layer prev display on shades on symbols off lines off count on title auto Font ("Arial",0,9,0) subtitle auto Font ("Arial",0,8,0) ascending on ranges Font ("Arial",0,8,0) auto display off ,auto display on ,auto display on  
+Create Cartographic Legend From Window map_win_id Behind Frame From Layer 1
+
+End Sub
+
+
+
+
+
+

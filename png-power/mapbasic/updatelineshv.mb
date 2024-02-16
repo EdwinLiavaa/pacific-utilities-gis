@@ -1,0 +1,747 @@
+'*****************************************************************
+'*  Name   : UpdateLinesHV
+'*  Purpose: Update geometry columns of Lines LN_HV 
+'*  Inputs : LN_HV, PL, TX, GN, TH, HY, BU, BR, IS, ES, LA, SG  
+'*  Outputs: LN_HV
+'*  Author : Edwin Liava'a
+'*  Date   : 10-Feb-2007
+'*  Mods   : 29-Oct-2015
+'*           
+'*****************************************************************
+
+Include "PPL_Lib.def"
+Include "mapbasic.def"
+Include "menu.def"
+Include "Icons.def"  
+
+'*****************************************************************
+
+Declare Sub UpdateLinesHV
+
+' Declare Global Variables
+
+Global vt_Path 		As String	 'MapInfo Vector Layers
+Global strFD_ID 		As String
+Global lineID			As Integer
+Global x1,y1,x2,y2	As Float
+
+Sub UpdateLinesHV
+
+OnError Goto Err_Manage
+
+'	+++++++++++++++ declarations +++++++++++++++
+
+	Dim more 									As Logical
+	Dim Map_Win_id								As Integer
+	Dim i, irow1 								As Integer
+	Dim i_obj_type 							As Integer
+	Dim TableName								As String
+	Dim stable								As String
+	Dim b_x, b_y, e_x, e_y 				As Float
+	Dim pole_x, pole_y					 	As Float
+	Dim trans_x, trans_y				 	As Float
+	Dim tower_x, tower_y				 	As Float
+	Dim SwitchGears_x, SwitchGears_y		As Float
+	Dim LArresters_x, LArresters_y		As Float
+	Dim ESwitches_x, ESwitches_y			As Float
+	Dim Isolators_x, Isolators_y			As Float
+	Dim Breakers_x, Breakers_y				As Float
+	Dim Busbars_x, Busbars_y				As Float
+	Dim Hydros_x, Hydros_y					As Float
+	Dim TGensets_x, TGensets_y				As Float
+	Dim DGensets_x, DGensets_y				As Float
+	Dim feederID 								As String
+	Dim LineFromID							As String
+	Dim LineToID								As String
+
+
+'	+++++++++++++++ user dialog +++++++++++++++
+
+	more = Ask(" 1. Update Spatial Geometry of HV Lines.          " +
+				 " 2. Update Tabular Data of Lines." +
+				 "                    " +
+				 " Please run Test_NoSpatial_LN_HV " +
+				 " Before Updating Lines." +
+				 "                                    " + 
+				 "                                    " + 
+			    "                                    " +                              
+				 " Do you want to continue?", "OK", "Cancel")
+
+	If more Then
+	Else
+		Exit Sub
+	End if
+
+'	+++++++++++++++ open tables +++++++++++++++
+
+	Close All
+	
+	Set ProgressBars On
+
+	TableName = vt_Path + "\" + "LN_HV.tab"        
+	Open Table TableName As HV Interactive
+	TableName = vt_path + "\" + "GN.tab"
+	Open Table TableName As DGensets Interactive
+	TableName = vt_path + "\" + "TH.tab"
+	Open Table TableName As TGensets Interactive
+	TableName = vt_path + "\" + "HY.tab"
+	Open Table TableName As Hydros Interactive
+	TableName = vt_path + "\" + "BU.tab"
+	Open Table TableName As Busbars Interactive
+	TableName = vt_path + "\" + "BR.tab"
+	Open Table TableName As Breakers Interactive
+	TableName = vt_path + "\" + "IS.tab"
+	Open Table TableName As Isolators Interactive
+	TableName = vt_path + "\" + "ES.tab"
+	Open Table TableName As ESwitches Interactive
+	TableName = vt_path + "\" + "LA.tab"
+	Open Table TableName As LArresters Interactive
+	TableName = vt_path + "\" + "SG.tab"
+	Open Table TableName As SwitchGears Interactive
+	TableName = vt_Path + "\" + "TT.tab"
+	Open Table TableName As Towers Interactive
+	TableName = vt_Path + "\" + "TX.tab"
+	Open Table TableName As Transformers Interactive
+	TableName = vt_Path + "\" + "PL.tab"
+	Open Table TableName As POL Interactive
+	TableName = vt_Path + "\" + "FD.tab"
+	Open Table TableName As Feeders Interactive
+
+
+	Map From HV,DGensets,TGensets,Hydros,Busbars,Breakers,Isolators,ESwitches,LArresters,SwitchGears,Towers,Transformers,POL Max
+
+	'*************  Getting window ID *************
+
+	Map_Win_Id = FrontWindow()
+	If Map_Win_id = 0 Then
+		Exit Sub
+	End If
+
+	'*************  Dialog Feeder *************  
+
+	Dialog
+	Title "PPL MIS-GIS" 
+	Control StaticText
+		Title "Please Enter Feeder_ID:"  
+	Control EditText 
+		Value strFD_ID		'this is a Global String variable
+		Into strFD_ID	
+	Control OKButton
+	Control CancelButton  
+			
+	If Not CommandInfo(CMD_INFO_DLG_OK) Then 
+		' ...then the user clicked CANCEL
+		Note "Program will now close!"
+		Close All Interactive
+		Exit Sub
+	End If
+	If CommandInfo(CMD_INFO_DLG_OK) And strFD_ID = "" Then
+		Note "Invalid Feerder_ID!"
+		Call UpdateLinesHV
+	Else	' ...the user clicked OK
+		Select FD_ID,KV from Feeders 
+			where FD_ID = Ucase$(str$(strFD_ID)) into Temp1
+		Select * from Feeders, HV
+			where Feeders.FD_ID = HV.FD_ID
+			And Feeders.FD_ID = Ucase$(str$(strFD_ID)) into Temp2
+		If Temp1.COL1 = Ucase$(str$(strFD_ID)) And Temp2.COL1 <> "" Then
+			feederID = Ucase$(Str$(strFD_ID))
+			'voltID = Temp1.COL2
+			Note "Ready to Update HV Lines" 			
+		Else
+			Note "Invalid Feerder_ID!"
+			Call UpdateLinesHV
+		End If
+	End If
+
+'***********Set Message Window****************
+
+	Open Window Message ' open Message window 
+	Set Window Message 
+	Font ("Arial Narrow", 1, 10, BLUE) ' Arial bold...
+	Position (0.25, 0.25) ' place in upper left 
+	Width 1.5 ' make window 1.5" wide 
+	Height 5.0 ' make window 1" high
+
+'************* Change Map, Set Centre and Zoom to Feeder ******************
+
+	Select * from HV where FD_ID = Ucase$(str$(strFD_ID)) AND 
+				left$(FROM_ID,2) <> "GN" AND 
+				left$(FROM_ID,2) <> "TH" AND
+				left$(FROM_ID,2) <> "HY" AND
+				left$(FROM_ID,2) <> "BU" AND
+				left$(FROM_ID,2) <> "BR" AND
+				left$(FROM_ID,2) <> "IS" AND
+				left$(FROM_ID,2) <> "ES" AND
+				left$(FROM_ID,2) <> "LA" AND
+				left$(FROM_ID,2) <> "TT" into Lines
+
+	Select * from POL into Poles
+	Select * from Transformers into Trans
+
+	Set Map redraw off
+	Set Map Distance Units "m" XY Units "m" 
+	Set Map Window Map_Win_Id Layer 1 Display Off
+	Set Map Window Map_Win_Id Layer 12 Display Off
+	Set Map Window Map_Win_Id Layer 13 Display Off
+	Add Map Window Map_Win_Id Layer "Poles"
+	Add Map Window Map_Win_Id Layer "Trans"
+	Add Map Window Map_Win_Id Layer "Lines"
+	Set Map Layer Lines Editable On
+	Set Map Layer "Lines"  Display Global Global Line (2,2,16711680)
+	Set Map Window Map_Win_Id Layer 1 Arrows On
+	Set Map Window Map_Win_Id Zoom Entire Layer 1
+	Set Window Map_Win_Id Max
+	Set map redraw on
+
+	Print "Start Update HV Components: Please Wait..."
+
+'****************** Update X and Y of DGensets ******************	
+
+	irow1 = 1
+	Fetch First From DGensets
+
+' at this point, the expression: "DGensets.obj" represents the graphical object that's attached 
+
+	Do While Not EOT(DGensets) 
+		i_obj_type = ObjectInfo(DGensets.obj, OBJ_INFO_TYPE)
+		If i_obj_type = OBJ_POINT Then
+			DGensets_x = ObjectGeography(DGensets.obj, OBJ_GEO_POINTX)
+			DGensets_y = ObjectGeography(DGensets.obj, OBJ_GEO_POINTY) 
+			Update DGensets Set Eastings = DGensets_x where rowid = irow1
+			Update DGensets Set Northings = DGensets_y where rowid = irow1
+			Fetch Next From DGensets
+			irow1 = irow1 + 1
+		End If
+	Loop 
+
+	Commit Table DGensets Interactive	
+
+'****************** Update X and Y of TGensets ******************	
+
+	irow1 = 1
+	Fetch First From TGensets
+
+' at this point, the expression: "TGensets.obj" represents the graphical object that's attached 
+
+	Do While Not EOT(TGensets) 
+		i_obj_type = ObjectInfo(TGensets.obj, OBJ_INFO_TYPE)
+		If i_obj_type = OBJ_POINT Then
+			TGensets_x = ObjectGeography(TGensets.obj, OBJ_GEO_POINTX)
+			TGensets_y = ObjectGeography(TGensets.obj, OBJ_GEO_POINTY) 
+			Update TGensets Set Eastings = TGensets_x where rowid = irow1
+			Update TGensets Set Northings = TGensets_y where rowid = irow1
+			Fetch Next From TGensets
+			irow1 = irow1 + 1
+		End If
+	Loop 
+
+	Commit Table TGensets Interactive	
+
+'****************** Update X and Y of Hydros ******************	
+
+	irow1 = 1
+	Fetch First From Hydros
+
+' at this point, the expression: "Hydros.obj" represents the graphical object that's attached 
+
+	Do While Not EOT(Hydros) 
+		i_obj_type = ObjectInfo(Hydros.obj, OBJ_INFO_TYPE)
+		If i_obj_type = OBJ_POINT Then
+			Hydros_x = ObjectGeography(Hydros.obj, OBJ_GEO_POINTX)
+			Hydros_y = ObjectGeography(Hydros.obj, OBJ_GEO_POINTY) 
+			Update Hydros Set Eastings = Hydros_x where rowid = irow1
+			Update Hydros Set Northings = Hydros_y where rowid = irow1
+			Fetch Next From Hydros
+			irow1 = irow1 + 1
+		End If
+	Loop 
+
+	Commit Table Hydros Interactive	
+
+'****************** Update X and Y of Busbars ******************	
+
+	irow1 = 1
+	Fetch First From Busbars
+
+' at this point, the expression: "Busbars.obj" represents the graphical object that's attached 
+
+	Do While Not EOT(Busbars) 
+		i_obj_type = ObjectInfo(Busbars.obj, OBJ_INFO_TYPE)
+		If i_obj_type = OBJ_POINT Then
+			Busbars_x = ObjectGeography(Busbars.obj, OBJ_GEO_POINTX)
+			Busbars_y = ObjectGeography(Busbars.obj, OBJ_GEO_POINTY) 
+			Update Busbars Set Eastings = Busbars_x where rowid = irow1
+			Update Busbars Set Northings = Busbars_y where rowid = irow1
+			Fetch Next From Busbars
+			irow1 = irow1 + 1
+		End If
+	Loop 
+
+	Commit Table Busbars Interactive	
+
+'****************** Update X and Y of Breakers ******************	
+
+	irow1 = 1
+	Fetch First From Breakers
+
+' at this point, the expression: "Breakers.obj" represents the graphical object that's attached 
+
+	Do While Not EOT(Breakers) 
+		i_obj_type = ObjectInfo(Breakers.obj, OBJ_INFO_TYPE)
+		If i_obj_type = OBJ_POINT Then
+			Breakers_x = ObjectGeography(Breakers.obj, OBJ_GEO_POINTX)
+			Breakers_y = ObjectGeography(Breakers.obj, OBJ_GEO_POINTY) 
+			Update Breakers Set Eastings = Breakers_x where rowid = irow1
+			Update Breakers Set Northings = Breakers_y where rowid = irow1
+			Fetch Next From Breakers
+			irow1 = irow1 + 1
+		End If
+	Loop 
+
+	Commit Table Breakers Interactive	
+
+'****************** Update X and Y of Isolators ******************	
+
+	irow1 = 1
+	Fetch First From Isolators
+
+' at this point, the expression: "Isolators.obj" represents the graphical object that's attached 
+
+	Do While Not EOT(Isolators) 
+		i_obj_type = ObjectInfo(Isolators.obj, OBJ_INFO_TYPE)
+		If i_obj_type = OBJ_POINT Then
+			Isolators_x = ObjectGeography(Isolators.obj, OBJ_GEO_POINTX)
+			Isolators_y = ObjectGeography(Isolators.obj, OBJ_GEO_POINTY) 
+			Update Isolators Set Eastings = Isolators_x where rowid = irow1
+			Update Isolators Set Northings = Isolators_y where rowid = irow1
+			Fetch Next From Isolators
+			irow1 = irow1 + 1
+		End If
+	Loop 
+
+	Commit Table Isolators Interactive	
+
+'****************** Update X and Y of ESwitches ******************	
+
+	irow1 = 1
+	Fetch First From ESwitches 
+
+' at this point, the expression: "ESwitches.obj" represents the graphical object that's attached 
+
+	Do While Not EOT(ESwitches) 
+		i_obj_type = ObjectInfo(ESwitches.obj, OBJ_INFO_TYPE)
+		If i_obj_type = OBJ_POINT Then
+			ESwitches_x = ObjectGeography(ESwitches.obj, OBJ_GEO_POINTX)
+			ESwitches_y = ObjectGeography(ESwitches.obj, OBJ_GEO_POINTY) 
+			Update ESwitches Set Eastings = ESwitches_x where rowid = irow1
+			Update ESwitches Set Northings = ESwitches_y where rowid = irow1
+			Fetch Next From ESwitches
+			irow1 = irow1 + 1
+		End If
+	Loop 
+
+	Commit Table ESwitches Interactive	
+
+'****************** Update X and Y of LArresters ******************	
+
+	irow1 = 1
+	Fetch First From LArresters 
+
+' at this point, the expression: "LArresters.obj" represents the graphical object that's attached 
+
+	Do While Not EOT(LArresters) 
+		i_obj_type = ObjectInfo(LArresters.obj, OBJ_INFO_TYPE)
+		If i_obj_type = OBJ_POINT Then
+			LArresters_x = ObjectGeography(LArresters.obj, OBJ_GEO_POINTX)
+			LArresters_y = ObjectGeography(LArresters.obj, OBJ_GEO_POINTY) 
+			Update LArresters Set Eastings = LArresters_x where rowid = irow1
+			Update LArresters Set Northings = LArresters_y where rowid = irow1
+			Fetch Next From LArresters
+			irow1 = irow1 + 1
+		End If
+	Loop 
+
+	Commit Table LArresters Interactive	
+
+'****************** Update X and Y of SwitchGears ******************	
+
+	irow1 = 1
+	Fetch First From SwitchGears 
+
+' at this point, the expression: "SwitchGears.obj" represents the graphical object that's attached 
+
+	Do While Not EOT(SwitchGears) 
+		i_obj_type = ObjectInfo(SwitchGears.obj, OBJ_INFO_TYPE)
+		If i_obj_type = OBJ_POINT Then
+			tower_x = ObjectGeography(SwitchGears.obj, OBJ_GEO_POINTX)
+			tower_y = ObjectGeography(SwitchGears.obj, OBJ_GEO_POINTY) 
+			Update SwitchGears Set Eastings = SwitchGears_x where rowid = irow1
+			Update SwitchGears Set Northings = SwitchGears_y where rowid = irow1
+			Fetch Next From SwitchGears
+			irow1 = irow1 + 1
+		End If
+	Loop 
+
+	Commit Table SwitchGears Interactive	
+
+'****************** Update X and Y of Towers ******************	
+
+	irow1 = 1
+	Fetch First From Towers
+
+' at this point, the expression: "Towers.obj" represents the graphical object that's attached 
+
+	Do While Not EOT(Towers) 
+		i_obj_type = ObjectInfo(Towers.obj, OBJ_INFO_TYPE)
+		If i_obj_type = OBJ_POINT Then
+			tower_x = ObjectGeography(Towers.obj, OBJ_GEO_POINTX)
+			tower_y = ObjectGeography(Towers.obj, OBJ_GEO_POINTY) 
+			Update Towers Set Eastings = tower_x where rowid = irow1
+			Update Towers Set Northings = tower_y where rowid = irow1
+			Fetch Next From Towers
+			irow1 = irow1 + 1
+		End If
+	Loop 
+
+	Commit Table Towers Interactive	
+
+'******************* Update X and Y of Transformers ******************	
+
+	irow1 = 1
+	Fetch First From Trans
+
+' at this point, the expression: "Trans.obj" represents the graphical object that's attached 
+
+	Do While Not EOT(Trans) 
+		i_obj_type = ObjectInfo(Trans.obj, OBJ_INFO_TYPE)
+		If i_obj_type = OBJ_POINT Then
+			trans_x = ObjectGeography(Trans.obj, OBJ_GEO_POINTX)
+			trans_y = ObjectGeography(Trans.obj, OBJ_GEO_POINTY) 
+			Update Trans Set Eastings = trans_x where rowid = irow1
+			Update Trans Set Northings = trans_y where rowid = irow1
+			Fetch Next From Trans
+			irow1 = irow1 + 1
+		End If
+	Loop 
+
+	Commit Table Trans Interactive	
+
+'******************* Update X and Y of Poles ******************	
+
+	irow1 = 1
+	Fetch First From Poles
+
+' at this point, the expression: "Poles.obj" represents the graphical object that's attached 
+
+	Do While Not EOT(Poles) 
+		i_obj_type = ObjectInfo(Poles.obj, OBJ_INFO_TYPE)
+		If i_obj_type = OBJ_POINT Then
+			pole_x = ObjectGeography(Poles.obj, OBJ_GEO_POINTX)
+			pole_y = ObjectGeography(Poles.obj, OBJ_GEO_POINTY) 
+			Update Poles Set Eastings = pole_x where rowid = irow1
+			Update Poles Set Nortings = pole_y where rowid = irow1
+			'Print pole_x + " " + pole_y
+			Fetch Next From Poles
+			irow1 = irow1 + 1
+		End If
+	Loop 
+
+	Commit Table Poles Interactive
+
+'****************** Update Lines ******************
+
+Print "Start Update HV Lines: Please Wait..."
+
+	Select * From Lines where LENGTH = 0 into Temp0
+
+	irow1 = 1
+	Fetch First From Temp0
+	
+	Do While Not EOT(Temp0) 
+		Delete From Temp0 Where RowID = irow1
+		Print "Table " + Temp0 + " rows " + irow1 + " No Line " 
+		Commit Table Lines Interactive
+		Pack Table Lines Graphic Data Interactive
+		Commit Table Lines Interactive
+		Fetch Next From Temp0
+		irow1 = irow1 + 1
+	Loop 
+
+	Add Column "Lines" (FROM_ID )From Trans Set To TX_ID Where intersects
+	Add Column "Lines" (NEXT_ID )From SwitchGears Set To SG_ID Where intersects
+	
+	Commit Table Lines Interactive
+
+	Select * From Lines where FROM_ID = "" into Temp1
+
+	irow1 = 1
+	Fetch First From Temp1
+
+	Do While Not EOT(Temp1) 
+		i_obj_type = ObjectInfo(Temp1.obj, OBJ_INFO_TYPE)
+		If i_obj_type = OBJ_LINE Then 
+			b_x = ObjectGeography(Temp1.obj, OBJ_GEO_LINEBEGX)
+			b_y = ObjectGeography(Temp1.obj, OBJ_GEO_LINEBEGY)
+			e_x = ObjectGeography(Temp1.obj, OBJ_GEO_LINEENDX)
+			e_y = ObjectGeography(Temp1.obj, OBJ_GEO_LINEENDY)
+			Update Temp1 Set XB = b_x where rowid = irow1
+			Update Temp1 Set YB = b_y where rowid = irow1
+			Update Temp1 Set XE = e_x where rowid = irow1
+			Update Temp1 Set YE = e_y where rowid = irow1
+			Select PL_ID From Poles Where Poles.Eastings = b_x And Poles.Nortings = b_y Into LineFromP
+			LineFromID = LineFromP.COL1
+			Update Temp1 Set FROM_ID = LineFromID where rowid = irow1
+			Print "From: " + LineFromID
+			Select PL_ID From Poles Where Poles.Eastings = e_x And Poles.Nortings = e_y Into LineToP
+			LineToID = LineToP.COL1
+			Update Temp1 Set NEXT_ID = LineToID where rowid = irow1 
+			Print "Next: " + LineToID
+			Fetch Next From Temp1
+			irow1 = irow1 + 1
+		End If
+	Loop 
+
+	Commit Table Temp1 Interactive	
+
+	Select * From Lines where FROM_ID = NEXT_ID into Temp4
+	Do While Not EOT(Temp4) 
+		i_obj_type = ObjectInfo(Temp4.obj, OBJ_INFO_TYPE)
+		If i_obj_type = OBJ_LINE Then 
+			b_x = ObjectGeography(Temp4.obj, OBJ_GEO_LINEBEGX)
+			b_y = ObjectGeography(Temp4.obj, OBJ_GEO_LINEBEGY)
+			e_x = ObjectGeography(Temp4.obj, OBJ_GEO_LINEENDX)
+			e_y = ObjectGeography(Temp4.obj, OBJ_GEO_LINEENDY)
+			Update Temp4 Set XB = b_x where rowid = irow1
+			Update Temp4 Set YB = b_y where rowid = irow1
+			Update Temp4 Set XE = e_x where rowid = irow1
+			Update Temp4 Set YE = e_y where rowid = irow1
+			Select TT_ID From Towers Where Towers.Eastings = b_x And Towers.Northings = b_y Into LineFromTT
+			LineToID = LineFromTT.COL1
+			Update Temp4 Set FROM_ID = LineToID where rowid = irow1 
+			Print "From: " + LineToID
+			Select TT_ID From Towers Where Towers.Eastings = e_x And Towers.Northings = e_y Into LineToTT
+			LineToID = LineToTT.COL1
+			Update Temp4 Set NEXT_ID = LineToID where rowid = irow1 
+			Print "Next: " + LineToID
+			Fetch Next From Temp4 
+			irow1 = irow1 + 1
+		End If
+	Loop 
+
+	Commit Table Temp4 Interactive
+
+	Select * From Lines where left$(FROM_ID,2) = "TX" into Temp5
+
+	irow1 = 1
+	Fetch First From Temp5
+
+	Do While Not EOT(Temp5) 
+		i_obj_type = ObjectInfo(Temp5.obj, OBJ_INFO_TYPE)
+		If i_obj_type = OBJ_LINE Then 
+			b_x = ObjectGeography(Temp5.obj, OBJ_GEO_LINEBEGX)
+			b_y = ObjectGeography(Temp5.obj, OBJ_GEO_LINEBEGY)
+			e_x = ObjectGeography(Temp5.obj, OBJ_GEO_LINEENDX)
+			e_y = ObjectGeography(Temp5.obj, OBJ_GEO_LINEENDY)
+			Update Temp5 Set XB = b_x where rowid = irow1
+			Update Temp5 Set YB = b_y where rowid = irow1
+			Update Temp5 Set XE = e_x where rowid = irow1
+			Update Temp5 Set YE = e_y where rowid = irow1
+			Select PL_ID From Poles Where Poles.Eastings = e_x And Poles.Nortings = e_y Into LineToP
+			LineToID = LineToP.COL1
+			Update Temp5 Set NEXT_ID = LineToID where rowid = irow1 
+			Print "Next: " + LineToID  
+			Fetch Next From Temp5
+			irow1 = irow1 + 1
+		End If
+	Loop 
+
+	Commit Table Temp5 Interactive
+
+	Select * From Lines where left$(FROM_ID,2) = "TX" into Temp6
+
+	irow1 = 1
+	Fetch First From Temp6
+
+	Do While Not EOT(Temp6) 
+		i_obj_type = ObjectInfo(Temp6.obj, OBJ_INFO_TYPE)
+		If i_obj_type = OBJ_LINE Then 
+			b_x = ObjectGeography(Temp6.obj, OBJ_GEO_LINEBEGX)
+			b_y = ObjectGeography(Temp6.obj, OBJ_GEO_LINEBEGY)
+			e_x = ObjectGeography(Temp6.obj, OBJ_GEO_LINEENDX)
+			e_y = ObjectGeography(Temp6.obj, OBJ_GEO_LINEENDY)
+			Update Temp6 Set XB = b_x where rowid = irow1
+			Update Temp6 Set YB = b_y where rowid = irow1
+			Update Temp6 Set XE = e_x where rowid = irow1
+			Update Temp6 Set YE = e_y where rowid = irow1
+			Update Temp6 Set NEXT_ID = FROM_ID where rowid = irow1 
+			Print "Next: " + LineToID  
+			Fetch Next From Temp6 
+			irow1 = irow1 + 1
+		End If
+	Loop 
+
+	Commit Table Temp6 Interactive
+
+	Select * From Lines where left$(FROM_ID,2) = "TX" AND left$(NEXT_ID,2) = "TX" into Temp7
+
+	irow1 = 1
+	Fetch First From Temp7
+
+	Do While Not EOT(Temp7) 
+		i_obj_type = ObjectInfo(Temp7.obj, OBJ_INFO_TYPE)
+		If i_obj_type = OBJ_LINE Then 
+			b_x = ObjectGeography(Temp7.obj, OBJ_GEO_LINEBEGX)
+			b_y = ObjectGeography(Temp7.obj, OBJ_GEO_LINEBEGY)
+			e_x = ObjectGeography(Temp7.obj, OBJ_GEO_LINEENDX)
+			e_y = ObjectGeography(Temp7.obj, OBJ_GEO_LINEENDY)
+			Update Temp7 Set XB = b_x where rowid = irow1
+			Update Temp7 Set YB = b_y where rowid = irow1
+			Update Temp7 Set XE = e_x where rowid = irow1
+			Update Temp7 Set YE = e_y where rowid = irow1
+			Select PL_ID From Poles Where Poles.Eastings = e_x And Poles.Nortings = e_y Into LineToP
+			LineToID = LineToP.COL1
+			Update Temp7 Set NEXT_ID = LineToID where rowid = irow1 
+			Print "Next: " + LineToID  
+
+			Fetch Next From Temp7 
+			irow1 = irow1 + 1
+		End If
+	Loop 
+
+	Commit Table Temp7 Interactive
+
+	Select * From Lines where left$(FROM_ID,2) = "TX" AND left$(NEXT_ID,2) = "" into Temp8
+
+	irow1 = 1
+	Fetch First From Temp8
+
+	Do While Not EOT(Temp8) 
+		i_obj_type = ObjectInfo(Temp8.obj, OBJ_INFO_TYPE)
+		If i_obj_type = OBJ_LINE Then 
+			b_x = ObjectGeography(Temp8.obj, OBJ_GEO_LINEBEGX)
+			b_y = ObjectGeography(Temp8.obj, OBJ_GEO_LINEBEGY)
+			e_x = ObjectGeography(Temp8.obj, OBJ_GEO_LINEENDX)
+			e_y = ObjectGeography(Temp8.obj, OBJ_GEO_LINEENDY)
+			Update Temp8 Set XB = b_x where rowid = irow1
+			Update Temp8 Set YB = b_y where rowid = irow1
+			Update Temp8 Set XE = e_x where rowid = irow1
+			Update Temp8 Set YE = e_y where rowid = irow1
+			Update Temp8 Set NEXT_ID = FROM_ID where rowid = irow1 
+			Print "Next: " + LineToID  
+			Select PL_ID From Poles Where Poles.Eastings = b_x And Poles.Nortings = b_y Into LineFromP
+			LineToID = LineFromP.COL1
+			Fetch Next From Temp8
+			irow1 = irow1 + 1
+		End If
+	Loop 
+
+	Commit Table Temp8 Interactive
+
+	Select * From Lines where FROM_ID = NEXT_ID into Temp9
+
+	irow1 = 1
+	Fetch First From Temp9
+
+	Do While Not EOT(Temp9) 
+		i_obj_type = ObjectInfo(Temp9.obj, OBJ_INFO_TYPE)
+		If i_obj_type = OBJ_LINE Then 
+			b_x = ObjectGeography(Temp9.obj, OBJ_GEO_LINEBEGX)
+			b_y = ObjectGeography(Temp9.obj, OBJ_GEO_LINEBEGY)
+			e_x = ObjectGeography(Temp9.obj, OBJ_GEO_LINEENDX)
+			e_y = ObjectGeography(Temp9.obj, OBJ_GEO_LINEENDY)
+			Update Temp9 Set XB = b_x where rowid = irow1
+			Update Temp9 Set YB = b_y where rowid = irow1
+			Update Temp9 Set XE = e_x where rowid = irow1
+			Update Temp9 Set YE = e_y where rowid = irow1
+			Select PL_ID From Poles Where Poles.Eastings = b_x And Poles.Nortings = b_y Into LineFromP
+			LineToID = LineFromP.COL1
+			Update Temp9 Set FROM_ID = LineToID where rowid = irow1 
+			Print "From: " + LineToID  
+
+			Fetch Next From Temp9
+			irow1 = irow1 + 1
+		End If
+	Loop 
+
+	Commit Table Temp9 Interactive
+
+	Select * From Lines where left$(FROM_ID,2)= "TX" AND left$(NEXT_ID,2)= "PL" Into Temp10 
+
+	irow1 = 1
+	
+	Fetch First From Temp10 
+
+	Do While Not EOT(Temp10) 
+		i_obj_type = ObjectInfo(Temp10.obj, OBJ_INFO_TYPE)
+		If i_obj_type = OBJ_LINE Then 
+			b_x = ObjectGeography(Temp10.obj, OBJ_GEO_LINEBEGX)
+			b_y = ObjectGeography(Temp10.obj, OBJ_GEO_LINEBEGY)
+			e_x = ObjectGeography(Temp10.obj, OBJ_GEO_LINEENDX)
+			e_y = ObjectGeography(Temp10.obj, OBJ_GEO_LINEENDY)
+			Update Temp10 Set XB = b_x where rowid = irow1
+			Update Temp10 Set YB = b_y where rowid = irow1
+			Update Temp10 Set XE = e_x where rowid = irow1
+			Update Temp10 Set YE = e_y where rowid = irow1
+			Select * From Poles Where Poles.Eastings = b_x And Poles.Nortings = b_y Into LineFromPL
+			LineFromID = LineFromPL.COL1
+			If LineFromPL.COL52 = b_x AND LineFromPL.COL53 = b_y Then
+				Update Temp10 Set NEXT_ID = FROM_ID where rowid = irow1
+				Update Temp10 Set FROM_ID = LineFromID where rowid = irow1
+			End If
+
+			Print "FROM: " + LineFromID 
+
+			Fetch Next From Temp10 
+			irow1 = irow1 + 1
+		End If
+	Loop 
+
+	Commit Table Temp10 Interactive
+
+	Select * From Lines where left$(FROM_ID,2)= "PL" AND left$(NEXT_ID,2)= "TX" Into Temp11 
+
+	irow1 = 1
+	
+	Fetch First From Temp11 
+
+	Do While Not EOT(Temp11) 
+		i_obj_type = ObjectInfo(Temp11.obj, OBJ_INFO_TYPE)
+		If i_obj_type = OBJ_LINE Then 
+			b_x = ObjectGeography(Temp11.obj, OBJ_GEO_LINEBEGX)
+			b_y = ObjectGeography(Temp11.obj, OBJ_GEO_LINEBEGY)
+			e_x = ObjectGeography(Temp11.obj, OBJ_GEO_LINEENDX)
+			e_y = ObjectGeography(Temp11.obj, OBJ_GEO_LINEENDY)
+			Update Temp11 Set XB = b_x where rowid = irow1
+			Update Temp11 Set YB = b_y where rowid = irow1
+			Update Temp11 Set XE = e_x where rowid = irow1
+			Update Temp11 Set YE = e_y where rowid = irow1
+			Select * From Poles Where Poles.Eastings = b_x And Poles.Nortings = b_y Into LineFromPL
+			LineFromID = LineFromPL.COL1
+			If LineFromPL.COL52 = b_x AND LineFromPL.COL53 = b_y Then
+				'Update Temp11 Set NEXT_ID = FROM_ID where rowid = irow1
+				Update Temp11 Set FROM_ID = LineFromID where rowid = irow1
+			End If
+
+			Print "FROM: " + LineFromID 
+
+			Fetch Next From Temp11 
+			irow1 = irow1 + 1
+		End If
+	Loop 
+
+	Commit Table Temp11 Interactive
+
+	Note  "Finished Updating: " + Lines
+	'Print "Closed: " + Lines
+
+	'Close All Interactive
+
+Main:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Print "Error: " + str$(err()) + ", " + error$()
+	Resume Main
+End Sub

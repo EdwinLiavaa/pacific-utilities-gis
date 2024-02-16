@@ -1,0 +1,144 @@
+'********************************************************
+'*                                                      *
+'*     CusPFuse.MBO                Edwin, 24.08.98      *
+'*                                                      *
+'*  This program dispalys all customer classes in       *
+'*  different colours i.e. domestic, commercial, etc.   *
+'*                                                      *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required files:                                      *
+'*                MAPBASIC.DEF                          *
+'*			MENU.DEF                              *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required tables:                                     *
+'*                  - customer.tab                      *
+'*                  - 		                          *
+'********************************************************
+
+	include "C:\Program Files\MapInfo\MapBasic\MAPBASIC.DEF"
+	include "C:\Program Files\MAPINFO\MAPBASIC\MENU.DEF"
+
+	Declare Sub CusPFuse
+
+	Global passw as String 
+	Global MapPath as string
+	Global CadaPath as String
+
+
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++*
+
+	Sub CusPFuse
+
+	
+	Dim  ivar1, ivar2, ivar3 As Integer
+	Dim Map_Win_Id 		As Integer
+	Dim i_lay_type		As SmallInt
+	Dim iz, ln			As SmallInt
+	Dim MapName			As String
+	Dim classty			As String
+	Dim iclass 			As SmallInt
+	Dim aRowId 			as Alias
+	Dim aclass 			as Alias
+	Dim aclassName 		as Alias
+	Dim sclassType(1) 	as String
+	Dim sclassName(1)		as String
+	Dim iCounter 		as Integer
+
+
+	OnError goto Err_CusPFuse
+
+' ++++++++++++++++++++++++++ close some toolbars ++++++++++++++++++++
+
+	Alter ButtonPad "Tools" Hide
+	Alter ButtonPad "Drawing" Hide
+	Alter ButtonPad "Main" Show Fixed
+	Alter ButtonPad "ODBC" Hide
+
+
+' ++++++++++++++++++++++++++ close and open map layers ++++++++++++++
+
+	
+	MapName = MapPath +"CUSTOMER.TAB"
+
+	Close All
+	
+	Open Table MapName As "Customer" password passw
+
+	Map From Customer Max
+
+	Mapname = Cadapath + "n_cad.tab"
+	open table MapName as n_cad interactive
+
+	add map layer n_cad
+
+'+++++++++++++++++++++++++++  Getting window ID +++++++++++++++++++++
+
+	Map_Win_id = FrontWindow()
+
+'++++++  go out of program if operator does not know password +++++++
+
+	If Map_Win_id = 0 Then
+		Exit Sub
+	End If
+
+'++++++++++++++++++++++++++++++Shade Statement+++++++++++++++++++++++++
+
+	Shade Window Map_Win_id "Customer" with C_CLASS values  
+		"00" Symbol (33,0,12,"MapInfo Real Estate",257,0) ,
+		"01" Symbol (33,16711680,12,"MapInfo Real Estate",257,0) ,
+		"02" Symbol (33,65280,12,"MapInfo Real Estate",257,0) ,
+		"03" Symbol (33,255,12,"MapInfo Real Estate",257,0) ,
+		"04" Symbol (33,16711935,12,"MapInfo Real Estate",257,0) ,
+		"05" Symbol (33,16776960,12,"MapInfo Real Estate",257,0) ,
+		"06" Symbol (33,32768,12,"MapInfo Real Estate",257,0) 
+		default Symbol (33,8388608,12,"MapInfo Real Estate",257,0)
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+'+++++++++++++++++++++++++ Legend statements +++++++++++++++++++++++++
+
+	Set Legend Window Map_Win_id layer prev display on shades off symbols on 
+		lines off count on title "Customer Classes" 
+		Font ("MS Sans Serif",0,10,0) subtitle "" 
+		Font ("MS Sans Serif",0,8,0) ascending on ranges 
+		Font ("MS Sans Serif",0,8,0) 
+		"all others" display on ,
+		"00 = unknown" display on ,
+		"01 = Commercial" display on ,
+		"02 = Domestic" display on ,
+		"03 = Industrial" display on ,
+		"04 = Hotel/Motel" display on ,
+		"05 = School" display on,
+		"06 = Church" display on
+
+	Set Window WIN_LEGEND 
+	Position (1,4) Units "cm"
+	Width 5 Units "cm"
+	Height 6 Units "cm"
+
+	Open Window Legend
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+'+++++++++++++++++++++++++ View Entire Layer +++++++++++++++++++++++++
+
+	
+	Set Map Window  Map_Win_Id Zoom Entire Layer "Customer"
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	Set Window Map_Win_id Max
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Res_CusPFuse:
+	Exit Sub
+
+Err_CusPFuse:
+	note "CusPFuse: "+str$(err())+" "+error$()
+	Resume Next
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	End Sub

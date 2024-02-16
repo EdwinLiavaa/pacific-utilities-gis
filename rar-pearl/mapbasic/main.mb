@@ -1,0 +1,45 @@
+'*****************************************************************
+'*  Name   : Main
+'*  Purpose: Function main that calls menus which calls other modules
+'*  Inputs : Global variables
+'*  Outputs: 
+'*  Author : Edwin Liava'a
+'*  Date   : 20/06/2011
+'*  Mods   :  
+'*
+'*****************************************************************
+Include "mapbasic.def"
+Include "menu.def"
+
+Global AC_Path As String	'	Access
+Global BD_Path As String	'	MapInfo Raster Layers 
+Global MI_Path As String	'	MapInfo Vector Layers
+Global DB_Name As String'	Database Name
+
+Declare Sub Main
+Declare Sub Menus
+
+Sub Main
+
+	OnError goto Err_Manage
+
+	AC_Path = "C:\MMR\Gis\Access\Back_End"		'	Access
+	BD_Path = "C:\MMR\Gis\Backdrops\Satellite"	'	MapInfo Raster Layers 
+	MI_Path = "C:\MMR\gis\mapinfo\"	'	MapInfo Vector Layers
+	DB_Name = "MMR_GIS_be.mdb"
+
+	Call Menus
+
+Res_Main:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Res_Main
+End Sub Main
+
+
+
+
+

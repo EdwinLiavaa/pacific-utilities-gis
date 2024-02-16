@@ -1,0 +1,197 @@
+'*****************************************************************
+'*  Name   : Main_Menu
+'*  Purpose: PPL GIS Main Menu
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Edwin Liava'a
+'*  Date   : 16-02-2007
+'*  Mods   : 28-10-2015
+'*           
+'*****************************************************************
+
+Include "PPL_Lib.def"
+Include "mapbasic.def"
+Include "menu.def"
+Include "Icons.def"  
+
+Declare Sub Main_Menu
+Declare Sub CreateLN_HV
+Declare Sub CreateLN_LV
+Declare Sub CreatePPL_IDs
+Declare Sub CreMeQueries			 
+Declare Sub CutLN_LV
+Declare Sub DispBL
+Declare Sub DispBR
+Declare Sub DispBU
+Declare Sub DispGN
+Declare Sub DispHY
+Declare Sub DispTH
+Declare Sub DispST
+Declare Sub DispSG
+Declare Sub DispPL
+Declare Sub DispND
+Declare Sub DispTT
+Declare Sub DispTX
+Declare Sub DispMT
+Declare Sub DispPS
+Declare Sub DispLA
+Declare Sub DispIS
+Declare Sub DispES
+Declare Sub DispLN_HV
+Declare Sub DispLN_LV
+Declare Sub DispBD_QB_1
+Declare Sub DispBD_QB_2
+Declare Sub DispBD_QB_3
+Declare Sub DispBD_QB_4
+Declare Sub DispBD_QB_5
+Declare Sub DispBD_QB_6
+Declare Sub DispBD_QB_7
+Declare Sub DispBD_QB_8
+Declare Sub DispBD_QB_9	
+Declare Sub DispCEN_COAST
+Declare Sub DispHV_FEEDER
+Declare Sub DispHV_UG
+Declare Sub DispLV_FEEDER
+Declare Sub DispLN_PHASE
+Declare Sub DispMT_ByFD
+Declare Sub DispMT_PRECON
+Declare Sub DispMT_HIGHCON 
+Declare Sub DispMT_SEALED
+Declare Sub DispPL_LIGHT
+Declare Sub DispPL_OWNER
+Declare Sub DispPL_TELCO
+Declare Sub DispPL_ByFD
+Declare Sub DispPL_XARM_COND
+Declare Sub DispSG_COND
+Declare Sub DispSG_ByFD
+Declare Sub DispPOM_NDPC 
+Declare Sub DispPL_COND
+Declare Sub DispPL_GENCOND
+Declare Sub DispTX_COND
+Declare Sub DispTX_TOTALCONSUMP
+Declare Sub DispTX_ByFD
+Declare Sub Find_Asset
+Declare Sub Find_Meter
+Declare Sub Fix_NoSpatial_LN_LV
+Declare Sub Fix_NoSpatial_LN_HV
+Declare Sub GRID	
+Declare Sub ImportPOM_Billing_KWH_Data
+Declare Sub Layout_Preview	
+Declare Sub Loss_Calculation
+Declare Sub UpdateLinesHV
+Declare Sub UpdateLinesLV
+Declare Sub UpdatePoints
+Declare Sub UpdateRegions
+Declare Sub UpdateSU1
+Declare Sub UpdateSU2
+Declare Sub NotYetReleased
+
+'*********************************************************************
+
+Sub Main_Menu
+
+OnError Goto Err_Manage
+
+	Create Menu "Common Layers" As
+		"Display POM Common Layers:",
+		"(-",
+			"Buildings"												Calling DispBL,
+			"Cadastrals"												Calling DispPOM_NDPC,
+			"Coasts"													Calling NotYetReleased,
+			"Roads"													Calling NotYetReleased,
+		"(-", 
+		"Display POM Image Backdrops:",
+		"(-",
+			"POM Quickbird All" 									Calling NotYetReleased, 
+			"POM Quickbird 1" 			  							Calling DispBD_QB_1,
+			"POM Quickbird 2" 										Calling DispBD_QB_2,
+			"POM Quickbird 3" 			  							Calling DispBD_QB_3,
+			"POM Quickbird 4" 										Calling DispBD_QB_4,
+			"POM Quickbird 5" 			  							Calling DispBD_QB_5,
+			"POM Quickbird 6" 										Calling DispBD_QB_6,
+			"POM Quickbird 7" 			  							Calling DispBD_QB_7,
+			"POM Quickbird 8" 										Calling DispBD_QB_8,
+			"POM Quickbird 9" 			  							Calling DispBD_QB_9,
+		"(-", 
+		" * Not Yet Acquired"
+	
+	Alter Menu Bar Add "Common Layers"
+
+	Create Menu "PPL Layers" As
+		"Display:",
+		"(-",
+			"Power and Sub Stations"									Calling DispST,
+ 			"Diesel Generators"											Calling DispGN,
+			"Thermal Generators"										Calling DispTH,
+			"Hyrdo Turbines"												Calling DispHY,
+			"Busbars"														Calling DispBU,
+			"Breakers"													Calling DispBR,
+			"Isolators"													Calling DispIS,
+			"Earth Switches"												Calling DispES,
+			"Lighting Arrestors"										Calling DispLA,
+			"Transmission Towers"										Calling DispTT,
+			"Poles"														Calling DispPL,
+			"Switches"													Calling DispSG,
+			"Transformers"												Calling DispTX,
+			"Lines High Voltage"										Calling DispLN_HV,
+			"Lines Low Voltage"											Calling DispLN_LV,
+			"Meters" 														Calling DispMT,
+			
+			"(-",
+			"* Not Yet Released"
+	
+	Alter Menu Bar Add "PPL Layers"
+
+	Create Menu "PPL Actions" As
+		"Maintenance:",
+		"(-",
+			"Update Asset IDs"											Calling CreatePPL_IDs, 
+			"Connect HV Lines"											Calling CreateLN_HV,
+			"Connect LV Lines"											Calling CreateLN_LV,
+			"Import POM KWH Billing Data"								Calling ImportPOM_Billing_KWH_Data,
+			"Update HV Lines"											Calling UpdateLinesHV,
+			"Update LV Lines"											Calling UpdateLinesLV,
+			"Fix No Spatial on LV Lines"								Calling Fix_NoSpatial_LN_LV,
+			"Fix No Spatial on HV Lines"								Calling Fix_NoSpatial_LN_HV,
+			"Loss Calculation on T&D Lines"							Calling Loss_Calculation,
+			"Load Flow Study by Feeder"								Calling NotYetReleased,
+			"Create a Map Grid"											Calling GRID,
+			"Print Layout Preview"										Calling Layout_Preview,
+			"(-",
+			"* Not Yet Released"
+	
+	Alter Menu Bar Add "PPL Actions"
+
+	Create Menu "PPL Queries" As
+		"Display:",
+		"(-",
+			"Find Meter"													Calling Find_Meter, 
+			"Find Asset"													Calling Find_Asset, 
+			"Poles by Base Condition"									Calling DispPL_COND,
+			"Poles by Cross Arm Condition"							Calling DispPL_XARM_COND,
+			"Poles by General Condition"								Calling DispPL_GENCOND,
+			"Poles by Street Lights Condition"						Calling DispPL_LIGHT,
+			"Poles by Feeders"											Calling DispPL_ByFD,
+			"Transformers by Condition"								Calling DispTX_COND, 
+			"Transformers by Feeders"									Calling DispTX_ByFD,
+			"Switch Gears by Feeders"									Calling DispSG_ByFD,
+			"Switch Gears by Condition" 								Calling DispSG_COND, 
+			"Meters by Feeders"											Calling DispMT_ByFD,
+			"Meters Not Sealed"											Calling DispMT_SEALED,
+			"Meters EasyPay and Conventional"						Calling DispMT_PRECON,
+			"Meters High Consumption Customers"						Calling DispMT_HIGHCON,
+			"(-",
+			"* Not Yet Released"
+	
+	Alter Menu Bar Add "PPL Queries"
+
+
+Res_CreMeActions:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Res_CreMeActions
+	
+End Sub

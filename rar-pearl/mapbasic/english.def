@@ -1,0 +1,199 @@
+' ENGLISH.DEF
+' Module containing all text information
+' 01 February 1999
+' 1.1 Modified to cater for modifications in Grid module 1.24
+' Modified by Edwin Liava'a 17/04/2011 for Tonga Communication Corporation
+' Version 1.1
+'
+' Some Legalese
+'    SOPAC.MBX A tool for MapInfo
+'    Copyright (C) 1995  Franck Martin
+'
+'    This program is free software; you can redistribute it and/or modify
+'    it under the terms of the GNU General Public License as published by
+'    the Free Software Foundation; either version 2 of the License, or
+'    (at your option) any later version.
+'
+'    This program is distributed in the hope that it will be useful,
+'    but WITHOUT ANY WARRANTY; without even the implied warranty of
+'    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+'    GNU General Public License for more details.
+'
+'    You should have received a copy of the GNU General Public License
+'    along with this program; if not, write to the Free Software
+'    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+' General
+
+Define TXT_ERR_NOT_MAPPER "You must Select a Map Window first"
+Define TXT_ERR_NOT_PREPAREDLP "This Map Window was not prepared with Layout Preview"
+
+Define TXT_EAST "E"
+Define TXT_WEST "W"
+Define TXT_NORTH "N"
+Define TXT_SOUTH "S"
+
+' Module GRID
+
+' Procedure Layout Preview
+
+Define TXT_LP_DIALOG_TITLE "Layout Preview"
+Define TXT_LP_GOUPBOX_SCALE "Scale"
+Define TXT_LP_POPUPMENU_SCALE "1:10,000,000;1:5,000,000;1:1,000,000;1:500,000;1:250,000;1:100,000;1:75,000;1:50,000;1:25,000;1:10,000;Custom"
+Define TXT_LP_STATICTEXT_CUSTOM "Custom  1:"
+Define TXT_LP_GROUPBOX_PAPER_SIZE "Paper Size"
+Define TXT_LP_POPUPMENU_PAPER_SIZE "A4;A3;A2;A1;A0;A;B;C;D;E;Cust"
+Define TXT_LP_STATICTEXT_UNITS "mm:"
+Define TXT_LP_RADIOGROUP_ORIENTATION "Portrait;Landscape"
+Define TXT_LP_CHECKBOX_GRID "Grid"
+Define TXT_LP_CHECKBOX_TITLE "Title Block"
+Define TXT_LP_GROUPBOX_LAYOUT "Layout Information"
+Define TXT_LP_STATICTEXT_PAPER "Paper: "
+Define TXT_LP_STATICTEXT_MM " mm x "
+Define TXT_LP_STATICTEXT_MM2 " mm"
+Define TXT_LP_STATICTEXT_MAP "Map: "
+Define TXT_LP_STATICTEXT_KM " km x " 
+Define TXT_LP_STATICTEXT_KM2 " km"
+
+' Menu Layout Preview
+
+Define TXT_MLP_ACCEPT "&Accept"
+Define TXT_MLP_HLP_ACCEPT "Accept Map Position"
+Define TXT_MLP_RESPECIFY "&Re-Specify"
+Define TXT_MLP_HLP_RESPECIFY "Change The Parameters"
+Define TXT_MLP_EXIT "&Exit"
+Define TXT_MLP_HLP_EXIT "Exit Layout Preview"
+Define TXT_MLP_BAR "Layout &Preview"
+
+' Button Bar Layout Preview (Grid Version 1.24)
+
+Define TXT_BLP_BUTTON "Layout Preview"
+Define TXT_BLP_BUTTON_TITLE "Layout Preview"
+Define TXT_BLP_HLP_ACCEPT "Accept Map Position\nAccept Map Position"
+Define TXT_BLP_HLP_RESPECIFY "Change The Parameters\nChange The Parameters"
+Define TXT_BLP_HLP_EXIT "Exit Layout Preview\nExit Layout Preview"
+
+' Dialog Title Block Entry (Grid Version 1.24)
+
+Define TXT_TB_DIALOG_TITLE "Title Block"
+Define TXT_TB_STATICTEXT_TITLE "Title:"
+Define TXT_TB_STATICTEXT_SUBTITLE "SubTitle:"
+Define TXT_TB_STATICTEXT_AUTHOR "Author:"
+Define TXT_TB_STATICT_TEXT_POSITION "Position:"
+Define TXT_TB_POPUPMENU_POSITION "Bottom Right;Bottom Left;Top Left;Top Right"
+Define TXT_TB_STATICTEXT_LOGO "Logo:"
+Define TXT_TB_POPUPMENU_LOGO "Logo1;Logo2"
+Define TXT_TB_STATICTEXT_SIZE "Size:"
+Define TXT_TB_POPUPMENU_SIZE "1x;1.5x;2x"
+
+' Dialog Grid
+
+Define TXT_GD_DIALOG_TITLE "Grid"
+Define TXT_GD_STATICTEXT_LINE_STYLE "Grid Line Style:"
+Define TXT_GD_STATICTEXT_COORDINATE_STYLE "Coordinates Style:"
+Define TXT_GD_RADIOGROUP_NEWGRID "New Grid;Append to Grid"
+Define TXT_GD_GROUPBOX_LABELPLACE "Label Place"
+Define TXT_GD_CHECKBOX_LEFT "Left"
+Define TXT_GD_CHECKBOX_RIGHT "Right"
+Define TXT_GD_CHECKBOX_TOP "Top"
+Define TXT_GD_CHECKBOX_BOTTOM "Bottom"
+Define TXT_GD_GROUPBOX_GRID_STYLE "Grid Style"
+Define TXT_GD_RADIOGROUP_LABEL_POSITION "Labels inside the Grid;Labels outside the Grid"
+
+' Module SOPAC
+
+' Menu Data Centre
+
+Define TXT_MDC_MENU_TITLE "&Data Centre"
+Define TXT_MDC_RELOAD "&Reload"
+Define TXT_MDC_HLP_RELOAD "Reload the background"
+Define TXT_MDC_MAP_PROJECTION "&Map Projection"
+Define TXT_MDC_HLP_MAP_PROJECTION "View and change map projection"
+Define TXT_MDC_MAP_VIEW "Map &View"
+Define TXT_MDC_HLP_MAP_VIEW "Zoom on a Location"
+Define TXT_MDC_GRID "Gr&id"
+Define TXT_MDC_HLP_GRID "Create a grid on the current Mapper"
+Define TXT_MDC_LAYOUT_PREVIEW "&Layout Preview"
+Define TXT_MDC_HLP_LAYOUT_PREVIEW "Prepare a Layout"
+Define TXT_MDC_ABOUT "&About"
+Define TXT_MDC_HLP_ABOUT "About this Utility"
+Define TXT_MDC_AUTOLOAD "A&utoLoad" 
+Define TXT_MDC_HLP_AUTOLOAD "Autoload this Menu when MapInfo Starts"
+Define TXT_MDC_SAVE_CHANGES "&Save Changes"
+Define TXT_MDC_HLP_SAVE_CHANGES "Save Changes in the TCC.INI File"
+Define TXT_MDC_EXIT "E&xit"
+Define TXT_MDC_HLP_EXIT "Close this menu"
+
+' ButtonPad Data Centre
+
+Define TXT_BDC_BUTTON "&Data Centre"
+Define TXT_BDC_HLP_MAP_PROJECTION "View and change map projection\nMap Projection"
+Define TXT_BDC_HLP_MAP_VIEW "Zoom on a Location\nMap View"
+Define TXT_BDC_HLP_GRID "Create a grid on the current Mapper\nGrid"
+Define TXT_BDC_HLP_LAYOUT_PREVIEW "Prepare a Layout\nLayout Preview"
+Define TXT_BDC_BUTTON_TITLE "TCC Data Centre"
+
+Define TXT_ERR_CANNOT_READ "The Program cannot read the tcc.ini file due to:"
+
+' About Dialog Box ( English.def 1.1 )
+
+Define TXT_AB_TXT1 "SOPAC Regional Data Centre V1.32"
+Define TXT_AB_TXT2 "         Menu Add-On v1.02"
+Define TXT_AB_TXT3 "           Grid+Print  v1.24"
+Define TXT_AB_TXT4 "     Code: Franck Martin"
+Define TXT_AB_TXT5 "  English: Franck Martin"
+Define TXT_AB_TXT6 "® SOPAC FM 1995-99 under GNU GPL"
+Define TXT_AB_TXT7 "      www.sopac.org.fj"
+
+' Reload Procedure
+
+Define TXT_ERR_NOT_FOUND "Couldn't find "
+Define TXT_ERR_NOT_FOUND2 " In directory "
+Define TXT_ERR_NOT_FOUND3 "Verify [Workspace] section in "
+
+' Dialog Map Projections
+
+Define TXT_MP_DIALOG_TITLE "Map Projections"
+Define TXT_MP_BUTTON_UP "Up"
+Define TXT_MP_BUTTON_DOWN "Down"
+Define TXT_MP_BUTTON_ADD "Add"
+Define TXT_MP_BUTTON_DELETE "Delete"
+
+' Dialog Map View
+
+Define TXT_MV_DIALOG_TITLE "Zoom to a Location"
+Define TXT_MV_BUTTON_UP "Up"
+Define TXT_MV_BUTTON_DOWN "Down"
+Define TXT_MV_BUTTON_ADD "Add"
+Define TXT_MV_BUTTON_DELETE "Delete"
+
+' Dailog Add View
+
+Define TXT_AV_DIALOG_TITLE "View Name"
+Define TXT_AV_DEFAULT_NAME "User View"
+
+' Procedure Finish
+
+Define TXT_FN_ERR_CANT_WRITE "Couldn't write the tcc.ini file due to:"
+Define TXT_FN_ERR_CANT_WRITE2 "Exit Anyway ?"
+Define TXT_FN_ERR_CANCEL "Cancel"
+Define TXT_FN_ERR_OK "Ok"
+
+' Procedure SaveIni
+' Dialog Default Workspace
+
+Define TXT_DW_DIALOG_TITLE "Default Workspace"
+
+' Procedure CheckWorkName
+
+Define TXT_CW_ERR_CANT_FIND "Cannot Find this workspace"
+
+' Procedure ReadIni
+
+Define TXT_RI_ERR_EMPTY "TCC.INI is empty"
+Define TXT_RI_ERR_CANT_FIND "Could Not find the [Workspace] section"
+Define TXT_RI_ERR_END_FILE " Unexpected end of file in [Workspace] section"
+Define TXT_RI_ERR_CANT_FIND_SEC_LOC_EOF "Could not find the section [Locations] after the [Workspace] section due to an unexpected end of file"
+Define TXT_RI_ERR_CANT_FIND_SEC_LOC "Could not find the section [Locations] after the [Workspace] section"
+Define TXT_RI_ERR_CANT_FIND_SEC_PROJ_EOF "Could not find the section [Projections] after the [Locations] section due to an unexpected end of File"
+Define TXT_RI_ERR_CANT_FIND_SEC_PROJ "Could not find the section [Projections] after the [Locations] section"

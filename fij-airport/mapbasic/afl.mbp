@@ -1,0 +1,14 @@
+[LINK]
+Application=AFL.mbx
+Module=AFL_Lib.mbo
+Module=main.mbo
+Module=menus.mbo
+Module=grid.mbo
+Module=auto_lib.mbo
+Module=About.mbo
+Module=Finish.mbo
+Module=NotYetReleased.mbo
+
+
+
+

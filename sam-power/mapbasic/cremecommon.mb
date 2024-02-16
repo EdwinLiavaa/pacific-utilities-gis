@@ -1,0 +1,64 @@
+'*****************************************************************
+'*  Name   : CreMeCommon
+'*  Purpose: Create user interface for Common drop down menu
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Leslie Allinson, Edwin Liava'a
+'*  Date   : 25-Jan-2007
+'*  Mods   : 28-Feb-2007
+'*
+'*****************************************************************
+Include "mapbasic.def"
+Include "menu.def"
+
+Global AC_Path As String	'	Access
+Global BD_Path As String	'	MapInfo Raster Layers (BackDrops)
+Global MI_Path As String	'	MapInfo Vector Layers
+
+Declare Sub CreMeCommon			 
+Declare Sub NotYetReleased		
+Declare Sub DispBL					' Display Buildings
+Declare Sub DispRD					' Display Roads
+Declare Sub DispCT					' Display Coast
+Declare Sub DispCP					' Display Control Points
+Declare Sub DispBD_QB_All_Tiles	' All Apia Images
+Declare Sub DispBD_QB_Tile1
+Declare Sub DispBD_QB_Tile2
+Declare Sub DispBD_QB_Tile3
+
+	
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++*
+
+Sub CreMeCommon
+
+OnError Goto Err_Manage
+
+	Create Menu "Common Layers" As
+		"Display Common Layers:",
+		"(-", 
+			"Buildings *"							Calling NotYetReleased,
+			"Coast *"								Calling NotYetReleased,
+			"Control Points *"					Calling NotYetReleased,
+			"Roads *"								Calling NotYetReleased,
+			"Hazard Zones *"						Calling NotYetReleased,
+		"(-", 
+		"Display Image Backdrops:",
+		"(-", 
+			"QuickBird Backdrop Tile1"     	Calling DispBD_QB_Tile1,
+			"QuickBird Backdrop Tile2"     	Calling DispBD_QB_Tile2,
+			"QuickBird Backdrop Tile3"     	Calling DispBD_QB_Tile3,
+			"QuickBird Backdrop All Tiles" 	Calling DispBD_QB_All_Tiles,
+		"(-", 
+		" * Not Yet Acquired"
+	
+	Alter Menu Bar Add "Common Layers"
+
+Res_CreMeCommon:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Res_CreMeCommon
+	
+End Sub

@@ -1,0 +1,14 @@
+'*****************************************************************
+'*  Name   : EPC_Lib.def
+'*  Purpose: Defines subroutines and functions in EPC_Lib library
+'*    
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Leslie Allinson
+'*  Date   : 13-Feb-2007
+'*  Mods   : 
+'*           
+'*****************************************************************
+
+Declare Sub TestColname (mycolname As String, myfound As Integer, s_tablename As String)
+Declare Sub ZoomSet (strLayer As String)

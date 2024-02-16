@@ -1,0 +1,273 @@
+Include "PPL_Lib.def"
+Include "mapbasic.def"
+Include "menu.def"
+Include "Icons.def"  
+
+'*****************************************************************
+
+' Declare Global Variables
+
+Global db_conn_path 				As String	 'Access
+Global rs_path 				As String	 'MapInfo Raster Layers (BackDrops)
+Global vt_Path 				As String	 'MapInfo Vector Layers
+												
+' Sub Program (Procedure) Declarations
+
+declare sub Find_Asset	
+
+'****************************** Find_Asset Procedure ********************************
+' this procedure open the tables and display the tools
+
+Sub Find_Asset
+
+	Dim Map_Win_id 	As Integer
+	Dim i,j			As Integer
+	Dim TableName 	As String
+	Dim Asset 		As String
+	Dim iXC,iYC		As Float
+	Dim aID			As Alias
+	Dim irowid 		As Integer
+	Dim iLayer		As Integer
+
+OnError Goto Err_Manage
+	
+	Close All
+
+	TableName = db_conn_path + "\" + "TX.tab"
+	Open Table Tablename As TX Interactive
+	TableName = db_conn_path + "\" + "TT.tab"
+	Open Table Tablename As TT Interactive
+	TableName = db_conn_path + "\" + "PL.tab"
+	Open Table TableName As PL Interactive
+	TableName = db_conn_path + "\" + "MT.tab"
+	Open Table Tablename As MT Interactive
+	TableName = db_conn_path + "\" + "BL.tab"
+	Open Table TableName As BL Interactive
+	TableName = db_conn_path + "\" + "SG.tab"
+	Open Table TableName As SG Interactive
+	TableName = db_conn_path + "\" + "BU.tab"
+	Open Table TableName As BU Interactive
+	TableName = db_conn_path + "\" + "GN.tab"
+	Open Table TableName As GN Interactive
+	TableName = db_conn_path + "\" + "ST.tab"
+	Open Table TableName As ST Interactive
+
+	Map From TX, MT, PL, SG, TT, BU, GN, BL, ST Max
+	
+	Set Map Distance Units "m" 
+
+	set map redraw off
+	Set Map Layer 1 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 1000) Units "m"
+		Activate Using Tag_Target_Photo On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 2 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 1000) Units "m"
+		Activate Using Tag_Target_Photo On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 3 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 1000) Units "m"
+		Activate Using Tag_Target_Photo On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 4 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 1000) Units "m"
+		Activate Using Tag_Target_Photo On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 5 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 1000) Units "m"
+		Activate Using Tag_Target_Photo On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 6 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 1000) Units "m"
+		Activate Using Tag_Target_Photo On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 7 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 1000) Units "m"
+		'Activate Using Tag_Target_Photo On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 8 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 1000) Units "m"
+		Activate Using Tag_Target_Photo On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 9 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 1000) Units "m"
+		Activate Using Tag_Target_Photo On Labels Objects Relative Path On
+	set map redraw on
+
+'+++++++++++++++++++++++++++  Getting window ID +++++++++++++++++++++
+
+	Map_Win_id = FrontWindow()
+
+	If Map_Win_id = 0 Then
+		Exit Sub
+	End If
+
+
+' ++++++++++++++++++++++++++  Dialog Box +++++++++++++++++++++++++++++
+
+	Dialog
+
+	Title "PPL MIS-GIS Find Asset"
+
+	Control StaticText
+		Title "Type in Asset ID:"
+		Position 5, 10
+
+	Control EditText
+		Position 20,20 Width 40
+		Into Asset
+	
+	Control OKButton
+		Position 5, 40
+
+	Control CancelButton
+		Position 45, 40
+
+	If not CommandInfo(CMD_INFO_DLG_OK) Then 	'The user just cancelled
+		Close All Interactive
+  		Exit Sub
+	End If
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	
+	If Left$(Asset,2) = "TX" Then
+		Select * From TX Where TX.TX_ID = Ucase$(Asset)
+		irowid = CommandInfo(CMD_INFO_ROWID)
+		Run Menu Command M_QUERY_FIND_SELECTION
+		iXC = CentroidX(TX.obj)
+		iYC = CentroidY(TX.obj)
+		Set Map Window Map_Win_id
+			Center (iXC,iYC)
+			Zoom 200 Units "m"
+		Open Window WIN_INFO
+		Set Window WIN_INFO Table TX Rec irowid
+	ElseIf Left$(Asset,2) = "PL" Then
+		Select * From PL Where PL.PL_ID = Ucase$(Asset)
+		irowid = CommandInfo(CMD_INFO_ROWID)
+		Run Menu Command M_QUERY_FIND_SELECTION
+		iXC = CentroidX(PL.obj)
+		iYC = CentroidY(PL.obj)
+		Set Map Window Map_Win_id
+			Center (iXC,iYC)
+			Zoom 200 Units "m"
+		Open Window WIN_INFO
+		Set Window WIN_INFO Table PL Rec irowid
+	ElseIf Left$(Asset,2) = "MT" Then
+		Select * From MT Where MT.MT_ID = Ucase$(Asset)
+		irowid = CommandInfo(CMD_INFO_ROWID)
+		Run Menu Command M_QUERY_FIND_SELECTION
+		iXC = CentroidX(MT.obj)
+		iYC = CentroidY(MT.obj)
+		Set Map Window Map_Win_id
+			Center (iXC,iYC)
+			Zoom 200 Units "m"
+		Open Window WIN_INFO
+		Set Window WIN_INFO Table MT Rec irowid
+   ElseIf Left$(Asset,2) = "BL" Then
+		Select * From BL Where BL.BL_ID = Ucase$(Asset)
+		irowid = CommandInfo(CMD_INFO_ROWID)
+		Run Menu Command M_QUERY_FIND_SELECTION
+		iXC = CentroidX(BL.obj)
+		iYC = CentroidY(BL.obj)
+		Set Map Window Map_Win_id
+			Center (iXC,iYC)
+			Zoom 200 Units "m"
+		Open Window WIN_INFO
+		Set Window WIN_INFO Table BL Rec irowid
+	ElseIf Left$(Asset,2) = "SG" Then
+		Select * From SG Where SG.SG_ID = Ucase$(Asset)
+		irowid = CommandInfo(CMD_INFO_ROWID)
+		Run Menu Command M_QUERY_FIND_SELECTION
+		iXC = CentroidX(SG.obj)
+		iYC = CentroidY(SG.obj)
+		Set Map Window Map_Win_id
+			Center (iXC,iYC)
+			Zoom 200 Units "m"
+		Open Window WIN_INFO
+		Set Window WIN_INFO Table SG Rec irowid
+	ElseIF Left$(Asset,2) = "BU" Then
+		Select * From BU Where BU.BU_ID = Ucase$(Asset)
+		irowid = CommandInfo(CMD_INFO_ROWID)
+		Run Menu Command M_QUERY_FIND_SELECTION
+		iXC = CentroidX(BU.obj)
+		iYC = CentroidY(BU.obj)
+		Set Map Window Map_Win_id
+			Center (iXC,iYC)
+			Zoom 200 Units "m"
+		Open Window WIN_INFO
+		Set Window WIN_INFO Table BU Rec irowid
+	ElseIf Left$(Asset,2) = "GN" Then
+		Select * From GN Where GN.GN_ID = Ucase$(Asset)
+		irowid = CommandInfo(CMD_INFO_ROWID)
+		Run Menu Command M_QUERY_FIND_SELECTION
+		iXC = CentroidX(GN.obj)
+		iYC = CentroidY(GN.obj)
+		Set Map Window Map_Win_id
+			Center (iXC,iYC)
+			Zoom 200 Units "m"
+		Open Window WIN_INFO
+		Set Window WIN_INFO Table GN Rec irowid
+	ElseIf Left$(Asset,2) = "TT" Then
+		Select * From ND Where TT.TT_ID = Ucase$(Asset)
+		irowid = CommandInfo(CMD_INFO_ROWID)
+		Run Menu Command M_QUERY_FIND_SELECTION
+		iXC = CentroidX(TT.obj)
+		iYC = CentroidY(TT.obj)
+		Set Map Window Map_Win_id
+			Center (iXC,iYC)
+			Zoom 200 Units "m"
+		Open Window WIN_INFO
+		Set Window WIN_INFO Table TT Rec irowid
+	ElseIf Left$(Asset,2) = "ST" Then
+		Select * From PS Where ST.ST_ID = Ucase$(Asset)
+		irowid = CommandInfo(CMD_INFO_ROWID)
+		Run Menu Command M_QUERY_FIND_SELECTION
+		iXC = CentroidX(ST.obj)
+		iYC = CentroidY(ST.obj)
+		Set Map Window Map_Win_id
+			Center (iXC,iYC)
+			Zoom 200 Units "m"
+		Open Window WIN_INFO
+		Set Window WIN_INFO Table ST Rec irowid
+	End If
+		
+'Set WIN_INFO
+		
+		Set Window WIN_INFO
+		Position (0.1, 0.1) ' place in upper left 
+		Font ("Arial", 1, 12, BLUE) ' Arial bold...
+		Width 4.0 ' make window 3" wide 
+		Height 8.0 ' make window 1" high
+		Open Window WIN_INFO
+		
+Res_FindAsset:
+
+	Exit Sub
+
+Err_Manage:
+	note "FindAsset: No Asset Found!"
+	Resume Res_FindAsset
+
+End Sub
+	
+	
+
+
+	

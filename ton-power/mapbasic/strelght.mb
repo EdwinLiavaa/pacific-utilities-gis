@@ -1,0 +1,143 @@
+'********************************************************
+'*                                                      *
+'*     Strelght.MBO                Edwin, 20.08.98      *
+'*                                                      *
+'*  This program displays the different types of Street *
+'*  Lights in use.                                      *
+'*                                                      *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required files:                                      *
+'*                MAPBASIC.DEF                          *
+'*			MENU.DEF                              *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required tables:                                     *
+'*                  - poles.tab                         *
+'*                  - st_type.tab                       *
+'********************************************************
+
+	include "C:\Program Files\MapInfo\MapBasic\MAPBASIC.DEF"
+	include "C:\Program Files\MAPINFO\MAPBASIC\MENU.DEF"
+
+	Global passw as String 
+	Global MapPath as string
+	Global CadaPath as String
+
+	Declare Sub Strelght
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++*
+
+	Sub Strelght
+
+	Dim  ivar1, ivar2, ivar3 As Integer
+	Dim Map_Win_Id 		as Integer
+	Dim aRowID 			as Alias
+	Dim aSt_Type 		as Alias
+	Dim aSt_TypeName 		as Alias
+	Dim sSt_TypeType(1) 	as String
+	Dim sSt_TypeName(1) 	as String
+	Dim tablename 		as String
+	Dim iCounter 		as Integer
+	Dim i_lay_type		As SmallInt
+	Dim iz, ln			As SmallInt
+	Dim MapName			As String
+
+	OnError goto Err_Strelght
+
+' ++++++++++++++++++++++++++ close some toolbars ++++++++++++++++++++
+
+	Alter ButtonPad "Tools" Hide
+	Alter ButtonPad "Drawing" Hide
+	Alter ButtonPad "Main" Show Fixed
+	Alter ButtonPad "ODBC" Hide
+
+
+' ++++++++++++++++++++++++++ close and open map layers ++++++++++++++
+
+	
+	MapName = MapPath +"POLES.TAB"
+
+	Close All
+	
+	Open Table MapName As "Poles" password passw
+
+	Map From Poles max
+	Mapname = Cadapath + "n_cad.tab"
+	open table MapName as n_cad interactive
+
+	add map layer n_cad
+
+'+++++++++++++++++++++++++++  Getting window ID +++++++++++++++++++++
+
+	Map_Win_id = FrontWindow()
+
+'++++++  go out of program if operator does not know password +++++++
+
+	If Map_Win_id = 0 Then
+		Exit Sub
+	End If
+
+
+'++++++++++++++++++++++++++ Shade statements +++++++++++++++++++++++++
+	Set Map Redraw off
+
+	Shade Window Map_Win_Id "Poles" with ST_LIGHT 
+		Values 
+		"0" Symbol (34,BLACK,8),
+		"00" Symbol (34,BLACK,8),
+		"01" Symbol (34,RED,8),
+		"02" Symbol (34,BLUE,8),
+		"03" Symbol (34,16711935,8),
+		"04" Symbol (34,YELLOW,8),
+		"05" Symbol (34,32768,8),
+		"06" Symbol (34,65280,8),
+		"07" Symbol (34,16744576,8)
+		default Symbol (34,BLACK,8)
+
+
+'+++++++++++++++++++++++++ View Entire Layer +++++++++++++++++++++++++
+
+	
+	Set Map Window Map_Win_Id Zoom Entire Layer "Poles"
+
+'+++++++++++++++++++++++++ Legend statements +++++++++++++++++++++++++
+
+	Set Legend Window Map_Win_Id layer prev display on shades off symbols on 
+		lines off count on title "Streetlight types" Font ("MS Sans Serif",0,10,0)
+		subtitle "" Font ("MS Sans Serif",0,8,0) 
+		Ascending On 
+		Ranges Font ("MS Sans Serif",0,8,0) 
+		"all others" display on,
+		"0 = no light" display on,
+		"00 = unknown" display on,
+		"01 = BETA79" display on,
+		"02 = 1 x 20W" display on,
+		"03 = 1 x 40W" display on,
+		"04 = Stradalux" display on,
+		"05 = Alpha 3" display on,
+		"06 = Alpha 8" display on,
+		"07 = Goughlight 600" display on
+
+	Set Window WIN_LEGEND 
+	Position (1,4) Units "cm"
+	Width 6 Units "cm"
+	Height 8 Units "cm"
+
+	set Map Redraw On
+	Open Window Legend
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	Set Window Map_Win_id Max
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Res_Strelght:
+	Exit Sub
+
+Err_Strelght:
+	note "Strelght: "+str$(err())+" "+error$()
+	Resume Next
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	End Sub

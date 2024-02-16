@@ -1,0 +1,199 @@
+'********************************************************
+'*                                                      *
+'*     PhasType.MBO                Edwin, 20.08.98      *
+'*                                                      *
+'*  This program dispalys customers according to which  *
+'*  phase type their connected.	                    *
+'*                                                      *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required files:                                      *
+'*                MAPBASIC.DEF                          *
+'*			MENU.DEF                              *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required tables:                                     *
+'*                  - customer.tab                      *
+'*                  - phase.tab                         *
+'********************************************************
+
+	include "C:\Program Files\MapInfo\MapBasic\MAPBASIC.DEF"
+	include "C:\Program Files\MAPINFO\MAPBASIC\MENU.DEF"
+
+	Global passw as String 
+	Global MapPath as string
+	Global CadaPath as String
+
+	Declare Sub PhasType
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++*
+
+
+
+	Sub PhasType
+
+	
+	Dim  ivar1, ivar2, ivar3 As Integer
+	Dim Map_Win_Id 		As Integer
+	Dim i_lay_type		As SmallInt
+	Dim iz, ln			As SmallInt
+	Dim MapName			As String
+	Dim phasety			As String
+	Dim iphase 			As SmallInt
+	Dim aRowId 			as Alias
+	Dim aphase 			as Alias
+	Dim aphaseName 		as Alias
+	Dim sphaseType(1) 	as String
+	Dim sphaseName(1)		as String
+	Dim iCounter 		as Integer
+
+
+	OnError goto Err_PhasType
+
+' ++++++++++++++++++++++++++ close some toolbars ++++++++++++++++++++
+
+	Alter ButtonPad "Tools" Hide
+	Alter ButtonPad "Drawing" Hide
+	Alter ButtonPad "Main" Show Fixed
+	Alter ButtonPad "ODBC" Hide
+
+
+' ++++++++++++++++++++++++++ close and open map layers ++++++++++++++
+
+	
+	MapName = MapPath +"CUSTOMER.TAB"
+
+	Close All
+	
+	Open Table MapName As "Customer" password passw
+
+	Map From Customer
+	Mapname = Cadapath + "n_cad.tab"
+	open table MapName as n_cad interactive
+
+	add map layer n_cad
+
+'+++++++++++++++++++++++++++  Getting window ID +++++++++++++++++++++
+
+	Map_Win_id = FrontWindow()
+
+'++++++  go out of program if operator does not know password +++++++
+
+	If Map_Win_id = 0 Then
+		Exit Sub
+	End If
+
+' ++++++++++++Store Data into Array Variable from Table+++++++++++++
+
+	MapName = MapPath +"phase.tab"
+	open table MapName password passw as "phase"
+
+	aRowId="phase.rowid"
+	aphase="Phase.PHA_TYPE"
+	aPhaseName="Phase.NAME"
+
+	Fetch First from phase		' cursor to first record
+	iCounter=1
+	Do While NOT EOT( Phase )
+		Redim sPhaseType(iCounter)
+		Redim sPhaseName(iCounter)
+		if iCounter=1 then
+			sPhaseType(iCounter)=aPhase
+			sPhaseName(iCounter)=aPhaseName
+			iCounter=2
+		else
+			if sPhaseType(iCounter-1)<>aPhase then
+				sPhaseType(iCounter)=aPhase
+				sPhaseName(iCounter)=aPhaseName
+				iCounter=iCounter+1
+			end if	
+		end if
+		Fetch Next from Phase
+	Loop
+	Close Table Phase
+
+' +++++++++++++++++++  Dialog ++++++++++++++++++++++++++++++++++++++++
+
+
+	Dialog
+
+	Title "select type:"
+
+	Control StaticText
+		Title "select phase type:"
+		Position 5, 10
+
+	Control PopUpMenu
+		Title From Variable sphaseName
+   		Value 1
+		Position 20,20 Width 60
+		Into iphase
+	
+	Control OKButton
+		Position 20, 40
+	Control CancelButton
+		Position 65, 40
+
+	If not CommandInfo(CMD_INFO_DLG_OK) Then 	'The user just cancelled.
+  		Exit Sub
+	End If 
+ 
+'++++++++++++++++ creating the right variable +++++++++++++++++++++++++
+ 
+		
+	phasety = sPhaseType(iphase)
+
+
+'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+'++++++++++++++++++++++++++ Shade statements +++++++++++++++++++++++++
+
+	Shade Window Map_Win_Id "Customer" 
+		with PHA_TYPE Values phasety 
+		Symbol (34,RED,8) 
+		default Symbol (34,BLACK,8)
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+'+++++++++++++++++++++++++ View Entire Layer +++++++++++++++++++++++++
+
+	
+	Set Map Window  Map_Win_Id Zoom Entire Layer "Customer"
+
+'+++++++++++++++++++++++++ Legend Statements +++++++++++++++++++++++++
+
+	Set Legend Window Map_Win_Id layer prev 
+		display on 
+		shades off 
+		symbols on 
+		lines off 
+		count on 
+		title "Select Phase Type" 
+		Font ("MS Sans Serif",0,10,0) 
+		subtitle "" Font ("MS Sans Serif",0,8,0) 
+		ascending on 
+		ranges Font ("MS Sans Serif",0,8,0) "all others" 
+		display on ,
+		sPhaseName(iphase) display on
+ 
+	Set Window WIN_LEGEND 
+	Position (1,4) Units "cm"
+	Width 6 Units "cm"
+	Height 3 Units "cm"
+
+	Open Window Legend
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	Set Window Map_Win_id Max
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Res_PhasType:
+	Exit Sub
+
+Err_PhasType:
+	note "PhasType: "+str$(err())+" "+error$()
+	Resume Next
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	End Sub

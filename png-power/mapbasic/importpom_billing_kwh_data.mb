@@ -1,0 +1,92 @@
+'*****************************************************************
+'*  Name   : ImportPOM_Billing_KWH_Data
+'*  Purpose: Import POM Credit KWH Billing Data
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Edwin Liava'a
+'*  Date   : 26-Feb-2007
+'*  Mods   : 04-Nov-2013
+'*           
+'*****************************************************************
+
+Include "PPL_Lib.def"
+Include "mapbasic.def"
+Include "menu.def"
+Include "Icons.def"  
+
+Declare Sub ImportPOM_Billing_KWH_Data
+
+GLobal vt_Path As String	'	MapInfo Vector Layers
+
+Sub ImportPOM_Billing_KWH_Data
+
+OnError Goto Err_Manage
+
+'****************** declarations ************************
+
+Dim Map_Win_id 				As Integer
+Dim i,j						As Integer
+Dim TableName				 	As String
+
+'****************** Open Meters layer ******************
+
+Close All
+
+TableName = vt_path + "\" + "TX.tab"
+Open Table TableName As TX Interactive
+TableName = vt_path + "\" + "MT.tab"
+Open Table TableName As MT Interactive
+TableName = vt_path + "\" + "LN_LV.tab"
+Open Table TableName As LV Interactive
+TableName = vt_path + "\" + "LN_HV.tab"
+Open Table TableName As HV Interactive
+
+Map From HV, LV, TX, MT Max
+
+'****************** Register Credit and Prepaid kWh layer ******************
+
+Register Table "C:\PPL_GIS\billing\Credit Meters\Processed\POM-CRE-KWH.csv"  
+TYPE ASCII Delimiter 44 Titles Charset "WindowsLatin1" 
+	Into "C:\PPL_GIS\billing\Credit Meters\Processed\POM-CRE-KWH.TAB"
+Open Table "C:\PPL_GIS\billing\Credit Meters\Processed\POM-CRE-KWH.TAB" Interactive
+
+Register Table "C:\PPL_GIS\billing\Prepaid Meters\Processed\POM-PRE-KWH.csv"  
+TYPE ASCII Delimiter 44 Titles Charset "WindowsLatin1" 
+	Into "C:\PPL_GIS\billing\Prepaid Meters\Processed\POM-PRE-KWH.TAB"
+Open Table "C:\PPL_GIS\billing\Prepaid Meters\Processed\POM-PRE-KWH.TAB" Interactive
+
+Add Column "MT" (CUR_CONSUMP )From POM_CRE_KWH Set To JunKwH Where COL14 = COL5 
+Add Column "MT" (PRE_CONSUMP )From POM_CRE_KWH Set To MayKwH Where COL14 = COL5 
+
+Select * From MT Where CUR_CONSUMP = 0 Into PrePaid_MT
+
+Add Column "PrePaid_MT" (CUR_CONSUMP )From POM_PRE_KWH Set To JunKwH Where COL14 = COL4
+Add Column "PrePaid_MT" (PRE_CONSUMP )From POM_PRE_KWH Set To MayKwH Where COL14 = COL4
+
+Commit Table PrePaid_MT As "C:\PPL_GIS\mapinfo\PrePaid_MT.TAB" TYPE NATIVE Charset "WindowsLatin1" Interactive
+
+Commit Table MT Interactive
+
+Add Column "TX" (pre_consum_kWh )From MT Set To sum(PRE_CONSUMP) Where COL1 = COL27 
+Add Column "TX" (cur_consum_kWh )From MT Set To sum(CUR_CONSUMP) Where COL1 = COL27 
+
+Commit Table TX Interactive
+
+Add Column "LV" (LOAD )From MT Set To CUR_CONSUMP Where intersects
+
+select * from LV where LOAD = 0 AND left$(NEXT_ID,2) <> "MT" into Temp1
+
+Add Column "Temp1" (LOAD )From LV Set To sum(LOAD) Where intersects
+
+Commit Table LV Interactive
+
+Note "Successfully Completed Importation of Billing Data!"
+
+Res_ImportPOM_Billing_KWH_Data:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executin the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Res_ImportPOM_Billing_KWH_Data
+End Sub

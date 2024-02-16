@@ -1,0 +1,1923 @@
+'*****************************************************************
+'*  Name   : Grid.MB Franck Martin 03 December 1996
+'*  Purpose: Creates a grid on a map window
+'*  Inputs : LOGO.TAB, TITLE.TAB in the application directory
+'*				Table "Title" must be 100mm x 100mm
+'*  Outputs: A scaled layout From a Map window
+'*  Modified by : Edwin Liava'a 06 March 2006
+'*  Date   : 25-Jan-2007
+'*  Mods   : 16-Feb-2007
+'*           
+'*****************************************************************
+
+include "mapbasic.def"
+include "menu.def"
+include "icons.def"
+include "english.def"
+
+Declare Sub Grid_Init
+Declare Sub Grid
+Declare Sub Layout_Preview
+Declare Sub GridParameters (Map_Win_id as Integer,xyunits as String,minx as Float,miny as Float,maxx as Float,maxy as Float,stepxy as Float,sStepxy as String)
+Declare Sub GridUnitChange
+
+'Layout_Preview Dialog Handler procedures
+Declare Sub Custom_Scale
+Declare Sub Layout_Preview_Accept
+Declare Sub Layout_Preview_Exit
+
+'Global variable used to redifine the grid
+
+Dim gridstepxy	as Float
+Dim degstepxy	as Float
+Dim sTitleUnit(2)	as String
+
+'Parameters to be remembered by the dialog boxes
+Dim GridStyle	as Integer	' Specify if the Labels are inside or outside the grid
+Dim iScale		as Integer
+Dim sScale		as String
+Dim iSize		as Integer
+Dim sPaperWidth	as String
+Dim sPaperHeight	as String
+Dim iFormat		as Integer
+Dim lGrid		as Logical
+Dim lTitleBlock	as Logical
+	' Title Block
+Dim sTitle		as String
+Dim sTitle1		as String
+Dim sTitle2		as String
+Dim sTitle3		as String
+Dim sTitle4		as String
+Dim sTitle5		as String
+Dim sTitle6		as String
+Dim sAuthor		as String
+Dim iTitlePos	as Integer
+Dim iTitleSize	as Integer
+dim iLogo		as Integer
+
+'--------------------------------------------
+' Grid_Init
+'
+' Initialise the variables and the module.
+'
+Sub Grid_Init
+
+	iScale=1
+	sScale="10000"
+	iSize=1
+	sPaperWidth="210"
+	sPaperHeight="297"
+	iFormat=1
+	lGrid=TRUE
+	lTitleBlock=TRUE
+
+	' Title Block
+	sTitle=""
+	sTitle1=""
+	sTitle2=""
+	sTitle3=""
+	sTitle4=""
+	sTitle5=""
+	sTitle6=""
+	sAuthor=""
+	iTitlePos=1
+	iTitleSize=1
+	iLogo=1
+
+End Sub
+
+'--------------------------------------------
+' Layout_Preview
+'
+' Prepare a Layout with scaled map in a frame ready for printing on paper
+'
+
+Sub Layout_Preview
+
+	Dim Scale		as Float
+	Dim MapperScale	as Float
+	Dim Map_Win_id	as Integer
+	Dim PaperWidth	as Float
+	Dim PaperHeight	as Float
+	Dim MapWidth	as Float
+	Dim MapHeight	as Float
+	Dim PaperTemp	as Float
+	Dim CentreX		as Float
+	Dim CentreY		as Float
+	Dim sCoordSys	as String
+	Dim pos1		as Integer
+	Dim pos2		as Integer
+	Dim minx		as Float
+	Dim miny		as Float
+	Dim maxx		as Float
+	Dim maxy		as Float
+	Dim xyunits		as String
+	Dim WindowWidth	as Float
+	Dim WindowHeight	as Float
+	Dim winState	as Integer
+	Dim zoom		as Float
+	Dim x1		as Float
+	Dim y1		as Float
+	Dim x2		as Float
+	Dim y2		as Float
+	Dim objRect		as Object
+	Dim Filename	as String
+	Dim TableName	as String
+	Dim i			as Integer
+	Dim windowZoom	as Float
+
+OnError goto Err_Layout_Preview
+
+	Map_Win_id= FrontWindow()
+	if WindowInfo(Map_Win_id,WIN_INFO_TYPE)<>WIN_MAPPER then
+		note TXT_ERR_NOT_MAPPER
+		Exit Sub
+	End If
+
+	'Mapinfo bug: when the window is maximized it returns height and width of the normal window not the maximized
+	if WindowInfo(Map_Win_id,WIN_INFO_STATE)<>WIN_STATE_NORMAL then
+		set window Map_Win_Id
+			Restore
+	End If
+
+	'Initial Paper and Map Size
+	PaperWidth=170
+	PaperHeight=260
+	MapWidth=170
+	MapHeight=260
+
+	Dialog
+		Title TXT_LP_DIALOG_TITLE
+		Control GroupBox
+			Position 5,0
+			Width 120
+			Height 43
+			Title TXT_LP_GOUPBOX_SCALE
+		Control PopupMenu
+			Position 45,10
+			Title TXT_LP_POPUPMENU_SCALE
+			ID 1
+			Value iScale
+			Calling Custom_Scale
+			Into iScale
+		Control StaticText
+			Position 10,27
+			Title TXT_LP_STATICTEXT_CUSTOM
+		Control EditText
+			Position 45,25
+			Width 57
+			ID 2
+			Calling Custom_Scale
+			Into sScale
+			Disable
+		Control GroupBox
+			Position 5,45
+			Width 120
+			Height 55
+			Title TXT_LP_GROUPBOX_PAPER_SIZE
+		Control PopupMenu
+			Position 10,55
+			Title TXT_LP_POPUPMENU_PAPER_SIZE
+			ID 3
+			Value iSize
+			Calling Custom_Scale
+			Into iSize
+		Control EditText
+			Position 10,70
+			Width 20
+			ID 9
+			Calling Custom_Scale
+			Into sPaperWidth
+			Disable
+		Control StaticText
+			Position 32,72
+			Title TXT_LP_STATICTEXT_UNITS
+		Control EditText
+			Position 10,85
+			Width 20
+			ID 10
+			Calling Custom_Scale
+			Into sPaperHeight
+			Disable
+		Control StaticText
+			Position 32,87
+			Title TXT_LP_STATICTEXT_UNITS
+		Control RadioGroup
+			Position 60,55
+			Title TXT_LP_RADIOGROUP_ORIENTATION
+			ID 4
+			Value iFormat
+			Calling Custom_Scale
+			Into iFormat
+		Control CheckBox
+			Position 10,100
+			Title TXT_LP_CHECKBOX_GRID
+			ID 5
+			Value lGrid
+			Into lGrid
+		Control CheckBox
+			Position 60,100
+			Title TXT_LP_CHECKBOX_TITLE
+			ID 6
+			Value lTitleBlock
+			Into lTitleBlock
+		Control GroupBox
+			Position 5,115
+			Width 120
+			Height 35
+			Title TXT_LP_GROUPBOX_LAYOUT
+		Control StaticText
+			Position 10,125
+			Title TXT_LP_STATICTEXT_PAPER+Format$(PaperWidth,",#")+TXT_LP_STATICTEXT_MM+Format$(PaperHeight,",#")+TXT_LP_STATICTEXT_MM2
+			ID 7
+			Width 110
+		Control StaticText
+			Position 10,135
+			Title TXT_LP_STATICTEXT_MAP+Format$(MapWidth,",#.##")+TXT_LP_STATICTEXT_KM+Format$(MapHeight,",#.##")+TXT_LP_STATICTEXT_KM2
+			ID 8
+			Width 110
+		Control OKButton
+		Control CancelButton
+
+	If CommandInfo(CMD_INFO_DLG_OK) Then 
+  	' ... then the user clicked OK. 
+	Else
+		Exit Sub
+	End If 
+
+	Do Case iScale
+	Case 1	'1:10,000,000
+		Scale=10000000
+	Case 2	'1:5,000,000
+		Scale=5000000
+	Case 3	'1:1,000,000
+		Scale=1000000
+	Case 4	'1:500,000
+		Scale=500000
+	Case 5	'1:250,000
+		Scale=250000
+	Case 6	'1:100,000
+		Scale=100000
+	Case 7	'1:75,000
+		Scale=75000
+	Case 8	'1:50,000
+		Scale=50000
+	Case 9	'1:25,000
+		Scale=25000
+	Case 10	'1:10,000
+		Scale=10000
+	Case 11	'Custom
+		Scale=Val(sScale)
+		if Scale<=0 Then
+			Scale=10000
+		End If
+	End Case
+
+	Do Case iSize
+	Case 1	'A4
+		PaperWidth=170	'210
+		PaperHeight=260	'297
+	Case 2	'A3
+		PaperWidth=260	'297
+		PaperHeight=380	'420
+	Case 3	'A2
+		PaperWidth=380	'420
+		PaperHeight=550	'594
+	Case 4	'A1
+		PaperWidth=550	'594
+		PaperHeight=800	'840
+	Case 5	'A0
+		PaperWidth=800	'840
+		PaperHeight=1140	'1188
+
+	Case 6	'A 8.5x11
+		PaperWidth=175	'215.9
+		PaperHeight=240	'279.4
+	Case 7	'B 11x17
+		PaperWidth=240	'279.4
+		PaperHeight=350	'431.8
+	Case 8	'C 17x22
+		PaperWidth=350	'431.8
+		PaperHeight=480	'558.8
+	Case 9	'D 22x34
+		PaperWidth=480	'558.8
+		PaperHeight=700	'863.6
+	Case 10	'E 34x44
+		PaperWidth=700	'863.6
+		PaperHeight=920	'1117.6
+	Case 11	'Custom
+		PaperWidth=Val(sPaperWidth)
+		PaperHeight=Val(sPaperHeight)
+		If PaperWidth<=0 then
+			PaperWidth=170
+		End If
+		If PaperHeight<=0 then
+			PaperHeight=260
+		End If
+	End Case
+
+	If iFormat=2 then
+		PaperTemp=PaperWidth
+		PaperWidth=PaperHeight
+		PaperHeight=PaperTemp
+	End If
+
+	MapWidth=PaperWidth*Scale/1000000
+	MapHeight=PaperHeight*Scale/1000000
+
+	Set CoordSys Window Map_Win_id
+	sCoordSys=MapperInfo(Map_Win_id,MAPPER_INFO_COORDSYS_CLAUSE)
+
+	xyunits=MapperInfo(Map_Win_id,MAPPER_INFO_XYUNITS)
+
+	if Left$(sCoordSys,28)<>"CoordSys Earth Projection 1," AND xyunits="degree" then
+		pos1=InStr(1,sCoordSys,"""")
+		pos2=InStr(pos1+1,sCoordSys,"""")
+		xyunits=Mid$(sCoordSys,pos1+1,pos2-pos1-1)
+	End If
+
+	If xyunits<>"degree" Then
+		set Distance Units xyunits
+	Else
+		set Distance Units "m"
+	End If
+	Set Paper Units "mm"
+
+
+
+	CentreX=MapperInfo(Map_Win_id,MAPPER_INFO_CENTERX)
+	CentreY=MapperInfo(Map_Win_id,MAPPER_INFO_CENTERY)
+
+	MapperScale=MapperInfo(Map_Win_id,MAPPER_INFO_SCALE)
+	
+	WindowWidth=WindowInfo(Map_Win_id,WIN_INFO_WIDTH)
+	WindowHeight=WindowInfo(Map_Win_id,WIN_INFO_HEIGHT)
+
+
+
+	minx=MapperInfo(Map_Win_id,MAPPER_INFO_MINX)
+	miny=MapperInfo(Map_Win_id,MAPPER_INFO_MINY)
+	maxx=MapperInfo(Map_Win_id,MAPPER_INFO_MAXX)
+	maxy=MapperInfo(Map_Win_id,MAPPER_INFO_MAXY)
+
+	zoom=MapperInfo(Map_Win_id,MAPPER_INFO_ZOOM)
+
+	If xyunits="degree" Then
+		x1=-MapWidth*1000*Abs(maxx-minx)/WindowWidth/MapperScale/2+CentreX
+		x2=MapWidth*1000*Abs(maxx-minx)/WindowWidth/MapperScale/2+CentreX
+		y1=-MapHeight*1000*Abs(maxy-miny)/WindowHeight/MapperScale/2+CentreY
+		y2=MapHeight*1000*Abs(maxy-miny)/WindowHeight/MapperScale/2+CentreY
+	Else
+		x1=-MapWidth*1000/2*zoom/WindowWidth/MapperScale+CentreX
+		x2=MapWidth*1000/2*zoom/WindowWidth/MapperScale+CentreX
+		y1=-MapHeight*1000/2*zoom/WindowWidth/MapperScale+CentreY
+		y2=MapHeight*1000/2*zoom/WindowWidth/MapperScale+CentreY
+	End If
+
+	TableName="MapPreview"	
+
+	' Check if Table MapPreview Already Open
+	' If yes Delete it...
+	For i=1 to NumTables()
+
+		If TableInfo(i,TAB_INFO_NAME)=TableName Then
+			Close Table TableName
+			Exit For
+		End If
+	Next
+	
+	TableName="MapPreview"
+	FileName=TempFileName$("")
+
+	Create Table TableName
+		( Paper 		Char(30),
+		  UserScale 	Float,
+		  Pwidth		Float,
+		  Pheight		Float,
+		  Paperformat	Integer,
+		  Grid		Logical,
+		  TitleBlock	Logical)
+		File FileName
+	Type NATIVE
+
+	Set Event Processing Off
+
+	Open Table FileName as MapPreview Hide
+	TableName=TableInfo(0,TAB_INFO_NAME)
+
+	Run Command "Create Map For "+TableName
+
+	Create Rect into Variable objRect
+		(x1,y1) (x2,y2)
+		Pen(1,3,RED)
+		Brush(53,RED)
+
+	
+	Insert Into TableName (Paper,UserScale,PWidth,PHeight,PaperFormat,Grid,TitleBlock,obj)
+			Values (	Format$(PaperWidth,",#")+" mm x "+Format$(PaperHeight,",#")+" mm",
+					Scale,
+					PaperWidth,
+					PaperHeight,
+					iFormat,
+					lGrid,
+					lTitleBlock,
+					objRect)
+	
+ 	Add Map Window Map_Win_id
+		Layer TableName
+ 
+	Set Map Window Map_Win_id
+		Zoom Entire Layer TableName
+		Layer Tablename
+			Editable On
+			Selectable On
+			Centroids On
+
+	Select * From Tablename
+
+	Set Event Processing On
+
+	Create Menu TXT_MLP_BAR As
+		TXT_MLP_ACCEPT	HelpMsg TXT_MLP_HLP_ACCEPT
+					Calling Layout_Preview_Accept,
+		TXT_MLP_RESPECIFY	HelpMsg TXT_MLP_HLP_RESPECIFY
+					Calling Layout_Preview,
+		"(-",
+		TXT_MLP_EXIT	HelpMsg TXT_MLP_HLP_EXIT
+					Calling Layout_Preview_Exit
+	
+	Alter Menu Bar Add TXT_MLP_BAR
+
+  	Create ButtonPad TXT_BLP_BUTTON As
+			PushButton
+				Icon MI_ICON_NUMBERS_21
+				HelpMsg TXT_BLP_HLP_ACCEPT
+				Calling Layout_Preview_Accept
+			PushButton
+				Icon MI_ICON_UNDO
+				HelpMsg TXT_BLP_HLP_RESPECIFY
+				Calling Layout_Preview
+			Separator
+			PushButton
+				Icon MI_ICON_LETTERS_X
+				HelpMsg TXT_BLP_HLP_EXIT
+				Calling Layout_Preview_Exit
+			Title TXT_BLP_BUTTON_TITLE
+			width 8
+			Float
+			Show
+
+Res_Layout_Preview:
+	Exit Sub
+
+Err_Layout_Preview:
+	note "Layout_Preview"+str$(err())+" "+error$()
+	Resume Res_Layout_Preview	
+
+End Sub Layout_Preview
+
+
+
+
+'------------------------
+Sub Layout_Preview_Accept
+
+	Dim Map_Win_id	as Integer
+	Dim Layout_Win_id	as Integer
+	Dim i			as Integer
+	Dim j			as Integer
+	Dim lFound		as Logical
+	Dim objminx		as Float
+	Dim objminy		as Float
+	Dim objmaxx		as Float
+	Dim objmaxy		as Float
+	Dim minx		as Float
+	Dim miny		as Float
+	Dim maxx		as Float
+	Dim maxy		as Float
+	Dim MapWidth	as Float
+	Dim MapHeight	as Float
+	Dim PaperWidth	as Float
+	Dim PaperHeight	as Float
+	Dim MapScale	as Float
+	Dim xyunits		as String
+	Dim WindowWidth	as Float
+	Dim WindowHeight	as Float
+	Dim CentreX		as Float
+	Dim CentreY		as Float
+	Dim zoom		as Float
+	Dim sCoordsys	as String
+	Dim pos1		as Integer
+	Dim pos2		as Integer
+	Dim MapperScale	as Float
+	Dim iFormat		as Integer
+	Dim MapZoom		as Float
+	Dim lGrid		as Logical
+	Dim lTitleBlock	as Logical
+	Dim sPath		as String
+	Dim tblLogo		as String
+	Dim tblTitle	as String
+	Dim title_Win_id	as Integer
+	Dim aName		as Alias
+	Dim aObj		as Alias
+	Dim objText		as Object
+	Dim FileName	as String
+	Dim sUnits		as String
+	Dim ScaleLength 	as Float
+	Dim x1		as Float
+	Dim dx		as Float
+	Dim xTitleSize	as Float
+	Dim TableName	as String
+	Dim sProjection	as string
+	Dim fTitleWidth	as Float
+	Dim fTitleHeight	as Float
+	Dim fTitleFrameWidth  as Float
+	Dim fTitleFrameHeight as Float
+
+	OnError goto Err_Layout_Preview_Accept
+
+	Map_Win_id= FrontWindow()
+	if WindowInfo(Map_Win_id,WIN_INFO_TYPE)<>WIN_MAPPER then
+		note TXT_ERR_NOT_MAPPER
+		Exit Sub
+	End If
+
+	' Check if Table MapPreview in Default Layer
+	' If yes Delete it...
+	For i=1 to MapperInfo(Map_Win_id,MAPPER_INFO_LAYERS)
+		If LayerInfo(Map_Win_id,i,TAB_INFO_NAME)="MapPreview" Then
+			lFound=TRUE
+			Exit For
+		End If
+	Next
+
+	if lFound=FALSE then
+		note TXT_ERR_NOT_PREPAREDLP		Exit Sub
+	End If
+
+	Fetch First From MapPreview	
+	If ObjectInfo(MapPreview.obj,OBJ_INFO_TYPE)<>OBJ_TYPE_RECT then
+		note TXT_ERR_NOT_PREPAREDLP		Exit Sub
+	End If
+
+	Set CoordSys Window Map_Win_id
+
+	objminx=ObjectGeography(MapPreview.obj,OBJ_GEO_MINX)
+	objminy=ObjectGeography(MapPreview.obj,OBJ_GEO_MINY)
+	objmaxx=ObjectGeography(MapPreview.obj,OBJ_GEO_MAXX)
+	objmaxy=ObjectGeography(MapPreview.obj,OBJ_GEO_MAXY)
+	
+	PaperWidth=MapPreview.PWidth
+	PaperHeight=MapPreview.PHeight
+	MapScale=MapPreview.UserScale
+	iFormat=MapPreview.PaperFormat
+	lGrid=MapPreview.Grid
+	lTitleBlock=MapPreview.TitleBlock
+
+	sCoordSys=MapperInfo(Map_Win_id,MAPPER_INFO_COORDSYS_CLAUSE)
+
+	xyunits=MapperInfo(Map_Win_id,MAPPER_INFO_XYUNITS)
+
+	CentreX=MapperInfo(Map_Win_id,MAPPER_INFO_CENTERX)
+	CentreY=MapperInfo(Map_Win_id,MAPPER_INFO_CENTERY)
+
+	if Left$(sCoordSys,28)<>"CoordSys Earth Projection 1," AND xyunits="degree" then
+		pos1=InStr(1,sCoordSys,"""")
+		pos2=InStr(pos1+1,sCoordSys,"""")
+		xyunits=Mid$(sCoordSys,pos1+1,pos2-pos1-1)
+	End If
+
+'	If xyunits<>"degree" Then
+'		set Distance Units xyunits
+'	Else
+'		set Distance Units "m"
+'	End If
+
+	set Distance Units "m"
+
+	Set Paper Units "mm"
+	MapperScale=MapperInfo(Map_Win_id,MAPPER_INFO_SCALE)
+	
+	WindowWidth=WindowInfo(Map_Win_id,WIN_INFO_WIDTH)
+	WindowHeight=WindowInfo(Map_Win_id,WIN_INFO_HEIGHT)
+
+	minx=MapperInfo(Map_Win_id,MAPPER_INFO_MINX)
+	miny=MapperInfo(Map_Win_id,MAPPER_INFO_MINY)
+	maxx=MapperInfo(Map_Win_id,MAPPER_INFO_MAXX)
+	maxy=MapperInfo(Map_Win_id,MAPPER_INFO_MAXY)
+
+	zoom=MapperInfo(Map_Win_id,MAPPER_INFO_ZOOM)
+
+	if iFormat=1 Then
+		WindowWidth=124 '62
+		WindowHeight=Abs(objmaxy-objminy)*WindowWidth/Abs(objmaxx-objminx)+0 '3
+'		MapZoom=abs(objmaxx-objminx)*Zoom/abs(maxx-minx)
+		MapZoom=PaperWidth*MapScale/1000
+	Else
+		WindowHeight=124
+		WindowWidth=Abs(objmaxx-objminx)*WindowHeight/Abs(objmaxy-objminy)+0
+'		MapZoom=abs(objmaxy-objminy)*Zoom/abs(maxy-miny)
+		MapZoom=PaperWidth*MapScale/1000
+	End If
+	CentreX=(objmaxx+objminx)/2
+	CentreY=(objmaxy+objminy)/2
+
+	Set Window Map_Win_id
+		Width	WindowWidth		Units "mm"
+		Height WindowHeight	Units "mm"
+		
+	Set Map Window Map_Win_id
+		Center(CentreX,CentreY)
+		Zoom MapZoom Units "m"
+		Layer "MapPreview"
+			Display Off
+	
+	If lGrid Then
+		Call Grid
+	End If
+	
+	sPath=ApplicationDirectory$()
+	If lTitleBlock Then
+
+		Dialog
+			Title TXT_TB_DIALOG_TITLE
+			Control StaticText
+				Position 5,5
+				Title TXT_TB_STATICTEXT_TITLE
+			Control EditText
+				Position 55,3
+				Width 100
+				Value sTitle
+				Into sTitle
+			Control StaticText
+				Position 5,22
+				Title TXT_TB_STATICTEXT_SUBTITLE
+			Control EditText
+				Position 55,20
+				Width 180
+				Value sTitle1
+				Into sTitle1
+			Control EditText
+				Position 55,30
+				Width 180
+				Value sTitle2
+				Into sTitle2
+			Control EditText
+				Position 55,40
+				Width 180
+				Value sTitle3
+				Into sTitle3
+			Control EditText
+				Position 55,50
+				Width 180
+				Value sTitle4
+				Into sTitle4
+			Control EditText
+				Position 55,60
+				Width 180
+				Value sTitle5
+				Into sTitle5
+			Control EditText
+				Position 55,70
+				Width 180
+				Value sTitle6
+				Into sTitle6
+			Control StaticText
+				Position 5,92
+				Title TXT_TB_STATICTEXT_AUTHOR
+			Control EditText
+				Position 55,90
+				Width 80
+				Value sAuthor
+				Into sAuthor
+			Control StaticText
+				Position 5,107
+				Title TXT_TB_STATICT_TEXT_POSITION
+			Control PopUpMenu
+				Position 55,105
+				Title TXT_TB_POPUPMENU_POSITION
+				Value iTitlePos
+				Into iTitlePos
+			Control StaticText
+				Position 115,107
+				Title TXT_TB_STATICTEXT_LOGO
+			Control PopUpMenu
+				Position 135,105
+				Title TXT_TB_POPUPMENU_LOGO
+				Value iLogo
+				Into iLogo
+			Control StaticText
+				Position 175,107
+				Title TXT_TB_STATICTEXT_SIZE
+			Control PopUpMenu
+				Position 200,105
+				Title TXT_TB_POPUPMENU_SIZE
+				Value iTitleSize
+				Into iTitleSize
+			Control OKButton
+			Control CancelButton
+
+		If CommandInfo(CMD_INFO_DLG_OK) Then 
+	  	' ... then the user clicked OK. 
+			
+			if sTitle="" Then
+				sTitle=" "
+			End If
+			if sTitle1="" Then
+				sTitle1=" "
+			End If
+			if sTitle2="" Then
+				sTitle2=" "
+			End If
+			if sTitle3="" Then
+				sTitle3=" "
+			End If
+			if sTitle4="" Then
+				sTitle4=" "
+			End If
+			if sTitle5="" Then
+				sTitle5=" "
+			End If
+			if sTitle6="" Then
+				sTitle6=" "
+			End If
+			if sAuthor="" Then
+				sAuthor=" "
+			End If
+			Do Case (iTitleSize)
+			Case 1
+				xTitlesize=1
+			Case 2
+				xTitlesiZe=1.5
+			Case 3
+				xTitleSize=2
+			Case Else
+				xTitleSize=1
+			End Case
+			
+
+			' Check if Table Logo in Default Layer
+			' If yes Delete it...
+			For i=1 to MapperInfo(Map_Win_id,MAPPER_INFO_LAYERS)
+				If LayerInfo(Map_Win_id,i,TAB_INFO_NAME)="Logo" Then
+					Close Table Logo
+					Exit For
+				End If
+				If LayerInfo(Map_Win_id,i,TAB_INFO_NAME)="Logo2" Then
+					Close Table Logo2
+					Exit For
+				End If
+			Next
+			' Check if Table Title in Default Layer
+			' If yes Delete it...
+			For i=1 to MapperInfo(Map_Win_id,MAPPER_INFO_LAYERS)
+				If LayerInfo(Map_Win_id,i,TAB_INFO_NAME)="Title" Then
+					Close Table Title
+					Exit For
+				End If
+			Next
+
+			If iLogo=2 then
+				Open Table sPath+"Logo2.tab" Hide ReadOnly
+				tblLogo=TableInfo(0,TAB_INFO_NAME)
+			Else
+				Open Table sPath+"Logo.tab" Hide ReadOnly
+				tblLogo=TableInfo(0,TAB_INFO_NAME)
+			End if
+
+			Open Table sPath+"Title.tab" Hide
+			tblTitle=TableInfo(0,TAB_INFO_NAME)
+	
+			' Make a copy of tblTitle before modifications...
+			FileName=TempFileName$("")
+	
+			Commit Table tblTitle
+				as Filename
+	
+			Close Table tblTitle
+
+			j=1
+			tablename="Title_"+str$(j)
+			lFound=FALSE
+			do
+				lFound=False
+				For i=1 to NumTables()
+					If TableInfo(i,TAB_INFO_NAME)=tablename Then
+						j=j+1
+						tableName="Title_"+str$(j)
+						lFound=TRUE
+
+						exit for
+					End If
+				Next
+			loop until lFound=FALSE
+	
+			Open Table FileName as TableName
+			tblTitle=TableInfo(0,TAB_INFO_NAME)
+
+			Set Coordsys NonEarth Units "mm"
+				Bounds (0,0) (5000,5000)
+
+			fTitleWidth=TableInfo(tblTitle,TAB_INFO_MAXX)-TableInfo(tblTitle,TAB_INFO_MINX)
+			fTitleHeight=TableInfo(tblTitle,TAB_INFO_MAXY)-TableInfo(tblTitle,TAB_INFO_MINY)
+
+'print fTitleWidth
+'print fTitleHeight
+	
+			Map From TblTitle,TblLogo
+				Width fTitleWidth/10 Units "mm"
+				Height fTitleHeight/10 Units "mm"
+	
+			Title_Win_id=FrontWindow()
+	
+			Set Map Window Title_win_id
+				Center (fTitleWidth/2,fTitleHeight/2) 
+				Scale 100 Units "mm" For 1000 Units "mm"
+			
+			Set Window Title_Win_id
+				Min
+	
+			ScaleLength=20*MapScale/1000000
+			sUnits="km"
+			If ScaleLength<1 then
+				ScaleLength=ScaleLength*1000
+				sUnits="m"
+			End If
+			aName=tblTitle+".Name"
+			aObj=tblTitle+".obj"
+			Fetch First From tblTitle
+			i=0
+	  		Do While Not EOT(tblTitle)
+				i=i+1
+				objText=aObj 
+				If aName="Projection" Then
+					sProjection=MapperInfo(Map_Win_id,MAPPER_INFO_COORDSYS_NAME)
+					if sProjection="" then
+						sProjection=MapperInfo(Map_Win_id,MAPPER_INFO_COORDSYS_CLAUSE)
+						sProjection=right$(sProjection,len(sProjection)-26)
+'						if len(sProjection)>47 then
+'							sProjection=left$(sProjection,45)+Chr$(10)+right$(sProjection,len(sProjection)-45)
+'						End If
+					End if
+					Alter Object objText
+						Info OBJ_INFO_TEXTSTRING, sProjection
+					Update tblTitle Set obj=objText
+						Where RowID=i 
+				ElseIf aName="Date" Then
+					Alter Object objText
+						Info OBJ_INFO_TEXTSTRING,Str$(Day(CurDate()))+"/"+Str$(Month(CurDate()))+"/"+Str$(Year(CurDate()))
+					Update tblTitle Set obj=objText
+						Where RowID=i 
+				ElseIf aName="Author" Then
+					Alter Object objText
+						Info OBJ_INFO_TEXTSTRING,sAuthor
+					Update tblTitle Set obj=objText
+						Where RowID=i 
+				ElseIf aName="Scale" Then
+					Alter Object objText
+						Info OBJ_INFO_TEXTSTRING,"1:"+Format$(MapScale,",#")
+					Update tblTitle Set obj=objText
+						Where RowID=i 
+				ElseIf aName="Units" Then
+					Alter Object objText
+						Info OBJ_INFO_TEXTSTRING,sUnits
+					Update tblTitle Set obj=objText
+						Where RowID=i 
+				ElseIf aName="Title" Then
+					Alter Object objText
+						Info OBJ_INFO_TEXTSTRING,sTitle
+						Geography OBJ_GEO_POINTX,500-Len(sTitle)*10-10
+					Update tblTitle Set obj=objText
+						Where RowID=i 
+				ElseIf aName="Title1" Then
+					Alter Object objText
+						Info OBJ_INFO_TEXTSTRING,sTitle1
+					Update tblTitle Set obj=objText
+						Where RowID=i 
+				ElseIf aName="Title2" Then
+					Alter Object objText
+						Info OBJ_INFO_TEXTSTRING,sTitle2
+					Update tblTitle Set obj=objText
+						Where RowID=i 
+				ElseIf aName="Title3" Then
+					Alter Object objText
+						Info OBJ_INFO_TEXTSTRING,sTitle3
+					Update tblTitle Set obj=objText
+						Where RowID=i 
+				ElseIf aName="Title4" Then
+					Alter Object objText
+						Info OBJ_INFO_TEXTSTRING,sTitle4
+					Update tblTitle Set obj=objText
+						Where RowID=i 
+				ElseIf aName="Title5" Then
+					Alter Object objText
+						Info OBJ_INFO_TEXTSTRING,sTitle5
+					Update tblTitle Set obj=objText
+						Where RowID=i 
+				ElseIf aName="Title6" Then
+					Alter Object objText
+						Info OBJ_INFO_TEXTSTRING,sTitle6
+					Update tblTitle Set obj=objText
+						Where RowID=i 
+				ElseIf aName="Unit25" Then
+					Alter Object objText
+						Info OBJ_INFO_TEXTSTRING,Format$(Round(ScaleLength/2*xTitleSize,0.01),",#.##")
+					Update tblTitle Set obj=objText
+						Where RowID=i 
+				ElseIf aName="Unit50" Then
+					Alter Object objText
+						Info OBJ_INFO_TEXTSTRING,Format$(Round(ScaleLength*xTitleSize,0.01),",#.##")
+					Update tblTitle Set obj=objText
+						Where RowID=i 
+				End If
+	    			Fetch Next From tblTitle
+	  		Loop 
+	
+		Else
+			lTitleBlock=FALSE
+		End If 
+	End If
+
+	Set Coordsys Layout Units "mm"
+
+	Layout
+	Layout_Win_id=FrontWindow()
+
+
+	If GridStyle=1 then	
+		Create Frame
+			Into Window Layout_Win_id
+			(20,20) (PaperWidth+20,PaperHeight+20)
+			Pen (2,2,BLACK)
+			Brush (2,WHITE,WHITE)
+			From Window Map_Win_id
+			FillFrame On
+	Else
+		Create Frame
+			Into Window Layout_Win_id
+			(20,20) (PaperWidth+20,PaperHeight+20)
+			Pen (2,1,BLACK)
+			Brush (2,WHITE,WHITE)
+			From Window Map_Win_id
+			FillFrame Off
+	End If
+
+	If lTitleBlock Then
+		fTitleFrameWidth=66.6*fTitleWidth/1000*xTitleSize
+		fTitleFrameHeight=66.6*fTitleHeight/1000*xTitleSize
+		Do Case iTitlePos
+		Case 1
+			Create Frame
+				Into Window Layout_Win_id
+				(PaperWidth+(20-fTitleFrameWidth),PaperHeight+(20-fTitleFrameHeight)) (PaperWidth+20,PaperHeight+20)
+				Pen (1,2,BLACK)
+				Brush (2,WHITE,WHITE)
+				From Window Title_Win_id
+				FillFrame On
+		Case 2
+			Create Frame
+				Into Window Layout_Win_id
+				(20,PaperHeight+(20-fTitleFrameHeight)) ((20+fTitleFrameWidth),PaperHeight+20)
+				Pen (1,2,BLACK)
+				Brush (2,WHITE,WHITE)
+				From Window Title_Win_id
+				FillFrame On
+		Case 3
+			Create Frame
+				Into Window Layout_Win_id
+				(20,20) ((20+fTitleFrameWidth),(20+fTitleFrameHeight))
+				Pen (1,2,BLACK)
+				Brush (2,WHITE,WHITE)
+				From Window Title_Win_id
+				FillFrame On
+		Case 4
+			Create Frame
+				Into Window Layout_Win_id
+				(PaperWidth+(20-fTitleFrameWidth),20) (PaperWidth+20,(20+fTitleFrameHeight))
+				Pen (1,2,BLACK)
+				Brush (2,WHITE,WHITE)
+				From Window Title_Win_id
+				FillFrame On
+		End Case
+	End If
+
+	Set Layout Window Layout_Win_id
+		Extents To Fit
+		Zoom To Fit
+
+	Alter Menu Bar Remove TXT_MLP_BAR
+	Alter ButtonPad TXT_BLP_BUTTON Destroy
+
+Res_Layout_Preview_Accept:
+	Exit Sub
+
+Err_Layout_Preview_Accept:
+	note "Layout_Preview_Accept: "+str$(err())+" "+error$()
+	Resume Res_Layout_Preview_Accept	
+
+End Sub Layout_Preview_Accept
+
+'----------------------
+Sub Layout_Preview_Exit
+
+	Dim i			as Integer
+	Dim TableName	as String
+
+	OnError goto Err_Layout_Preview_Exit
+
+	TableName="MapPreview"	
+
+	' Check if Table MapPreview Already Open
+	' If yes Delete it...
+	For i=1 to NumTables()
+		If TableInfo(i,TAB_INFO_NAME)=TableName Then
+			Close Table TableName
+			Exit For
+		End If
+	Next
+
+	Alter Menu Bar Remove TXT_MLP_BAR
+	Alter ButtonPad TXT_BLP_BUTTON Destroy
+
+Res_Layout_Preview_Exit:
+	Exit Sub
+
+Err_Layout_Preview_Exit:
+	note "Layout_Preview_Exit: "+str$(err())+" "+error$()
+	Resume Res_Layout_Preview_Exit	
+
+End Sub Layout_Preview_Exit
+
+'---------------
+Sub Custom_Scale
+
+	Dim PaperWidth	as Float
+	Dim PaperHeight	as Float
+	Dim MapWidth	as Float
+	Dim MapHeight	as Float
+	Dim Scale		as Float
+	Dim PaperTemp	as Float
+	
+	OnError goto Err_Custom_Scale
+
+	if ReadControlValue(1)=11 Then
+		Alter Control 2 Enable
+	Else
+		Alter Control 2 Disable
+	End If
+
+	Do Case ReadControlValue(1)
+	Case 1	'1:10,000,000
+		Scale=10000000
+	Case 2	'1:5,000,000
+		Scale=5000000
+	Case 3	'1:1,000,000
+		Scale=1000000
+	Case 4	'1:500,000
+		Scale=500000
+	Case 5	'1:250,000
+		Scale=250000
+	Case 6	'1:100,000
+		Scale=100000
+	Case 7	'1:75,000
+		Scale=75000
+	Case 8	'1:50,000
+		Scale=50000
+	Case 9	'1:25,000
+		Scale=25000
+	Case 10	'1:10,000
+		Scale=10000
+	Case 11	'Custom
+		Scale=Val(ReadControlValue(2))
+		If Scale<=0 Then
+			Scale=10000
+			Alter Control 2 
+				Value "10000"
+		End If
+
+	End Case
+
+	if ReadControlValue(3)=11 Then
+		Alter Control 9 Enable
+		Alter Control 10 Enable
+	Else
+		Alter Control 9 Disable
+		Alter Control 10 Disable
+	End If
+
+	Do Case ReadControlValue(3)
+	Case 1	'A4
+		PaperWidth=170	'210
+		PaperHeight=260	'297
+	Case 2	'A3
+		PaperWidth=260	'297
+		PaperHeight=380	'420
+	Case 3	'A2
+		PaperWidth=380	'420
+		PaperHeight=550	'594
+	Case 4	'A1
+		PaperWidth=550	'594
+		PaperHeight=800	'840
+	Case 5	'A0
+		PaperWidth=800	'840
+		PaperHeight=1140	'1188
+	Case 6	'A 8.5x11
+		PaperWidth=175	'215.9
+		PaperHeight=240	'279.4
+	Case 7	'B 11x17
+		PaperWidth=240	'279.4
+		PaperHeight=350	'431.8
+	Case 8	'C 17x22
+		PaperWidth=350	'431.8
+		PaperHeight=480	'558.8
+	Case 9	'D 22x34
+		PaperWidth=480	'558.8
+		PaperHeight=700	'863.6
+	Case 10	'E 34x44
+		PaperWidth=700	'863.6
+		PaperHeight=920	'1117.6
+	Case 11	'Custom
+		PaperWidth=Val(ReadControlValue(9))
+		PaperHeight=Val(ReadControlValue(10))
+		If PaperWidth<=0 then
+			PaperWidth=170
+			Alter Control 9
+				Value "170"
+		End If
+		If PaperHeight<=0 then
+			PaperHeight=260
+			Alter Control 10
+				Value "260"
+		End If
+	End Case
+
+	If ReadControlValue(4)=2 then
+		PaperTemp=PaperWidth
+		PaperWidth=PaperHeight
+		PaperHeight=PaperTemp
+	End If
+
+	MapWidth=PaperWidth*Scale/1000000
+	MapHeight=PaperHeight*Scale/1000000
+
+	Alter Control 7
+			Title TXT_LP_STATICTEXT_PAPER+Format$(PaperWidth,",#")+TXT_LP_STATICTEXT_MM+Format$(PaperHeight,",#")+TXT_LP_STATICTEXT_MM2			
+	Alter Control 8
+			Title TXT_LP_STATICTEXT_MAP+Format$(MapWidth,",#.##")+TXT_LP_STATICTEXT_KM+Format$(MapHeight,",#.##")+TXT_LP_STATICTEXT_KM2
+
+Res_Custom_Scale:
+	Exit Sub
+
+Err_Custom_Scale:
+	note "Custom_Scale: "+str$(err())+" "+error$()
+	Resume Res_Custom_Scale	
+
+End Sub Custom_Scale
+
+
+'--------------------------------------------
+' Grid
+'
+' Create a Grid inside the current Mapper
+'
+Sub Grid
+
+	Dim Map_Win_id 	as Integer
+	Dim xyunits		as String
+	Dim Scale		as Float
+	Dim GridScale	as Float
+	Dim WindowWidth	as Float
+	Dim WindowHeight	as Float
+	Dim minx		as Float
+	Dim miny		as Float
+	Dim maxx		as Float
+	Dim maxy		as Float
+	Dim gminx		as Float
+	Dim gminy		as Float
+	Dim gmaxx		as Float
+	Dim gmaxy		as Float
+	Dim stepxy		as Float
+	Dim sStepxy		as String
+	Dim sOldStepxy	as String
+	Dim dx		as Float
+	Dim dx1		as Float
+	Dim dy		as Float
+	Dim dy1		as Float
+	Dim Centrex		as Float
+	Dim Centrey		as Float
+	Dim sCoordsys	as String
+	Dim pos1		as Integer
+	Dim pos2		as Integer
+	Dim FileName	as String
+	Dim TableName	as String
+	Dim TableNameGridTop as String
+	Dim penPick		as Pen
+	Dim fontPick	as Font
+	Dim LabelLeft	as Logical
+	Dim LabelRight	as Logical
+	Dim LabelTop	as Logical
+	Dim LabelBottom	as Logical
+	Dim NewGrid		as Integer
+
+	Dim x1		as Float
+	Dim x2		as Float
+	Dim x3		as Float
+	Dim x4		as Float
+	Dim x			as Float
+	Dim y			as Float
+	Dim objLine		as Object
+	Dim objText		as Object
+	Dim objPoint	as Object
+	Dim objRect		as Object
+	Dim i 		as Integer
+	Dim iStart		as Integer
+	dim lFoundGrid	as Logical
+	Dim stText 		as String
+	Dim sOrgDistUnits as String
+	Dim FontSize	as Integer
+	Dim sizex		as Float
+	Dim sizey		as Float
+	Dim LabelLeftN	as Integer
+	Dim LabelTopN	as Integer
+	Dim LabelRightN	as Integer
+	Dim LabelBottomN	as Integer
+
+	Dim iTitleUnit	as Integer
+
+	OnError goto Err_Grid
+
+	Map_Win_id= FrontWindow()
+	if WindowInfo(Map_Win_id,WIN_INFO_TYPE)<>WIN_MAPPER then
+		note TXT_ERR_NOT_MAPPER
+		Exit Sub
+	End If
+
+	TableName="Grid"	
+
+	' Check if Table Grid Already Open
+	' If yes Request in Dialog if the user want to overwrite the grid
+	lFoundGrid=FALSE
+	For i=1 to NumTables()
+		If TableInfo(i,TAB_INFO_NAME)=TableName Then
+			lFoundGrid=TRUE
+			Exit For
+		End If
+	Next
+
+
+	Set CoordSys Window Map_Win_id
+
+	sOrgDistUnits=MapperInfo(Map_win_id,MAPPER_INFO_DISTUNITS)
+	Set Distance Units "m"
+
+	Set Paper Units "mm"
+
+	sCoordSys=MapperInfo(Map_Win_id,MAPPER_INFO_COORDSYS_CLAUSE)
+
+	xyunits=MapperInfo(Map_Win_id,MAPPER_INFO_XYUNITS)
+
+	CentreX=MapperInfo(Map_Win_id,MAPPER_INFO_CENTERX)
+	CentreY=MapperInfo(Map_Win_id,MAPPER_INFO_CENTERY)
+
+	if Left$(sCoordSys,28)<>"CoordSys Earth Projection 1," AND xyunits="degree" then
+		pos1=InStr(1,sCoordSys,"""")
+		pos2=InStr(pos1+1,sCoordSys,"""")
+		xyunits=Mid$(sCoordSys,pos1+1,pos2-pos1-1)
+	End If
+
+	If xyunits<>"degree" Then
+		redim sTitleUnit(2)
+		sTitleUnit(2)=xyunits
+		sTitleUnit(1)="degree"
+		call GridParameters (Map_Win_id,sTitleUnit(1),minx,miny,maxx,maxy,stepxy,sStepxy)	'Compute the xyunits
+		degstepxy=stepxy
+		call GridParameters (Map_Win_id,sTitleUnit(2),minx,miny,maxx,maxy,stepxy,sStepxy)	'Compute the xyunits
+		gridstepxy=stepxy
+		iTitleUnit=2
+	Else
+
+		redim sTitleUnit(1)
+		sTitleUnit(1)="degree"
+		call GridParameters (Map_Win_id,sTitleUnit(1),minx,miny,maxx,maxy,stepxy,sStepxy)	'Compute the xyunits
+		degstepxy=stepxy
+		iTitleUnit=1
+	End If
+
+	Scale=MapperInfo(Map_Win_id,MAPPER_INFO_SCALE)
+	
+	WindowWidth=WindowInfo(Map_Win_id,WIN_INFO_WIDTH)
+	WindowHeight=WindowInfo(Map_Win_id,WIN_INFO_HEIGHT)
+
+	If lFoundGrid Then
+		Dialog
+			Title TXT_GD_DIALOG_TITLE
+			Control EditText
+				Position 15,5
+				Width 50
+				Value Str$(stepxy)
+				Into sStepxy
+				ID 1
+			Control StaticText
+				Position 70,7
+				width 20
+				Title UnitAbbr$(xyunits)
+				ID 2
+			Control RadioGroup
+				Position 90,5
+				Value iTitleUnit
+				Title From Variable sTitleUnit
+				into iTitleUnit
+				ID 3
+				Calling GridUnitChange
+			Control StaticText
+				Position 15,35
+				Title TXT_GD_STATICTEXT_LINE_STYLE
+			Control PenPicker
+				Position 80,30
+				Value MakePen(1,5,BLACK)
+				Into penPick
+			Control StaticText
+				Position 15,55
+				Title TXT_GD_STATICTEXT_COORDINATE_STYLE
+			Control FontPicker
+				Position 80,50
+				Into fontPick
+			Control RadioGroup
+				Position 5,70
+				Value 1
+				Title TXT_GD_RADIOGROUP_NEWGRID
+				Into NewGrid
+
+			Control GroupBox
+				Position 5,100
+				Width 120
+				Height 35
+				Title TXT_GD_GROUPBOX_LABELPLACE
+			Control CheckBox
+				Position 10,110
+				Value TRUE
+				Title TXT_GD_CHECKBOX_LEFT
+				Into LabelLeft
+			Control CheckBox
+				Position 10,120
+				Value FALSE
+				Title TXT_GD_CHECKBOX_RIGHT
+				Into LabelRight
+			Control CheckBox
+				Position 80,110
+				Value TRUE	
+				Title TXT_GD_CHECKBOX_TOP
+				Into LabelTop
+			Control CheckBox
+				Position 80,120
+				Value FALSE
+				Title TXT_GD_CHECKBOX_BOTTOM
+				Into LabelBottom
+
+			Control GroupBox
+				Position 5,140
+				Width 120
+				Height 35
+				Title TXT_GD_GROUPBOX_GRID_STYLE
+			Control RadioGroup
+				Position 10,150
+				Value 1
+				Title TXT_GD_RADIOGROUP_LABEL_POSITION
+				Into GridStyle
+			Control OKButton
+			Control CancelButton
+
+	Else
+		Dialog
+			Title TXT_GD_DIALOG_TITLE
+			Control EditText
+				Position 15,5
+				Width 50
+				Value Str$(stepxy)
+				Into sStepxy
+				ID 1
+			Control StaticText
+				Position 70,7
+				width 20
+				Title UnitAbbr$(xyunits)
+				ID 2
+			Control RadioGroup
+				Position 90,5
+				Value iTitleUnit
+				Title From Variable sTitleUnit
+				into iTitleUnit
+				ID 3
+				Calling GridUnitChange
+			Control StaticText
+				Position 15,35
+				Title TXT_GD_STATICTEXT_LINE_STYLE
+			Control PenPicker
+				Position 80,30
+				Value MakePen(1,5,BLACK)
+				Into penPick
+			Control StaticText
+				Position 15,55
+				Title TXT_GD_STATICTEXT_COORDINATE_STYLE
+			Control FontPicker
+				Position 80,50
+				Into fontPick
+			Control RadioGroup
+				Position 5,70
+				Value 1
+				Title TXT_GD_RADIOGROUP_NEWGRID
+				Into NewGrid
+				Disable
+			Control GroupBox
+				Position 5,100
+				Width 120
+				Height 35
+				Title TXT_GD_GROUPBOX_LABELPLACE
+			Control CheckBox
+				Position 10,110
+				Value TRUE
+				Title TXT_GD_CHECKBOX_LEFT
+				Into LabelLeft
+			Control CheckBox
+				Position 10,120
+				Value FALSE
+				Title TXT_GD_CHECKBOX_RIGHT
+				Into LabelRight
+			Control CheckBox
+				Position 80,110
+				Value TRUE	
+				Title TXT_GD_CHECKBOX_TOP
+				Into LabelTop
+			Control CheckBox
+				Position 80,120
+				Value FALSE
+				Title TXT_GD_CHECKBOX_BOTTOM
+				Into LabelBottom
+
+			Control GroupBox
+				Position 5,140
+				Width 120
+				Height 35
+				Title TXT_GD_GROUPBOX_GRID_STYLE
+			Control RadioGroup
+				Position 10,150
+				Value 1
+				Title TXT_GD_RADIOGROUP_LABEL_POSITION
+				Into GridStyle
+			Control OKButton
+			Control CancelButton
+	End If	
+	
+
+	If CommandInfo(CMD_INFO_DLG_OK) Then 
+  	' ... then the user clicked OK. 
+	Else
+		Exit Sub
+	End If 
+
+	sOldStepxy=sStepxy	
+	call GridParameters (Map_Win_id,sTitleUnit(iTitleUnit),minx,miny,maxx,maxy,stepxy,sStepxy)	'Compute the xyunits
+	sStepxy=sOldStepxy
+	stepxy=val(sStepxy)
+
+
+	xyunits=sTitleUnit(iTitleUnit)
+	If xyunits="degree" Then
+		xyunits="°"
+	End If	
+
+	TableName="Grid"	
+	TableNameGridTop="GridTop"
+
+	If NewGrid=1 then
+		if lFoundGrid then
+			Close Table TableName
+			Close Table TableNameGridTop
+		End If
+		FileName=TempFileName$("")
+
+		Create Table TableName
+			( Position Char(20))
+			File FileName
+		Type NATIVE
+
+		Open Table FileName As TableName 
+		TableName=TableInfo(0,TAB_INFO_NAME)
+
+		FileName=TempFileName$("")
+
+		Create Table TableNameGridTop
+			( Position Char(20))
+			File FileName
+		Type NATIVE		
+
+		Open Table FileName As TableNameGridTop 
+		TableNameGridTop=TableInfo(0,TAB_INFO_NAME)
+
+		Run Command "Create Map For "+TableName 
+		Run Command "Create Map For "+TableNameGridTop
+
+		iStart=0
+	Else
+		Fetch Last From TableName
+		iStart=Grid.RowID
+		Fetch Last From TableNameGridTop
+	End If
+
+
+	Set Event Processing Off
+
+	'We start drawing the grid....
+	
+	gminx=round(minx,stepxy)-2*stepxy
+	gmaxx=round(maxx,stepxy)+2*stepxy
+	gminy=round(miny,stepxy)-2*stepxy
+	gmaxy=round(maxy,stepxy)+2*stepxy
+
+	' Draw first the Longitudes
+	For x=gminx To gmaxx Step stepxy
+		Create Pline Into Variable objLine 0	
+		For y=gminy To gmaxy Step stepxy
+			Alter Object objLine 
+				Node Add (x,y)
+		Next
+		Alter Object objLine info OBJ_INFO_PEN, penPick
+		Insert Into TableName (Position,obj)
+			Values (str$(x)+xyunits,objLine)
+		Create Point Into Variable ObjPoint
+			(x,gmaxy)
+			Symbol (31,Black,0)
+		Insert Into TableName (Position,obj)
+			Values (str$(x)+xyunits,objPoint)
+	Next
+ 
+	' Draw Second the Latitudes
+	For y=gminy To gmaxy Step stepxy
+		Create Pline Into Variable objLine 0	
+		For x=gminx To gmaxx Step stepxy
+			Alter Object objLine 
+				Node Add (x,y)
+		Next
+		Alter Object objLine info OBJ_INFO_PEN, penPick
+		Insert Into TableName (Position,obj)
+			Values (str$(y)+xyunits,objLine)
+		Create Point Into Variable ObjPoint
+			(y,gmaxx)
+			Symbol (31,Black,0)
+		Insert Into TableName (Position,obj)
+			Values (str$(y)+xyunits,objPoint)
+
+	Next
+
+ 	Add Map Window Map_Win_id
+		Layer  TableNameGridTop, TableName
+
+	if xyunits="°" then
+		dx1=minx+stepxy/10
+		dy1=maxy-stepxy/10
+	Else
+		dx1=CentreX-WindowWidth*scale/2
+		dy1=CentreY+WindowHeight*scale/2
+	End If
+
+	'Draw a white box if the user selected labels outside the grid
+	If GridStyle=2 then
+
+		Set Distance Units "m"
+		'Check if Mappreview is on the mapper
+		FontSize=StyleAttr(FontPick,FONT_POINTSIZE)
+
+		'gridscale=scale
+		gridscale=MapperInfo(Map_Win_id,MAPPER_INFO_SCALE)
+
+		' Check if Table MapPreview in Default Layer
+		' If yes Delete it...
+		For i=1 to MapperInfo(Map_Win_id,MAPPER_INFO_LAYERS)
+'print LayerInfo(Map_Win_id,i,TAB_INFO_NAME)
+			If LayerInfo(Map_Win_id,i,TAB_INFO_NAME)="MapPreview" Then
+'print "Found!"
+				Fetch First From MapPreview	
+				If ObjectInfo(MapPreview.obj,OBJ_INFO_TYPE)=OBJ_TYPE_RECT then
+					gridscale=MapPreview.UserScale/1000
+
+				End If
+				Exit For
+			End If
+		Next
+
+
+		'sizex=Fontsize*3527/10000*(len(str$(gminx))+len(xyunits))*gridscale
+		'sizey=Fontsize*3527/6500*gridscale
+		sizex=(maxx-minx)/(MapperInfo(Map_Win_id,MAPPER_INFO_ZOOM)/gridscale)*FontSize/4*(len(str$(gminx))+len(xyunits))
+		sizey=(maxy-miny)/(MapperInfo(Map_Win_id,MAPPER_INFO_ZOOM)/gridscale)*FontSize/4
+
+'print "----"
+'print FontSize
+'print gridscale
+'print scale
+'print minx
+'print miny
+'print maxx
+'print maxy
+'print sizex
+'print sizey
+'print TableInfo(TableNameGridTop,TAB_INFO_COORDSYS_CLAUSE)
+'print WindowInfo(Map_Win_id,WIN_INFO_WIDTH)
+'print WindowInfo(Map_Win_id,WIN_INFO_HEIGHT)
+'print MapperInfo(Map_Win_id,MAPPER_INFO_ZOOM)
+'print MapperInfo(Map_Win_id,MAPPER_INFO_SCALE)
+'print (maxy-miny)
+
+		LabelLeftN=0
+		LabelTopN=0
+		LabelRightN=0
+		LabelBottomN=0
+		If LabelTop then
+			LabelTopN=1
+			Create Rect Into Variable objRect
+				(minx,maxy) (maxx,maxy-sizey)
+				Pen (1,1,BLACK)
+				Brush (2,WHITE,WHITE)
+
+			Insert Into TableNameGridTop (Position,obj)
+				Values ("Top",objRect)
+		End If
+		If LabelLeft then
+			LabelLeftN=1
+			Create Rect Into Variable objRect
+				(minx,miny) (minx+sizex,maxy)
+				Pen (1,1,BLACK)
+				Brush (2,WHITE,WHITE)
+
+			Insert Into TableNameGridTop (Position,obj)
+				Values ("Left",objRect)
+		End If
+		If LabelBottom then
+			LabelBottomN=1
+			Create Rect Into Variable objRect
+				(minx,miny) (maxx,miny+sizey)
+				Pen (1,1,BLACK)
+				Brush (2,WHITE,WHITE)
+
+			Insert Into TableNameGridTop (Position,obj)
+				Values ("Bottom",objRect)
+		End If
+		If LabelRight then
+			LabelRightN=1
+			Create Rect Into Variable objRect
+				(maxx-sizex,miny) (maxx,maxy)
+				Pen (1,1,BLACK)
+				Brush (2,WHITE,WHITE)
+
+			Insert Into TableNameGridTop (Position,obj)
+				Values ("Right",objRect)
+		End If
+		Create Rect Into Variable objRect
+				(minx+sizex*(LabelLeftN+0.025),miny+sizey*(LabelBottomN+0.1)) (maxx-sizex*(LabelRightN+0.025),maxy-sizey*(LabelTopN+0.1))
+				Pen (3,2,BLACK)
+				Brush (1,White,WHITE)
+		Insert Into TableNameGridTop (Position,obj)
+				Values ("Frame",objRect)
+	End If
+
+	'Draw the Longitude Coordinates on Top
+	
+	i=istart+1
+	For x=gminx To gmaxx Step stepxy
+		
+		If LabelTop Then
+			if xyunits="°" then
+				if x>180 then
+					stText=FormatNumber$(360-x)+xyunits+TXT_WEST
+				end if
+				if x<0 then
+					stText=FormatNumber$(-x)+xyunits+TXT_WEST
+				end if
+				if x>=0 and x<=180 then
+					stText=FormatNumber$(x)+xyunits+TXT_EAST
+				End if
+			else
+				stText=FormatNumber$(x)+xyunits+TXT_EAST
+			End if
+			Set Map Layer TableName
+				Label Object i
+					Visibility On
+					Anchor (x,maxy)
+					Text stText
+					Position Below Left	'Above Right
+					Font fontPick
+					Angle 0	'-90
+					OffSet 0
+					Callout (x,maxy)
+		End If
+		i=i+2
+	Next
+
+	'Draw the Latitude Coordinates on Left
+	If LabelLeft Then
+		For y=gminy To gmaxy Step stepxy
+			if y<0 then
+				stText=FormatNumber$(-y)+xyunits+TXT_SOUTH
+			end if
+			if y>=0 then
+				stText=FormatNumber$(y)+xyunits+TXT_NORTH
+			End if
+			
+			Set Map Layer TableName
+				Label Object i
+					Visibility On
+					Anchor (minx,y)
+					Text stText
+					Position Above Right
+					Font fontPick
+					Angle 0
+					Offset 0
+					Callout (minx,y)
+			i=i+2
+		Next
+	End If
+
+	if xyunits="°" then
+		dx1=maxx-stepxy/10
+		dy1=miny+stepxy/10
+	Else
+		dx1=CentreX+WindowWidth*scale/2
+		dy1=CentreY-WindowHeight*scale/2
+	End If
+
+	'Draw the Longitude Coordinates on Bottom
+	
+	i=istart+2
+	For x=gminx To gmaxx Step stepxy
+		
+		If LabelBottom Then
+			if xyunits="°" then
+				if x>180 then
+					stText=FormatNumber$(360-x)+xyunits+TXT_WEST
+				end if
+				if x<0 then
+					stText=FormatNumber$(-x)+xyunits+TXT_WEST
+				end if
+				if x>=0 and x<=180 then
+					stText=FormatNumber$(x)+xyunits+TXT_EAST
+				End if
+			else
+				stText=FormatNumber$(x)+xyunits+TXT_EAST
+			End if
+			Set Map Layer TableName
+				Label Object i
+					Visibility On
+					Anchor (x,miny)
+					Text stText
+					Position Above Left
+					Font fontPick
+					Angle 0	'-90
+					Offset 0
+					Callout (x,miny)
+		End If
+		i=i+2
+	Next
+
+	'Draw the Latitude Coordinates on Right
+	If LabelRight Then
+		For y=gminy To gmaxy Step stepxy
+			if y<0 then
+				stText=FormatNumber$(-y)+xyunits+TXT_SOUTH
+			end if
+			if y>=0 then
+				stText=FormatNumber$(y)+xyunits+TXT_NORTH
+			End if
+			Set Map Layer TableName
+				Label Object i
+					Visibility On
+					Anchor (maxx,y)
+					Text stText
+					Position Above Left
+					Font fontPick
+					Angle 0
+					Offset 0
+					Callout (maxx,y)
+			i=i+2
+		Next
+	End If
+
+	Set Distance Units sOrgDistUnits
+
+	Set Event Processing On
+
+Res_Grid:
+	Exit Sub
+
+Err_Grid:
+	note "Grid: "+str$(err())+" "+error$()
+	Resume Res_Grid	
+
+End Sub Grid
+
+'--------------------------------------------
+' GridUnitChange
+'
+' Modify the Values in the dialog if the user changes the units.
+'
+Sub GridUnitChange
+
+	OnError Goto Err_GridUnitChange
+	Do Case ReadControlValue(3)
+	Case 1
+		Alter Control 1
+			Value str$(degstepxy)
+
+		Alter Control 2
+			Title UnitAbbr$(sTitleUnit(1))
+	Case 2
+		Alter Control 1
+			Value str$(gridstepxy)
+
+		Alter Control 2
+			Title UnitAbbr$(sTitleUnit(2))
+	Case Else
+		Alter Control 1
+			Value str$(degstepxy)
+		Alter Control 2
+			Title UnitAbbr$(sTitleUnit(1))
+	End Case
+
+
+
+Res_GridUnitChange:
+	Exit Sub
+
+Err_GridUnitChange:
+	note "GridUnitChange: "+str$(err())+" "+error$()
+	Resume Res_GridUnitChange	
+
+End Sub GridUnitChange
+
+'--------------------------------------------
+' GridParameters
+'
+' Modify the Values in the dialog if the user changes the units.
+'
+Sub GridParameters (Map_Win_id as Integer,xyunits as String,minx as Float,miny as Float,maxx as Float,maxy as Float,stepxy as Float,sStepxy as String)
+
+	dim dx 		as Float
+	Dim dy		as Float
+	Dim pos1		as Integer
+	Dim pos2		as Integer
+	Dim sCoordSys	as String
+	Dim sxyunits	as String
+
+	OnError Goto Err_GridParameters
+
+	Set CoordSys Window Map_Win_id
+	sCoordSys=MapperInfo(Map_Win_id,MAPPER_INFO_COORDSYS_CLAUSE)
+
+	sxyunits=MapperInfo(Map_Win_id,MAPPER_INFO_XYUNITS)
+
+	if Left$(sCoordSys,28)<>"CoordSys Earth Projection 1," AND sxyunits="degree" then
+		pos1=InStr(1,sCoordSys,"""")
+		pos2=InStr(pos1+1,sCoordSys,"""")
+		sxyunits=Mid$(sCoordSys,pos1+1,pos2-pos1-1)
+	End If
+
+	if xyunits=sxyunits Then
+		Set CoordSys Window Map_Win_id
+		set Distance Units xyunits
+
+	Else
+		set Coordsys Earth
+		set Distance Units "m"
+
+	End If
+
+	Set Paper Units "mm"
+
+	minx=MapperInfo(Map_Win_id,MAPPER_INFO_MINX)
+	miny=MapperInfo(Map_Win_id,MAPPER_INFO_MINY)
+	maxx=MapperInfo(Map_Win_id,MAPPER_INFO_MAXX)
+	maxy=MapperInfo(Map_Win_id,MAPPER_INFO_MAXY)
+
+	dx=maxx-minx
+	dy=maxy-miny
+
+	if abs(dx)<abs(dy) then
+		stepxy=abs(dx)/5		
+	else
+		stepxy=abs(dy)/5
+	end if
+
+	if stepxy>=1 and Stepxy<10 then
+		stepxy=Int(stepxy)
+	Else
+		sStepxy=Format$(stepxy, "#E+00")
+		stepxy=Val(sStepxy)
+	End If
+
+
+Res_GridParameters:
+	Exit Sub
+
+Err_GridParameters:
+	note "GridParameters: "+str$(err())+" "+error$()
+	Resume Res_GridParameters	
+
+End Sub GridParameters

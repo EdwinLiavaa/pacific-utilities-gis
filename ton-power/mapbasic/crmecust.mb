@@ -1,0 +1,55 @@
+'********************************************************
+'*                                                      *
+'*     CrMeCust.MBO                Edwin, 24.08.98      *
+'*                                                      *
+'*  This program contains the sub program of the drop   *
+'*  down menu "Customers" which then calls the other    *
+'*  programs of the pull down menus.                    *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required files:                                      *
+'*                                                      *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required tables:                                     *
+'*                  - 		                          *
+'*                  -                                   *
+'********************************************************
+
+	Declare Sub CrMeCust
+	Declare Sub LocaCust
+	Declare Sub LocCustM
+	Declare Sub LocCustL
+	Declare Sub LocCustP
+	Declare Sub CustCond
+	Declare Sub PhasType
+	Declare Sub CustClas
+	Declare Sub AllCClas
+	Declare Sub AllPType
+
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++*
+
+	Sub CrMeCust
+
+	Create Menu "Customers" As 
+		"Connected in month.. "		calling CustCond,
+		"Identify by meter No. 	" 	calling LocCustM ,
+		"Identify by account No. " 	calling LocaCust ,
+		"Identify by location No. " 	calling LocCustL ,
+		"Identify by pole Id. " 	calling LocCustP,
+		"(-",
+		"Display:",
+		" - selected phase type "		calling PhasType,
+		" - all phase types "			calling AllPType,
+		" - customers with(out)pole fuses *",
+		" - customer consumption *",
+		" - customer 10% higher avg *",
+		" - customer 10% lower avg *",
+		" - all customer classes "          calling AllCClas,
+		" - selected customer class "		calling CustClas,
+		"(-",
+		" * not ready yet"
+
+	Alter Menu Bar Add "Customers"
+
+
+	End Sub

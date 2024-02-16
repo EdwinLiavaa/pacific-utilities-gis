@@ -1,0 +1,32 @@
+	'***********************************************************
+	'*                  Water_Consumption     Wolf 08.11.07    *
+	'* Modified: Edwin 23.06.08                                *
+	'* This program creates a drop down menu from which the    *
+    '* can select executable program to create thematic maps  * 
+	'***********************************************************
+
+		Declare Sub Water_Consumption
+		Declare Sub ConsumptionHouse
+		Declare Sub DaysNoRain
+
+		Sub Water_Consumption
+
+			OnError Goto Err_Manage
+
+		Create Menu "Water Consumption" As
+			"Please update TMP_RoofDetails first",			
+			"(-",
+			"Consumption per house" Calling ConsumptionHouse, 
+			"Days without rain" Calling DaysNoRain  
+
+		Alter Menu Bar Remove "Help"
+		Alter Menu Bar Add "Water Consumption", "Help"
+
+			Res_Main:
+				Exit Sub
+			Err_Manage:
+				note "Error: " + str$(err()) + ", " + error$()
+				Resume Res_Main		
+
+		End Sub
+

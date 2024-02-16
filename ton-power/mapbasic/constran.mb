@@ -1,0 +1,139 @@
+'********************************************************
+'*                                                      *
+'*     Constran.MBO                Edwin, 24.08.98      *
+'*                                                      *
+'*  This program displays all Transformers  in          *
+'*  different colours classed by consumption ranges.    *
+'*                                                      *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required files:                                      *
+'*                MAPBASIC.DEF                          *
+'*			MENU.DEF                              *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required tables:                                     *
+'*                  - Tralist.tab                       *
+'*                  - Location.tab                      *
+'********************************************************
+
+Declare Sub ConsTran
+
+Global passw as String 
+Global MapPath as string
+Global CadaPath as String
+
+
+include "C:\Program Files\mapinfo\mapbasic\MAPBASIC.DEF"
+include "C:\Program Files\MAPINFO\MAPBASIC\MENU.DEF"
+
+
+'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Sub ConsTran
+
+
+
+	Dim Map_Win_Id 	as Integer
+	Dim fRange() 	as Float
+	Dim stRange() 	as Symbol
+	Dim iz, ln		As SmallInt
+	Dim i_lay_type	As SmallInt
+	Dim MapName		As String
+
+' +++++++++++++++++++++++++Errpr Statement++++++++++++++++++++++++++++
+
+	OnError goto Err_Tra_Cons
+
+' +++++++++++++++++Open Table Statement=====+++++++++++++++++++++++++++
+close all
+
+	MapName = MapPath +"Tralist.tab"
+	open table MapName Password passw as Tralist
+
+	MapName = MapPath +"Location.tab"
+	open table MapName Password passw as Location
+
+
+select * from Tralist,Location Where Tralist.LOCAT_NO=Location.LOCAT_NO
+		into Transformers NoSelect ' Join these two tables in one
+
+Map From Transformers Max
+
+	Mapname = Cadapath + "n_cad.tab"
+	open table MapName as n_cad interactive
+
+	add map layer n_cad
+
+'+++++++++++++++++++++++++++  Getting window ID +++++++++++++++++++++
+
+	Map_Win_id= FrontWindow()
+	if WindowInfo(Map_Win_id,WIN_INFO_TYPE)<>WIN_MAPPER then
+		note "You must Select a Map Window first"
+		Exit Sub
+	End If
+
+	ln = MapperInfo(Map_Win_id, MAPPER_INFO_LAYERS)
+	iz = 1
+
+	Do 
+		i_lay_type = LayerInfo(Map_Win_id, iz, LAYER_INFO_TYPE)
+		If i_lay_type = LAYER_INFO_TYPE_THEMATIC Then
+			set map redraw off
+		 	Set Map Layer iz Display Off
+		 	set map redraw on
+		End If
+		iz = iz + 1
+
+	Loop While iz <= ln
+
+'++++++++++++++++++++++++++ Shade statements +++++++++++++++++++++++++
+
+	Create Ranges From "Transformers" 
+   		With CONSUMPTION
+   		Use "Natural Break" 
+   		Number 10
+		Round 100
+   		Into Variable fRange
+
+	Create Styles 
+   		From Symbol(37,BLACK,12)  	'style for LOW range
+   		To   Symbol(37,RED,12)  	'style for HIGH range
+   		Vary Color By "RGB" 
+   		Number 10
+   		Into Variable  stRange 
+
+	Shade Window Map_Win_Id "Transformers" with CONSUMPTION 
+		Ranges
+		From Variable fRange
+		Style Variable stRange
+
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+'+++++++++++++++++++++++++ Legend statements +++++++++++++++++++++++++
+
+	Set Legend Window Map_Win_Id layer prev display on shades off symbols on 
+		lines off count on title "Transformers Consumption (kWh)" 
+		Font ("MS Sans Serif",0,10,0) subtitle "" 
+		Font ("MS Sans Serif",0,8,0) 
+ 
+	Set Window WIN_LEGEND 
+	Position (1,4) Units "cm"
+	Width 6 Units "cm"
+	Height 6 Units "cm"
+
+	Open Window Legend
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+Res_Tra_Cons:
+	Exit Sub
+
+Err_Tra_Cons:
+	note "Tra_Cons: "+str$(err())+" "+error$()
+	Resume Res_Tra_Cons
+
+
+End Sub
+

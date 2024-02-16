@@ -1,0 +1,158 @@
+'*****************************************************************
+'*  Name   : UpdateLinesHV
+'*  Purpose: Update geometry columns of Lines LN_HV 
+'*  Inputs : LN_HV, PL, TX, ND 
+'*  Outputs: LN_HV
+'*  Author : Leslie Allinson, Edwin Liava'a
+'*  Date   : 10-Feb-2007
+'*  Mods   : 28-Feb-2007
+'*           
+'*****************************************************************
+
+Include "mapbasic.def"
+Include "menu.def"
+
+Declare Sub UpdateLinesHV
+
+' Declare Global Variables
+
+Global db_conn_path 		As String	 'Access
+Global rs_path 		As String	 'MapInfo Raster Layers (BackDrops)
+Global vt_Path 		As String	 'MapInfo Vector Layers
+Global db_name 		As String	 'MIS database
+Global lineID			As Integer
+Global x1,y1,x2,y2	As Float
+
+Sub UpdateLinesHV
+
+OnError Goto Err_Manage
+
+'	+++++++++++++++ declarations +++++++++++++++
+
+	Dim more 						As Logical
+	Dim i, irow1 					As Integer
+	Dim i_obj_type 				As Integer
+	Dim TableName					As String
+	Dim stable					As String
+	Dim b_x, b_y, e_x, e_y 	As Float
+
+	
+'	+++++++++++++++ user dialog +++++++++++++++
+
+	more = Ask(" 1. Update Spatial Geometry of HV Lines.          " +
+				 " 2. Update Tabular Data of Lines." +
+				 "                    " +
+				 " Please run Test_NoSpatial_LN_HV.MBX" +
+				 " Before Updating Lines." +
+				 "                                    " + 
+				 "                                    " + 
+			    "                                    " +                              
+				 " Do you want to continue?", "OK", "Cancel")
+
+	If more Then
+	Else
+		Exit Sub
+	End if
+
+'	+++++++++++++++ open Lines tables +++++++++++++++
+
+	Close All
+	
+	Set ProgressBars On
+
+	db_name = "EPC_MIS.MDB"
+
+	Register Table db_conn_path + "\" + db_name 
+		Type ACCESS Table "LN_HV" Into db_conn_path + "\" + "LN_HV.tab"
+	Register Table db_conn_path + "\" + db_name 
+		Type ACCESS Table "PL" Into db_conn_path + "\" + "PL.tab"
+	Register Table db_conn_path + "\" + db_name 
+		Type ACCESS Table "TX" Into db_conn_path + "\" + "TX.tab"
+	Register Table db_conn_path + "\" + db_name 
+		Type ACCESS Table "ND" Into db_conn_path + "\" + "ND.tab"
+
+	TableName = db_conn_path + "\" + "LN_HV.tab"
+	Open Table TableName As Lines Interactive
+	Commit Table Lines Interactive
+	TableName = db_conn_path + "\" + "PL.tab"
+	Open Table TableName As Poles Interactive
+	Commit Table Poles Interactive	
+	TableName = db_conn_path + "\" + "TX.tab"
+	Open Table TableName As Trans Interactive
+	Commit Table Trans Interactive
+	TableName = db_conn_path + "\" + "ND.tab"
+	Open Table TableName As Nodes Interactive
+	Commit Table Nodes Interactive
+	
+	Map From Lines, Trans, Poles, Nodes Max
+	
+	Set Map Distance Units "m" XY Units "m" 
+	Set Map Redraw Off
+	Set Map Layer Lines Editable On
+	Set Map Redraw On
+	set map redraw off
+	Set Map Layer 1 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+	set map redraw on
+
+	Print "Start Update HV Lines: Please Wait..."
+	
+'	+++++++++++++++ Lines is open and a mappable table +++++++++++++++	
+	
+	irow1 = 1
+	Fetch First From Lines
+
+' at this point, the expression: "Lines.obj" represents the graphical object that's attached 
+' to the first record of the Lines table. 
+
+	Do While Not EOT(Lines) 
+		i_obj_type = ObjectInfo(Lines.obj, OBJ_INFO_TYPE)
+		If i_obj_type = OBJ_LINE Then 
+			b_x = ObjectGeography(Lines.obj, OBJ_GEO_LINEBEGX)
+			b_y = ObjectGeography(Lines.obj, OBJ_GEO_LINEBEGY)
+			e_x = ObjectGeography(Lines.obj, OBJ_GEO_LINEENDX)
+			e_y = ObjectGeography(Lines.obj, OBJ_GEO_LINEENDY)
+			Update Lines Set XB = b_x where rowid = irow1
+			Update Lines Set YB = b_y where rowid = irow1
+			Update Lines Set XE = e_x where rowid = irow1
+			Update Lines Set YE = e_y where rowid = irow1
+			Commit Table Lines
+			Fetch Next From Lines
+			irow1 = irow1 + 1
+		End If
+	Loop 
+
+	Commit Table Lines Interactive	
+
+	Add Column "Lines" (FROM_ID )From Poles Set To PL_ID Where intersects
+	Commit Table Lines Interactive
+	Add Column "Lines" (NEXT_ID )From Nodes Set To ND_ID Where intersects
+
+	Commit Table Lines Interactive
+	Select * From Lines where FROM_ID = "" into Temp1
+	Add Column "Temp1" (FROM_ID )From Trans Set To TX_ID Where intersects
+	Commit Table Lines Interactive
+	Select * From Lines where FROM_ID = "" into Temp2
+	Add Column "Temp2" (FROM_ID )From Nodes Set To ND_ID Where intersects
+	Commit Table Lines Interactive
+	Select * from Lines where NEXT_ID = "" into Temp3
+	Add Column "Temp3" (NEXT_ID )From Poles Set To PL_ID Where COL10 = COL32 
+	Commit Table Lines Interactive
+	select * from Lines where FROM_ID = NEXT_ID into Temp4
+	Add Column "Temp4" (FROM_ID )From Poles Set To PL_ID Where COL8 = COL32 
+	Commit Table Lines Interactive
+	
+	Note  "Finished Updating: " + Lines
+	Print "Closed: " + Lines
+
+	Close All Interactive
+
+Main:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Print "Error: " + str$(err()) + ", " + error$()
+	Resume Main
+End Sub

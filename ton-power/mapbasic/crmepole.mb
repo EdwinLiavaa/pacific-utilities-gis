@@ -1,0 +1,43 @@
+'********************************************************
+'*                                                      *
+'*     CrMePole.MBO                Edwin, 20.08.98      *
+'*                                                      *
+'*  This program contains the sub program of the drop   *
+'*  down menu "poles" which then calls the other        *
+'*  programs of the pull down menus.                    *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required files:                                      *
+'*                                                      *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required tables:                                     *
+'*                  - poles.tab                         *
+'*                  -                                   *
+'********************************************************
+
+	Declare Sub CrMePole
+	Declare Sub LocaPole
+	Declare Sub PoleCons
+	Declare Sub PoleType
+	Declare Sub Strelght
+	
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++*
+
+	Sub CrMePole
+
+
+	Create Menu "Poles" As 
+		"Construction in month.."	Calling PoleCons,
+		"Locate pole by pole ID "	Calling LocaPole,
+		"(-",
+		"Display:",
+		" - pole condition *",
+		" - defined pole typ "		Calling PoleType,
+		" - all street lights "		Calling StreLght,
+		" - last survey *",
+		"(-",
+		" * not ready yet"
+
+	Alter Menu Bar Add "Poles"
+
+
+	End Sub

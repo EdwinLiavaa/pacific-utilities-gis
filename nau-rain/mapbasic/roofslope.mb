@@ -1,0 +1,112 @@
+'***********************************************************
+'*       RoofSlope                Wolf   08.11.07          *
+'*   Modified: Edwin 28.09.08                              *
+'*   This program                                          *
+'*           - imports the TMP_RoofDetails from Access     *
+'*           - links Roof_MI to TMP_RoofDetails            *
+'*           - adds the linked tables to mapwindow         *
+'*           - creates a thematic map from the linked TAB  *
+'***********************************************************
+Include "MapBasic.DEF"
+Include "Menu.DEF"
+		
+	Declare Sub RoofSlope
+
+	Global PathVectorL As String
+	Global PathBackdrop As String
+	Global PathAccess As String
+	Global DatabaseName As String
+
+	Sub RoofSlope
+
+	OnError Goto Err_Manage
+
+	Dim MapWinID As Integer
+
+	Close All
+ 
+	Open Table PathVectorL + "Roof_MI.TAB" As Roof_MI
+
+	Map From Roof_MI Max
+
+	MapWinID = FrontWindow()
+
+	Open Table PathBackdrop + "nauru050515.TAB" Interactive
+	
+	Add Map Auto Layer nauru050515
+
+	Set Map Window MapWinID Zoom 1.0 Units "km" Center (166.9354, -0.504205)
+
+'	++++++++++++++++ import Access Table +++++++++++++++++++++++++++++++++++++++++
+
+	Register Table PathAccess + DatabaseName   
+	Type ACCESS Table "TMP_RoofDetails" 
+	Into PathVectorL + "TMP_RoofDetails.TAB"
+
+	Open Table PathVectorL + "TMP_RoofDetails.TAB" Interactive
+
+'	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'	++++++++++++++++ Link MapInfo and Access Table +++++++++++++++++++++++++++++++
+
+	Select * from Roof_MI, TMP_RoofDetails 
+	where Roof_MI.Roof_ID = TMP_RoofDetails.Roof_ID 
+	into LinkTable
+
+'	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'	++++++++++++++++++++++++ Add to current mapper +++++++++++++++++++++++++++++++
+
+	set map redraw off
+	Add Map Layer LinkTable
+	set map redraw on
+
+'	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'	++++++++++++++++++++++++ Create thematic Map +++++++++++++++++++++++++++++++
+
+	shade window MapWinID linkTable with Slope values  
+	"FLAT (<2.5degrees)" Brush (2,16776960,16777215) Pen (1,2,0) ,
+	"LOW (2.5 - 20degrees)" Brush (2,65280,16777215) Pen (1,2,0) ,
+	"STEEP (>20degrees)" Brush (2,255,16777215) Pen (1,2,0) ,
+	"Unknown" Brush (2,16711680,16777215) Pen (1,2,0) 
+	default Brush (1,0,16777215) Pen (1,2,0)  
+
+'	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'	++++++++++++++++++++++++ Create Map Legend +++++++++++++++++++++++++++++++
+
+	set legend window MapWinID layer prev 
+		display on 
+		shades on 
+		symbols off 
+		lines off 
+		count on 
+		title "Roof Slope" Font ("Arial",1,10,0) 
+		subtitle auto Font ("Arial",0,8,0) 
+		ascending on ranges 
+		Font ("Arial",0,8,0) 
+		auto display off ,
+		auto display on ,
+		auto display on ,
+		auto display on ,
+		auto display on 
+
+	Set Window WIN_LEGEND 
+		Position (0.5,3) Units "cm"
+		Width 6 Units "cm"
+		Height 3 Units "cm"
+
+	Open Window Legend
+
+	Run Menu Command M_QUERY_UNSELECT
+
+	set map redraw off
+	Set Map Layer LinkTable Label Font ("Arial",257,12,0,16777215) Overlap On
+	Set Map Layer LinkTable Label Auto On 
+	set map redraw on
+
+		Res_Main:
+			Exit Sub
+
+		Err_Manage:
+			note "Error: " + str$(Err()) + ", " + Error$()
+			Resume Res_Main
+
+	End sub

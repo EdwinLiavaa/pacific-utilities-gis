@@ -1,0 +1,204 @@
+'********************************************************
+'*                                                      *
+'*     PoleType.MBO                Edwin, 20.08.98      *
+'*                                                      *
+'*  This program asks the operator to type in the month *
+'*  when the Pole was constructed.                      *
+'*                                                      *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required files:                                      *
+'*                MAPBASIC.DEF                          *
+'*			MENU.DEF                              *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required tables:                                     *
+'*                  - poles.tab                         *
+'*                  - pole.tab                          *
+'********************************************************
+
+	include "C:\Program Files\MapInfo\MapBasic\MAPBASIC.DEF"
+	include "C:\Program Files\MAPINFO\MAPBASIC\MENU.DEF"
+
+	Global passw as String 
+	Global MapPath as string
+	Global CadaPath as String
+
+	Declare Sub PoleType
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++*
+
+	Sub PoleType
+
+	
+	Dim  ivar1, ivar2, ivar3 As Integer
+	Dim Map_Win_Id 		As Integer
+	Dim i_lay_type		As SmallInt
+	Dim iz, ln			As SmallInt
+	Dim MapName			As String
+	Dim polety 			As String
+	Dim ipole 			As SmallInt
+	Dim aRowId 			as Alias
+	Dim aPole 			as Alias
+	Dim aPoleName 		as Alias
+	Dim sPoleType(1) 		as String
+	Dim sPoleName(1) 		as String
+	Dim iCounter 		as Integer
+
+	OnError goto Err_PoleType
+
+' ++++++++++++++++++++++++++ close some toolbars ++++++++++++++++++++
+
+	Alter ButtonPad "Tools" Hide
+	Alter ButtonPad "Drawing" Hide
+	Alter ButtonPad "Main" Show Fixed
+	Alter ButtonPad "ODBC" Hide
+
+
+' ++++++++++++++++++++++++++ close and open map layers ++++++++++++++
+
+	Close All	
+	
+
+
+'+++++++++++++++++++++++++++  Getting window ID +++++++++++++++++++++
+
+	Map_Win_id = FrontWindow()
+
+'++++++  go out of program if operator does not know password +++++++
+
+	'If Map_Win_id = 0 Then
+	'	Exit Sub
+	'End If
+
+' ++++++++++++Store Data into Array Variable ffrom Table+++++++++++++
+
+	MapName = MapPath +"Pole"
+	open table MapName Password passw as "Pole"
+
+	aRowId="Pole.rowid"
+	aPole="Pole.PO_CODE"
+	aPoleName="Pole.PO_TYPE"
+
+	Fetch First from Pole		' cursor to first record
+	iCounter=1
+	Do While NOT EOT( Pole )
+		Redim sPoleType(iCounter)
+		Redim sPoleName(iCounter)
+		if iCounter=1 then
+			sPoleType(iCounter)=aPole
+			sPoleName(iCounter)=aPoleName
+			iCounter=2
+		else
+			if sPoleType(iCounter-1)<>aPole then
+				sPoleType(iCounter)=aPole
+				sPoleName(iCounter)=aPoleName
+				iCounter=iCounter+1
+			end if	
+		end if
+		Fetch Next from Pole
+	Loop
+	Close Table Pole
+
+
+' +++++++++++++++++++  Dialog ++++++++++++++++++++++++++++++++++++++++
+
+
+	Dialog
+
+	Title "select type:"
+
+	Control StaticText
+		Title "select pole type:"
+		Position 5, 10
+
+	Control PopUpMenu
+		Title From Variable sPoleName
+   		Value 1
+		Position 20,20 Width 60
+		Into ipole
+
+	
+	Control OKButton
+		Position 20, 40
+	Control CancelButton
+		Position 65, 40
+
+	If not CommandInfo(CMD_INFO_DLG_OK) Then 	'The user just cancelled.
+  		Exit Sub
+	End If 
+ 
+'++++++++++++++++ creating the right variable +++++++++++++++++++++++++
+ 
+		
+	polety = sPoleType(ipole)
+
+
+'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+'++++++++++++++++++++++++++++++Open table statement++++++++++++++++++++++++++++++
+
+	MapName = MapPath +"POLES.TAB"
+
+
+	
+	Open Table MapName As "Poles" Password passw
+
+	Map From Poles
+	'Run Application "e:\tepbdata\Tepb.wor"
+	Mapname = Cadapath + "GPSRoads.tab" 
+	open table MapName as GPSRoads interactive
+
+	add map layer GPSRoads
+'++++++++++++++++++++++++++ Shade statements +++++++++++++++++++++++++
+
+Map_win_id= Frontwindow()
+
+	Shade Window Map_Win_Id "Poles" 
+		with PO_CODE Values polety 
+		Symbol (34,RED,8) 
+		default Symbol (34,BLACK,8)
+
+'+++++++++++++++++++++++++ View Entire Layer +++++++++++++++++++++++++
+
+	
+	Set Map Window  Map_Win_Id Zoom Entire Layer "Poles"
+
+'+++++++++++++++++++++++++ Legend Statements +++++++++++++++++++++++++
+
+	Set Legend Window Map_Win_Id layer prev 
+		display on 
+		shades off 
+		symbols on 
+		lines off 
+		count on 
+		title "Select Pole Type" 
+		Font ("MS Sans Serif",0,10,0) 
+		subtitle "" Font ("MS Sans Serif",0,8,0) 
+		ascending on 
+		ranges Font ("MS Sans Serif",0,8,0) "all others" 
+		display on ,
+		sPoleName(ipole) display on
+ 
+	Set Window WIN_LEGEND 
+	Position (1,4) Units "cm"
+	Width 6 Units "cm"
+	Height 3 Units "cm"
+
+	Open Window Legend
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	Set Window Map_Win_id Max
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Res_PoleType:
+	Exit Sub
+
+Err_PoleType:
+	note "PoleType: "+str$(err())+" "+error$()
+	Resume Next
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	End Sub

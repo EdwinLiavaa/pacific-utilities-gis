@@ -1,0 +1,99 @@
+'*****************************************************************
+'*  Name   : DispHV_UG
+'*  Purpose: Display HV Lines Underground
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Les Allinson, Edwin Liava'a
+'*  Date   : 26-Feb-2007
+'*  Mods   : 
+'*           
+'*****************************************************************
+
+Include "mapbasic.def"
+Include "menu.def"
+
+Declare Sub DispHV_UG
+
+Global db_conn_path As String	'	Access
+Global rs_path As String	'	MapInfo Raster Layers (BackDrops)
+GLobal vt_Path As String	'	MapInfo Vector Layers
+
+Sub DispHV_UG
+
+OnError Goto Err_Manage
+
+	'	+++++++++++++++ declarations +++++++++++++++
+
+	Dim Map_Win_id 				As Integer
+	Dim i,j						As Integer
+	Dim TableName				 	As String
+
+	'	+++++++++++++++ display selected layer +++++++++++++++
+
+	Close All
+
+	TableName = db_conn_path + "\" + "TX.tab"
+	Open Table TableName As TX Interactive
+	TableName = db_conn_path + "\" + "PL.tab"
+	Open Table TableName As PL Interactive
+	TableName = db_conn_path + "\" + "LN_HV.tab"
+	Open Table TableName As HV Interactive
+		
+	Map From TX, PL, HV Max
+
+	Set Map Distance Units "m"
+	set map redraw off
+	Set Map Layer 1 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+		Activate Using PIC On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 2 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+		Activate Using PIC On Labels Objects Relative Path On
+	set map redraw on
+	set map redraw off
+	Set Map Layer 3 
+		Label Font ("Arial",257,8,0,16777215) 
+		Auto On Overlap On Visibility Zoom (0, 500) Units "m"
+	set map redraw on
+		
+	'++++++++++++++++++  Getting window ID +++++++++++++++++++++
+
+	Map_Win_id = FrontWindow()
+
+	'++++++++++++++++++  Shade Statement  ++++++++++++++++++++++
+
+	Shade Window Map_Win_id "HV" with UG 
+	values  
+		"N" Line (1,2,65535) ,
+		"Y" Line (3,2,16711680) 
+	default Line (1,2,0) 
+
+'+++++++++++++++++++++++++ Legend statements +++++++++++++++++++++++++
+
+	set legend window Map_Win_id layer prev display on shades off symbols off lines on count on 
+	title "EPC MIS-GIS" Font ("Arial",0,9,0) 
+	subtitle "HV Line Underground" Font ("Arial",0,8,0) 
+	ascending on ranges Font ("Arial",0,8,0) auto display off ,
+	"N - None" display on ,
+	"Y - Underground" display on	
+		
+	Set Window WIN_LEGEND 
+		Position (20,3) Units "cm"
+		Width 6 Units "cm"
+		Height 6 Units "cm"
+
+	Open Window Legend
+
+Res_DispHV_UG:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executin the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Res_DispHV_UG
+
+End Sub

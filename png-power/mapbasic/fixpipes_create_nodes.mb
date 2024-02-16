@@ -1,0 +1,114 @@
+'*****************************************************************
+'*  Name   : FixPipes_Create_Nodes
+'*  Purpose: Find begining of Pipes and create a point object to represent fittings
+'* 			   and convert arcs into polylines and delete non-line objects 
+'*  Inputs : SN_PI_MI
+'*  Outputs: CreateFittings
+'*  Author : Edwin Liava'a 
+'*  Date   : 04/02/2011
+'*  Mods   : 
+'*           
+'*****************************************************************
+
+Include "mapbasic.def"
+Include "menu.def"
+
+Declare Sub Main
+
+Sub Main
+
+OnError Goto Err_Manage
+
+	Dim myOBJ As Object
+	Dim Map_Win_id, irow, counter, i, obj_type As Integer
+	Dim x, y As Float
+	Dim new_pnt As Object
+	Dim s_filename, Temp As String
+
+	Close All
+
+	s_filename = FileOpenDlg("","","TAB","Open Table") 
+	
+	'Open Table "C:\WAF\MI_FILES\SN_PI_MI.TAB" As s_table Interactive
+
+	Open Table s_filename As s_table Interactive
+	
+	Map from s_table
+
+	'+++++++++++++++++++++++++++  Getting window ID +++++++++++++++++++++
+
+	Map_Win_id = FrontWindow()
+
+	If Map_Win_id = 0 Then
+		Exit Sub
+	End If
+
+	Set map redraw off
+	Set Map Layer 1 Editable On
+	Set map redraw on
+
+	irow = 1
+
+	Fetch First From s_table
+	
+	Do While Not EOT(s_table) 
+		myOBJ = s_table.obj
+		obj_type = ObjectInfo(myOBJ, OBJ_INFO_TYPE) 
+		Do Case obj_type
+			Case OBJ_TYPE_LINE
+				Print "Object is a line."
+				x = ObjectGeography(myOBJ, OBJ_GEO_LINEBEGX)
+				y = ObjectGeography(myOBJ, OBJ_GEO_LINEBEGY) 
+				Create Point Into Variable new_pnt (x, y)
+				Insert Into s_table(obj) Values (new_pnt)
+				x = ObjectGeography(myOBJ, OBJ_GEO_LINEENDX)
+				y = ObjectGeography(myOBJ, OBJ_GEO_LINEENDY) 
+				Create Point Into Variable new_pnt (x, y) 
+				Insert Into s_table(obj) Values (new_pnt) 
+ 			Case OBJ_TYPE_PLINE
+				Print "Object is a polyline."
+				counter = ObjectInfo(myOBJ, OBJ_INFO_NPNTS) 
+				Print " ... with " + Str$(counter) + " nodes."
+						For i = 1 to counter
+						x = ObjectNodeX(myOBJ, 1, i) ' read longitude
+						y = ObjectNodeY(myOBJ, 1, i) ' read latitude
+						Create Point Into Variable new_pnt (x, y) 
+						Insert Into s_table(obj) Values (new_pnt)
+						Next
+				Case OBJ_TYPE_ARC
+					Print "Object is an arc."
+					Select * From s_table Where RowID = irow
+					Run Menu Command M_OBJECTS_CVT_PLINE
+					Print "Convert to Polyline: " & irow
+					counter = ObjectInfo(myOBJ, OBJ_INFO_NPNTS) 
+					Print " ... with " + Str$(counter) + " nodes."
+						For i = 1 to counter
+						x = ObjectNodeX(myOBJ, 1, i) ' read longitude
+						y = ObjectNodeY(myOBJ, 1, i) ' read latitude
+						Create Point Into Variable new_pnt (x, y) 
+						Insert Into s_table(obj) Values (new_pnt)
+						Next
+				Case OBJ_TYPE_POINT
+					Print "Object is a Point: " & irow
+				Case Else
+					Select * From s_table Where RowID = irow
+					Delete From s_table Where RowID = irow
+					Print "Deleted non-line object: " & irow
+			End Case
+		Fetch Next From s_table
+		irow = irow + 1
+	Loop
+
+	'Commit Table s_table
+	'Pack Table s_table Interactive
+
+	Print "Finished creating points representing nodes objects!" 
+
+Main:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Next
+End Sub

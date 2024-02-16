@@ -1,0 +1,108 @@
+'********************************************************
+'*                                                      *
+'*     TypInsTr.MBO                Paula, 24.08.98      *
+'*                                                      *
+'*  This program displays The Transformers by classe of *
+'*  different type .                                    *
+'*                                                      *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required files:                                      *
+'*		MAPBASIC.DEF                                *
+'*		MENU.DEF                                    *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required tables:                                     *
+'*                  - Tralist.tab                       *
+'*                  - Location.tab                      *
+'********************************************************
+
+	include "C:\Program Files\mapinfo\mapbasic\MAPBASIC.DEF"
+	include "C:\Program Files\MAPINFO\MAPBASIC\MENU.DEF"
+
+
+	Global passw as String 
+	Global MapPath as string
+	Global CadaPath as String
+
+
+	Declare Sub TypInsTr
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	Sub TypInsTr
+
+
+
+	Dim Map_Win_Id 	As Integer
+	Dim iz, ln		As SmallInt
+	Dim i_lay_type	As SmallInt
+	Dim MapName		As String
+
+' ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	OnError goto Err_Inst_Typ
+
+' +++++++++++++++++++ Open Table statement +++++++++++++++++++++++++++
+
+	MapName = MapPath +"Tralist.tab"
+	open table MapName Password passw As Tralist
+
+	MapName = MapPath +"Location.tab"
+	open table MapName Password passw as Location 
+
+	select * from Tralist,Location Where Tralist.LOCAT_NO=Location.LOCAT_NO
+			into Transformers NoSelect
+
+	Map From Transformers Max
+
+	Mapname = Cadapath + "n_cad.tab"
+	open table MapName as n_cad interactive
+
+	add map layer n_cad
+
+'++++++++++++++++++++++++++Get the Window ID +++++++++++++++++++++++++++++++++++++
+
+	Map_Win_id= FrontWindow()
+
+
+	
+
+'++++++++++++++++++++++++++ Shade statements +++++++++++++++++++++++++
+
+	Shade Window Map_Win_Id "Transformers" with PO_PA_ST Ranges  
+		0:1 Symbol (37,RED,12,"MapInfo Symbols",257,0) ,
+		1:2 Symbol (37,BLUE,12,"MapInfo Symbols",257,0) ,
+		2:3 Symbol (37,GREEN,12,"MapInfo Symbols",257,0)
+		default Symbol (37,0,12,"MapInfo Symbols",257,0)
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+'+++++++++++++++++++++++++ Legend statements +++++++++++++++++++++++++
+
+	Set Legend Window Map_Win_Id layer prev display on shades off symbols on 
+		lines off count on title "Installation of transformer" 
+		Font ("MS Sans Serif",0,10,0) subtitle "" 
+		Font ("MS Sans Serif",0,8,0) ascending on ranges 
+		Font ("MS Sans Serif",0,8,0) 
+		"other" display on ,
+		"on pole" display on ,
+		"on pad" display on ,
+		"in stock" display on 
+
+
+
+	Set Window WIN_LEGEND 
+	Position (1,4) Units "cm"
+	Width 5 Units "cm"
+	Height 4 Units "cm"
+
+	Open Window Legend
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Res_Inst_Typ:
+	Exit Sub
+
+Err_Inst_Typ:
+	note "Inst_Typ: "+str$(err())+" "+error$()
+	Resume Res_Inst_Typ
+
+end sub
+

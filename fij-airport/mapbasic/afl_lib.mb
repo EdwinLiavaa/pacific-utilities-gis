@@ -1,0 +1,90 @@
+'*****************************************************************
+'*  Name   : AFL_Lib
+'*  Purpose: Subroutine and function library
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Edwin Liava'a
+'*  Date   : 20/06/2011
+'*  Mods   : 
+'*           
+'*****************************************************************
+
+Include "AFL_Lib.def"
+Include "mapbasic.def"
+Include "menu.def"
+
+'*****************************************************************
+'*  Name   : TestColumns
+'*  Purpose: Determine if column exists
+'*  Inputs : column to find, found flag, table name
+'*  Outputs: found flag
+'*  Author : Edwin Liava'a
+'*  Date   : 10-Feb-2011
+'*  Mods   : 
+'*           
+'*****************************************************************
+
+Sub TestColname (mycolname As String, myfound As Integer, s_tablename As String) 
+
+OnError Goto Err_Manage
+
+'	+++++++++++++++ declarations +++++++++++++++
+
+	Dim i, icol_count As Integer
+
+'	+++++++++++++++ initialise +++++++++++++++
+
+	myfound = 0
+
+	icol_count = NumCols(s_tablename)
+
+' only check first 10 char as those right of 10 may have been stripped by Excel
+
+	For i = 1 to icol_count		
+		If UCase$(Left$(mycolname,10)) = UCase$(Left$(ColumnInfo(s_tablename, "COL" + str$(i), COL_INFO_NAME),10)) Then
+			myfound = 1
+			mycolname = ColumnInfo(s_tablename, "COL" + str$(i), COL_INFO_NAME) ' store column name from table
+			Exit For
+		End If
+	Next
+
+TestColname:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume TestColname
+End Sub
+
+'*****************************************************************
+'*  Name   : ZoomSet
+'*  Purpose: Set a zoomlevel for a layer
+'*  Inputs : layer name
+'*  Outputs: Set Map
+'*  Author : Edwin Liava'a
+'*  Date   : 10-Feb-2011
+'*  Mods   : 
+'*           
+'*****************************************************************
+
+Sub ZoomSet (strLayer As String)
+
+OnError Goto Err_Manage
+
+	'	+++++++++++++++ set units and zoom +++++++++++++++
+
+	Set Map Distance Units "m" 
+	set map redraw off
+	Set Map  Scale 1 Units "cm" For 100 Units "m"
+	Set Map Layer strLayer Zoom (100, 55000) Units "m" On
+	set map redraw on
+
+Res_ZoomSet:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Res_ZoomSet
+End Sub

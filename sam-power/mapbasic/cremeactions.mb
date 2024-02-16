@@ -1,0 +1,63 @@
+'*****************************************************************
+'*  Name   : CreMeActions
+'*  Purpose: Create user interface for Actions drop down menu
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Leslie Allinson, Edwin Liava'a
+'*  Date   : 25-Jan-2007
+'*  Mods   : 28-Feb-2007
+'*
+'*****************************************************************
+Include "mapbasic.def"
+Include "menu.def"
+
+Global AC_Path As String	'	Access
+Global BD_Path As String	'	MapInfo Raster Layers (BackDrops)
+Global MI_Path As String	'	MapInfo Vector Layers
+
+Declare Sub CreMeActions			 
+Declare Sub CreateLN_HV
+Declare Sub CreateLN_LV
+Declare Sub GRID	
+Declare Sub Layout_Preview	
+Declare Sub UpdateLinesHV
+Declare Sub UpdateLinesLV
+Declare Sub UpdatePoints
+Declare Sub UpdateRegions
+Declare Sub UpdateSU1
+Declare Sub UpdateSU2
+Declare Sub NotYetReleased
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++*
+
+Sub CreMeActions
+
+OnError Goto Err_Manage
+
+	Create Menu "EPC Actions" As
+		"Maintenance:",
+		"(-", 
+			"Create Lines High Voltage"					Calling CreateLN_HV,
+			"Create Lines Low Voltage"					Calling CreateLN_LV,
+			"Update HV Lines"								Calling UpdateLinesHV,
+			"Update LV Lines"								Calling UpdateLinesLV,
+			"Update Points"								Calling UpdatePoints,
+			"Update Regions"								Calling UpdateRegions,
+			"Update Survey1" 								Calling UpdateSU1,
+			"Update Survey2" 								Calling UpdateSU2,
+			"Create a Map Grid"							Calling GRID,
+			"Print Layout Preview"						Calling Layout_Preview,
+			"(-",
+			"* Not Yet Released"
+	
+	Alter Menu Bar Add "EPC Actions"
+
+Res_CreMeActions:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Res_CreMeActions
+	
+End Sub

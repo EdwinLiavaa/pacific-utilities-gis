@@ -1,0 +1,50 @@
+'*****************************************************************
+'*  Name   : Save_To_TG2005
+'*  Purpose: Save a Table to Tonga Map Grid TG2005 
+'*  Inputs : Any Layer
+'*  Outputs:  
+'*  Author : Edwin Liava'a
+'*  Date   : 
+'*  Mods   : 
+'*           
+'*****************************************************************
+
+Include "mapbasic.def"
+Include "menu.def"
+
+Declare Sub Save_To_TG2005
+
+Sub Save_To_TG2005
+
+OnError Goto Err_Manage
+
+	Dim myOBJ As Object
+	Dim Map_Win_id, irow, counter, i, obj_type As Integer
+	Dim x, y As Float
+	Dim new_pnt As Object
+	Dim s_file, s_filename As String
+
+	Close All
+
+	Note "Please select file to convert to Tonga Map Grid TGD 2005!"	
+
+	s_file = FileOpenDlg("","","TAB","Open Table") 
+	
+	Open Table s_file As s_Temp Interactive
+	
+	s_filename = PathToFileName$(s_file)
+	
+	Commit Table s_Temp As "C:\TCC\gis\mapinfo\TG_2005\" & s_filename
+	TYPE NATIVE Charset "WindowsLatin1" 
+	CoordSys Earth Projection 8, 33, "m", -177, 0, 0.9996, 1500000, 5000000 Bounds (-6745844.29605, -4997964.94315) (9745844.29605, 14997964.9432)
+
+	Note "Finished Saving Table " & s_filename & " to TG_2005!" 
+
+Main:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Next
+End Sub

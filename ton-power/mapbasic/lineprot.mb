@@ -1,0 +1,129 @@
+'********************************************************
+'*                                                      *
+'*     LineProt.MBO                Edwin, 24.08.98      *
+'*                                                      *
+'*  This program dispalys lines with, witout and unknown*
+'*  protection devices in, black, red, blue             *
+'*                                                      *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required files:                                      *
+'*                MAPBASIC.DEF                          *
+'*			MENU.DEF                              *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required tables:                                     *
+'*                  - Lines.tab                      *
+'*                  - 		                          *
+'********************************************************
+
+	include "C:\Program Files\MapInfo\MapBasic\MAPBASIC.DEF"
+	include "C:\Program Files\MAPINFO\MAPBASIC\MENU.DEF"
+
+	Global passw as String 
+	Global MapPath as string
+	Global CadaPath as String
+
+
+	Declare Sub LineProt
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++*
+
+	Sub LineProt
+
+	
+	Dim  ivar1, ivar2, ivar3 As Integer
+	Dim Map_Win_Id 		As Integer
+	Dim i_lay_type		As SmallInt
+	Dim iz, ln			As SmallInt
+	Dim MapName			As String
+
+
+	OnError goto Err_LineProt
+
+' ++++++++++++++++++++++++++ close some toolbars ++++++++++++++++++++
+
+	Alter ButtonPad "Tools" Hide
+	Alter ButtonPad "Drawing" Hide
+	Alter ButtonPad "Main" Show Fixed
+	Alter ButtonPad "ODBC" Hide
+
+
+' ++++++++++++++++++++++++++ close and open map layers ++++++++++++++
+
+	
+	MapName = MapPath +"LINES.TAB"    '###### path may change
+
+	Close All
+	
+	Open Table MapName As "Lines" password passw
+
+	Map From Lines max
+	Mapname = Cadapath + "n_cad.tab"
+	open table MapName as n_cad interactive
+
+	add map layer n_cad
+
+'+++++++++++++++++++++++++++  Getting window ID +++++++++++++++++++++
+
+	Map_Win_id = FrontWindow()
+
+'++++++  go out of program if operator does not know password +++++++
+
+	If Map_Win_id = 0 Then
+		Exit Sub
+	End If
+
+	Set Map Window Map_Win_id Zoom Entire Layer "Lines"	
+
+	Set Window Map_Win_id Max
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'++++++++++++++++++++++++++ Shade statements +++++++++++++++++++++++++
+
+
+
+	Shade Window Map_Win_id "Lines" with PROT_TYPE values
+		"0" Line (2, 2, RED) ,
+		"00" Line (2, 2, BLUE) , 
+		"02" Line (2,2,255) ,
+		"15" Line (2,2,16711935) ,
+		"16" Line (2,2,16776960) 
+		default Line (1,2,0) 
+	
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+'+++++++++++++++++++++++++ Legend statements +++++++++++++++++++++++++
+
+	Set Legend Window Map_Win_id layer prev 
+		display on  
+		shades off 
+		symbols off
+		lines on 
+   		count on 
+		title "Voltage of Lines" 
+		Font ("MS Sans Serif",0,10,0) subtitle "" 
+		Font ("MS Sans Serif",0,8,0)ascending off ranges 
+		Font ("MS Sans Serif",0,8,0) 
+		"with protector" display on ,
+		"no protector" display on ,
+		"unknown" display on 
+				
+
+	Set Window WIN_LEGEND 
+	Position (1,4) Units "cm"
+	Width 7 Units "cm"
+	Height 3 Units "cm"
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	Open Window Legend
+
+Res_LineProt:
+	Exit Sub
+
+Err_LineProt:
+	note "LineProt: "+str$(err())+" "+error$()
+	Resume Next
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	End Sub

@@ -1,0 +1,137 @@
+'********************************************************
+'*                                                      *
+'*     AgeTrans.MBO                Paula, 24.08.98      *
+'*                                                      *
+'*  This program displays all Transformers  in          *
+'*  different colours classed by age.                   *
+'*                                                      *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required files:                                      *
+'*                MAPBASIC.DEF                          *
+'*			MENU.DEF                              *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required tables:                                     *
+'*                  - Tralist.tab                       *
+'*                  - Location.tab                      *
+'********************************************************
+
+Declare Sub AgeTrans
+
+Global passw as String 
+Global MapPath as string
+Global CadaPath as String
+ 
+include "C:\Program Files\mapinfo\mapbasic\MAPBASIC.DEF"
+include "C:\Program Files\MAPINFO\MAPBASIC\MENU.DEF"
+
+
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Sub AgeTrans
+
+
+
+	Dim Map_Win_Id 	as Integer
+	Dim iz, ln		As SmallInt
+	Dim i_lay_type	As SmallInt
+	Dim MapName		As String
+
+' +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	OnError goto Err_Tran_Age
+
+'+++++++++++++++++++++++++++++++Close et open Map Layer++++++++++++++++++++++++++
+
+	
+	MapName = MapPath +"Tralist.tab"
+	open table MapName Password passw  as Tralist
+	MapName = MapPath +"Location.tab" 
+	open table MapName Password passw as Location 
+
+	select * from Tralist,Location Where Tralist.LOCAT_NO=Location.LOCAT_NO
+		into Transformers NoSelect
+
+	Map From Transformers Max
+
+	Mapname = Cadapath + "n_cad.tab"
+	open table MapName as n_cad interactive
+
+	add map layer n_cad
+
+' ++++++++++++++++++++ Map Window, Layer Display ++++++++++++++++++++++++++++++++
+
+
+
+	Map_Win_id= FrontWindow()
+	if WindowInfo(Map_Win_id,WIN_INFO_TYPE)<>WIN_MAPPER then
+		note "You must Select a Map Window first"
+		Exit Sub
+	End If
+
+	ln = MapperInfo(Map_Win_id, MAPPER_INFO_LAYERS)
+	iz = 1
+
+	Do 
+		i_lay_type = LayerInfo(Map_Win_id, iz, LAYER_INFO_TYPE)
+		If i_lay_type = LAYER_INFO_TYPE_THEMATIC Then
+			set map redraw off
+		 	Set Map Layer iz Display Off
+		 	set map redraw on
+		End If
+		iz = iz + 1
+
+	Loop While iz <= ln
+
+	
+
+'++++++++++++++++++++++++++ Shade statements +++++++++++++++++++++++++
+
+	Shade Window Map_Win_Id "Transformers" with YEAR Ranges  
+		1951:1961 Symbol (37,RED,12,"MapInfo Symbols",257,0) ,
+		1961:1971 Symbol (37,32768,12,"MapInfo Symbols",257,0) ,
+		1971:1981 Symbol (37,GREEN,12,"MapInfo Symbols",257,0) ,
+		1981:1986 Symbol (37,BLUE,12,"MapInfo Symbols",257,0) ,
+		1986:1991 Symbol (37,YELLOW,12,"MapInfo Symbols",257,0) ,
+		1991:1996 Symbol (37,16711935,12,"MapInfo Symbols",257,0) ,
+		1996:2001 Symbol (37,16744576,12,"MapInfo Symbols",257,0) 
+		default Symbol (37,0,12,"MapInfo Symbols",257,0)
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+'+++++++++++++++++++++++++ Legend statements +++++++++++++++++++++++++
+
+	Set Legend Window Map_Win_Id layer prev display on shades off symbols on 
+		lines off count on title "Transformers grouping by Age" 
+		Font ("MS Sans Serif",0,10,0) subtitle "" 
+		Font ("MS Sans Serif",0,8,0) ascending on ranges 
+		Font ("MS Sans Serif",0,8,0) 
+		"other" display on ,
+		"1951:1960" display on ,
+		"1961:1970" display on ,
+		"1971:1980" display on ,
+		"1981:1985" display on ,
+		"1986:1990" display on ,
+		"1991:1995" display on ,
+		"1996:2000" display on 
+
+
+
+	Set Window WIN_LEGEND 
+	Position (1,4) Units "cm"
+	Width 6 Units "cm"
+	Height 6 Units "cm"
+
+	Open Window Legend
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Res_Tran_Age:
+	Exit Sub
+
+Err_Tran_Age:
+	note "Tran_Age: "+str$(err())+" "+error$()
+	Resume Res_Tran_Age
+
+End Sub
+
+

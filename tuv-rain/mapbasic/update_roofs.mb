@@ -1,0 +1,23 @@
+	'***********************************************************
+	'*                 Update_Roofs          Edwin 25.09.08    *
+	'*                                    						 *
+	'* This program Commits Roof_MI to Access						 *
+	'***********************************************************
+
+		Declare Sub Update_Roofs
+      
+
+		Sub Update_Roofs  
+
+			OnError Goto Err_Manage
+
+			Commit Table Roof_MI As "C:\TVCRDatabase\Rain Water Data\Roof_MI.tab" Type ACCESS Database "C:\TVCRDatabase\TV_CatchRain.mde" Table "Roof_MI"
+
+			Res_Main:
+				Exit Sub
+			Err_Manage:
+				note "Error: " + str$(err()) + ", " + error$()
+				Resume Res_Main		
+
+		End Sub
+

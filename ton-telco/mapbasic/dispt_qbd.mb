@@ -1,0 +1,45 @@
+'*****************************************************************
+'*  Name   : DispT_QBD
+'*  Purpose: Display Tongatapu Quickbird imagery
+'*           Set units and zoom
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Edwin Liava'a
+'*  Date   : 06/05/2011
+'*  Mods   : 
+'*
+'*****************************************************************
+
+Include "TCC_Lib.def"
+Include "mapbasic.def"
+Include "menu.def"
+
+Declare Sub DispT_QBD
+
+Global AC_Path As String	'	Access
+Global BD_Path As String	'	MapInfo Raster Layers (BackDrops)
+Global MI_Path As String	'	MapInfo Vector Layers
+Global db_MIS As String	'	MIS database
+
+Sub DispT_QBD
+
+OnError Goto Err_Manage
+
+	'	+++++++++++++++ declarations +++++++++++++++
+
+	Dim layer_num, mapID, num_layers As Integer
+	Dim layer_already_disp As Logical
+	Dim strWorkSpace As String
+
+	'	+++++++++++++++ open workspace +++++++++++++++
+
+	Run Application BD_Path + "\" + "All_images.WOR"
+
+Res_DispT_QBD:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Res_DispT_QBD
+End Sub

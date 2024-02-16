@@ -1,0 +1,214 @@
+'********************************************************
+'*                                                      *
+'*     InsMonT.MBO                Paula, 24.08.98       *
+'*                                                      *
+'*  This program displays The Transformers installed    *
+'*  in a chosen month.                                  *
+'*                                                      *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required files:                                      *
+'*                MAPBASIC.DEF                          *
+'*			MENU.DEF                              *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required tables:                                     *
+'*                  - Tralist.tab                       *
+'*                  - Location.tab                      *
+'********************************************************
+
+
+
+
+
+Declare Sub InsMonT
+
+Global passw as String 
+Global MapPath as string
+Global CadaPath as String
+
+
+Include "C:\Program Files\Mapinfo\Mapbasic\Mapbasic.def"
+Include "C:\Program Files\Mapinfo\Mapbasic\Menu.def"
+
+'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+sub InsMonT
+
+
+
+	Dim  ivar1, ivar2, ivar3 As Integer
+	Dim vyear 			As SmallInt
+	Dim vyear3 			As SmallInt
+	Dim vmonth 			As SmallInt
+	Dim vmonth2 		As SmallInt
+	Dim stvar2 			As String
+	Dim stvar3 			As String
+	Dim styear, styear3 	As String
+	Dim stmonth, stmonth3 	As String
+	Dim vmonth3 		As SmallInt
+	Dim Map_win_Id 		as Integer
+	Dim iz, ln			As SmallInt
+	Dim i_lay_type		As SmallInt
+	Dim MapName			As String
+
+
+' +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	OnError goto Err_Tra_Mont
+
+
+'++++++++++++++++++open table Statement+++++++++++++++++++++++
+
+	MapName = MapPath +"Tralist.tab"
+	Open table MapName password passw as Tralist
+	
+	MapName = MapPath +"Location.tab" 
+	Open table MapName password passw as Location 
+
+select * from Tralist,Location Where Tralist.LOCAT_NO=Location.LOCAT_NO
+		into Transformers NoSelect
+
+
+
+'+++++++++++++++++++++++++++  Map ++++++++++++++++++++++++++++++++++++++++++
+
+Map From Transformers Max
+
+	Mapname = Cadapath + "n_cad.tab"
+	open table MapName as n_cad interactive
+
+	add map layer n_cad
+
+'+++++++++++++++++++++++++Getting Windows ID+++++++++++++++++++++++++++++++
+
+	Map_Win_id= FrontWindow()
+
+	if WindowInfo(Map_Win_id,WIN_INFO_TYPE)<>WIN_MAPPER then
+		note "You must Select a Map Window first"
+		Exit Sub
+	End If
+
+	ln = MapperInfo(Map_Win_id, MAPPER_INFO_LAYERS)
+	iz = 1
+
+	Do 
+		i_lay_type = LayerInfo(Map_Win_id, iz, LAYER_INFO_TYPE)
+		If i_lay_type = LAYER_INFO_TYPE_THEMATIC Then
+			set map redraw off
+		 	Set Map Layer iz Display Off
+		 	set map redraw on
+		End If
+		iz = iz + 1
+
+	Loop While iz <= ln
+
+
+'+++++++++++++++++++++++++++  DIALOG ++++++++++++++++++++++++++++++++++
+
+	Dialog
+
+	Title "Tranformers installed in:"
+
+	Control StaticText
+		Title "select year:"
+		Position 5, 10
+
+	Control EditText
+		Position 35, 20 Width 25
+		Value "1990"
+		Into styear
+
+	Control StaticText
+		Title "select month:"
+		Position 80, 10
+
+	Control PopUpMenu
+		Title "01;02;03;04;05;06;07;08;09;10;11;12"
+		Position 80, 20 Width 30
+		Value 1
+		Into vmonth
+
+	Control OKButton
+		Position 25, 40
+	Control CancelButton
+		Position 65, 40
+
+	If not CommandInfo(CMD_INFO_DLG_OK) Then 	'The user just cancelled.
+  		Exit Sub
+	End If 
+
+
+
+'++++++++++++++++++++++ Calculating year and month +++++++++++++++++++
+
+	vyear = 1989 + vyear
+	'styear = Str$(vyear)
+
+	vmonth3 = vmonth + 1
+
+	IF vmonth3 < 10 Then
+   		stmonth3 = "0" + Str$(vmonth3)
+		styear3 = styear
+	ElseIf vmonth3 = 13 Then
+		stmonth3 = "01"
+		vyear3 = vyear + 1
+		styear3 = Str$(vyear3)
+	Else	
+		stmonth3 = Str$(vmonth3)
+		styear3 = styear
+	End If
+
+	If vmonth < 10 Then
+		stmonth = "0" + Str$(vmonth)
+	Else
+		stmonth = Str$(vmonth)
+	End If
+
+	stvar2 = styear+stmonth+"01"     ' not possible from 01 to 31 because
+	stvar3 = styear3+stmonth3+"01"    ' some month 30, better 01 next month!
+
+	ivar2 = Val(stvar2)
+	ivar3 = Val(stvar3)
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+'++++++++++++++++++++++++++ Shade statements +++++++++++++++++++++++++
+
+
+	Shade Window Map_win_Id "Transformers" with INST_DATE Ranges ivar2:ivar3 
+		Symbol (37,RED,12,"MapInfo Symbols",257,0)
+		default Symbol (37,BLACK,12,"MapInfo Symbols",257,0)
+	
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	Set Map Window Map_Win_Id Zoom Entire Layer Transformers
+
+
+'+++++++++++++++++++++++++ Legend Statements +++++++++++++++++++++++++
+
+	Set Legend Window Map_Win_Id layer prev display on shades off symbols on 
+		lines off count on title "Constructed in defined month" Font 
+		("MS Sans Serif",0,10,0) subtitle "" Font ("MS Sans Serif",0,8,0) 
+		ascending on ranges Font ("MS Sans Serif",0,8,0) "all others" 
+		display on ,"constructed" display on 
+
+	Set Window WIN_LEGEND 
+	Position (1,4) Units "cm"
+	Width 6 Units "cm"
+	Height 3 Units "cm"
+
+	Open Window Legend
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Res_Tra_Mont:
+	Exit Sub
+
+Err_Tra_Mont:
+	note "Tra_Mont: "+str$(err())+" "+error$()
+	Resume Res_Tra_Mont
+end sub
+
+
+
+
+

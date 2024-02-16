@@ -1,0 +1,36 @@
+'*****************************************************************
+'*  Name   : NotYetReleased
+'*  Purpose: Display dialog as placeholder for non released 
+'*           modules
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Les Allinson, Edwin Liava'a
+'*  Date   : 26-Jan-2007
+'*  Mods   : 
+'*           
+'*****************************************************************
+
+Include "mapbasic.def"
+Include "menu.def"
+
+Declare Sub NotYetReleased
+
+Global AC_Path As String	'	Access
+Global BD_Path As String	'	MapInfo Raster Layers (BackDrops)
+Global MI_Path As String	'	MapInfo Vector Layers
+Global db_MIS As String	'	MIS database
+
+Sub NotYetReleased
+
+OnError Goto Err_Manage
+
+	Note "Module not yet released"
+
+NotYetReleased:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executing the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume NotYetReleased
+End Sub

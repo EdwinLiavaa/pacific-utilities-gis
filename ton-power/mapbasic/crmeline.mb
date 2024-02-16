@@ -1,0 +1,41 @@
+'********************************************************
+'*                                                      *
+'*     CrMeLine.MBO                Edwin, 21.08.98      *
+'*                                                      *
+'*  This program contains the sub program of the drop   *
+'*  down menu "Lines" which then calls the other        *
+'*  programs of the pull down menus.                    *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required files:                                      *
+'*                                                      *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required tables:                                     *
+'*                  - 		                          *
+'*                  -                                   *
+'********************************************************
+
+	Declare Sub CrMeLine
+	Declare Sub Lin_Cut2
+	Declare Sub FeedersL
+	Declare Sub LinesVol
+	Declare Sub LineProt
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++*
+
+	Sub CrMeLine
+
+	Create Menu "Lines" As 
+		"Cut a Line " 			Calling Lin_Cut2,
+		"(-",
+		"Display:",
+		" - selected Feeder "		Calling FeedersL,
+		" - voltage type "		Calling LinesVol,
+		" - line protection "		Calling LineProt,
+		" - consumption by line *",
+		"(-",
+		" * not ready yet"
+
+	Alter Menu Bar Add "Lines"
+
+
+	End Sub

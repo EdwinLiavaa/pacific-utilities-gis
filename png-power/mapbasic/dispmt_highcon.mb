@@ -1,0 +1,111 @@
+'*****************************************************************
+'*  Name   : DispMT_HIGHCON
+'*  Purpose: Display High Consumption Meters
+'*  Inputs : 
+'*  Outputs: 
+'*  Author : Edwin Liava'a
+'*  Date   : 26-Feb-2007
+'*  Mods   : 04-Nov-2013
+'*           
+'*****************************************************************
+
+Include "PPL_Lib.def"
+Include "mapbasic.def"
+Include "menu.def"
+Include "Icons.def"  
+
+Declare Sub DispMT_HIGHCON
+
+Global db_conn_path As String	'	Access
+Global rs_path As String	'	MapInfo Raster Layers (BackDrops)
+GLobal vt_Path As String	'	MapInfo Vector Layers
+
+Sub DispMT_HIGHCON
+
+OnError Goto Err_Manage
+
+	'	+++++++++++++++ declarations +++++++++++++++
+
+	Dim Map_Win_id 				As Integer
+	Dim i,j						As Integer
+	Dim TableName				 	As String
+
+	'	+++++++++++++++ display selected layer +++++++++++++++
+
+	Close All
+
+	TableName = db_conn_path + "\" + "MT.tab"
+	Open Table TableName As MT Interactive
+	Register Table "C:\PPL_GIS\excel\POM High Consumer Consumption Listing.xls"  TYPE XLS Titles  Range "2011!A2:AH291"  Interactive Into "C:\PPL_GIS\excel\POM High Consumer Consumption Listing.TAB"
+	Open Table "C:\PPL_GIS\excel\POM High Consumer Consumption Listing.TAB" Interactive
+	Map From MT Max
+
+	'Set Map Center (147.21086,-9.45159)
+	'Set Map Zoom 1.7 Units "km"
+	'Set Map Scale 1 Units "mm" For 12 Units "m" 
+
+	
+	'++++++++++++++++++  Getting window ID +++++++++++++++++++++
+
+	Map_Win_id = FrontWindow()
+
+	'++++++++++++++++++  Shade Statement  ++++++++++++++++++++++
+
+	Select * from MT, POM_High_Consumer_Consumption where MT.CS_ACC_NUM = POM_High_Consumer_Consumption.CONSUMER# into Link_MT_Consumption
+	Add Map Window Map_Win_id Auto Layer Link_MT_Consumption
+
+	Set Map Zoom Entire Layer 1
+
+	Shade window Map_Win_id "Link_MT_Consumption" 
+	with JAN_KWH,FEB_KWH,MAR_KWH,APR_KWH,MAY_KWH,JUN_KWH,JUL_KWH,AUG_KWH,SEP_KWH,OCT_KWH,NOV_KWH,DEC_KWH
+	bar normalized Max Size 5 Units "mm" border Pen (1,2,0) Width 7 Units "mm" position center above style 
+		Brush (2,16711680,16777215) ,
+		Brush (2,65280,16777215) ,
+		Brush (2,255,16777215) ,
+		Brush (2,16711935,16777215) ,
+		Brush (2,16776960,16777215) ,
+		Brush (2,65535,16777215) ,
+		Brush (2,8388608,16777215) ,
+		Brush (2,32768,16777215) ,
+		Brush (2,128,16777215) ,
+		Brush (2,8388736,16777215) ,
+		Brush (2,8421376,16777215) ,
+		Brush (2,32896,16777215)   
+
+'+++++++++++++++++++++++++ Legend statements +++++++++++++++++++++++++
+
+	Set legend window Map_Win_id layer prev display on shades on symbols off lines off count off 
+	title "PPL MIS-GIS" Font ("Arial",0,9,0) 
+	subtitle "High Consumption Customers Historical Records 2011" 
+		Font ("Arial",0,8,0) ascending on ranges 
+		Font ("Arial",0,8,0) auto display off ,
+		auto display on ,
+		auto display on ,
+		auto display on ,
+		auto display on ,
+		auto display on ,
+		auto display on ,
+		auto display on ,
+		auto display on ,
+		auto display on ,
+		auto display on ,
+		auto display on ,
+		auto display on  
+
+    Create Cartographic Legend From Window Map_Win_id Behind Frame From Layer 2
+
+	Set Window WIN_LEGEND 
+		Position (1,1) Units "cm"
+		Width 8 Units "cm"
+		Height 10 Units "cm"
+
+	Open Window Legend
+
+Res_DispMT_HIGHCON:
+	Exit Sub
+	' The Exit Sub prevents the program from
+	' unintentionally executin the error handlers
+Err_Manage:
+	Note "Error: " + str$(err()) + ", " + error$()
+	Resume Res_DispMT_HIGHCON
+End Sub

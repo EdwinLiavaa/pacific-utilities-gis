@@ -1,0 +1,138 @@
+'********************************************************
+'*                                                      *
+'*     LocaMetr.MBO                Paula, 24.08.98      *
+'*                                                      *
+'*  This program locates and displays the meter         *
+'*  with an ID number the user has chosen.              *
+'*                                                      *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required files:                                      *
+'*          MAPBASIC.DEF                                *
+'*		MENU.DEF                                    *
+'* ++++++++++++++++++++++++++++++++++++++++++++++++++++ *
+'* required tables:                                     *
+'*                  - Consumer.tab                      *
+'*                  -                                   *
+'********************************************************
+
+
+Declare Sub LocaMetr
+
+	Global passw as String 
+	Global MapPath as string
+	Global CadaPath as String
+
+
+include "C:\program files\mapinfo\mapbasic\MENU.DEF"
+include "C:\program files\mapinfo\mapbasic\MAPBASIC.DEF"
+
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Sub LocaMetr
+
+
+	Dim  ivar1, ivar2, ivar3 	As Integer
+	Dim meterno 			As String
+	Dim Map_Win_Id 			As Integer
+	Dim ixv				As Integer
+	Dim iyv				As Integer
+	Dim iz				As SmallInt
+	Dim ln				As SmallInt
+	Dim i_lay_type			As SmallInt
+	Dim MapName				As String
+
+
+	OnError goto Err_Met_Loca
+
+
+'+++++++++++++++++++++++++++++ the map window +++++++++++++++++++++++++
+
+	MapName = MapPath +"customer.tab"
+	open table MapName password passw as customer 
+	map from customer Max
+
+	Mapname = Cadapath + "n_cad.tab"
+	open table MapName as n_cad interactive
+
+	add map layer n_cad
+
+	Map_Win_id = FrontWindow()
+	if WindowInfo(Map_Win_id,WIN_INFO_TYPE)<>WIN_MAPPER then
+		note "You must Select a Map Window first"
+		Exit Sub
+	End If
+
+	ln = MapperInfo(Map_Win_id, MAPPER_INFO_LAYERS)
+	iz = 1
+
+	Do 
+		i_lay_type = LayerInfo(Map_Win_id, iz, LAYER_INFO_TYPE)
+		If i_lay_type = LAYER_INFO_TYPE_THEMATIC Then
+			set map redraw off
+		 	Set Map Layer iz Display Off
+		 	set map redraw on
+		End If
+		iz = iz + 1
+
+	Loop While iz <= ln
+
+
+'++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+'+++++++++++++++++++++++++++  DIALOG ++++++++++++++++++++++++++++++++++
+
+	Dialog
+
+	Title "Meter connected in:"
+
+	Control StaticText
+		Title "type in meter number:"
+		Position 5, 10
+
+	Control EditText
+		Position 20,20 Width 40
+		Into meterno
+	
+	Control OKButton
+		Position 5, 40
+	Control CancelButton
+		Position 45, 40
+
+	If not CommandInfo(CMD_INFO_DLG_OK) Then 	'The user just cancelled.
+  		Exit Sub
+	End If 
+
+
+'++++++++++++++++++++++++Select Statement++++++++++++++++++++++++++++++++
+
+	Select * From Customer into sel
+		Where METER_NO=meterno
+	Run Menu Command M_QUERY_FIND_SELECTION
+
+'+++++++++++++++++ Set Centre and Zoom of Map ++++++++++++++++++++++++
+
+	
+
+add Map Layer Sel
+
+
+	Set Window Map_Win_id Max
+
+	Set Map 
+		Center (ixv,iyv)
+		Zoom Entire Layer Sel
+		Zoom 900 Units "m"
+
+
+'+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Res_Met_Loca:
+	Exit Sub
+
+Err_Met_Loca:
+	note "Met_Loca: "+str$(err())+" "+error$()
+	Resume Res_Met_Loca
+
+End sub
+

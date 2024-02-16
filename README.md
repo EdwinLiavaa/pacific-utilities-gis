@@ -1,3 +1,5 @@
+![](https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/pic.png?raw=true)
+
 ## About
 
 For over 20+ years since 1997, I have developed custom GIS solutions to manage critical infrastructure and optimize operations for public utilities across the Pacific Islands. This GitHub repository is my contribution to the Pacific Islands open-source community by publicly open-sourcing over 45,000 lines of code and modules created with MapBasic for MapInfo to solve real-world challenges.

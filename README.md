@@ -33,7 +33,7 @@ Let's leverage geospatial systems to build a better world, together.
 
 ## Special Addition
 
-* TEPB Programming Manual, only available on National Library of Australia http://catalogue.nla.gov.au/Record/2345856
+* TEPB Programming Manual ![](https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/ton-power/TEPB%20Programming%20Manual.pdf), only available on National Library of Australia http://catalogue.nla.gov.au/Record/2345856
 
 ## 45,832 total lines of code
 

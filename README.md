@@ -18,10 +18,10 @@ Let's leverage geospatial systems to build a better world together. 🛠
 
 ## Contributors
 
-1. Les Allinson
-2. Franck Martin
-3. Dr. Wolf Forstreuter
-4. Edwin Liava'a
+1. [Les Allinson](https://en.wikipedia.org/wiki/PICISOC)
+2. [Franck Martin](https://www.linkedin.com/in/franckmartin)
+3. [Dr. Wolf Forstreuter](https://www.linkedin.com/in/wolf-forstreuter-3bbb123)
+4. [Edwin Liava'a](https://github.com/EdwinLiavaa) 
 
 ## Systems
 
@@ -37,7 +37,7 @@ Let's leverage geospatial systems to build a better world together. 🛠
 
 ## Special Edition
 
-* TEPB Programming Manual https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/ton-power/TEPB%20Programming%20Manual.pdf, only available at the National Library of Australia http://catalogue.nla.gov.au/Record/2345856
+* [TEPB Programming Manual](https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/ton-power/TEPB%20Programming%20Manual.pdf), only available at the [National Library of Australia](https://catalogue.nla.gov.au/Record/2345856) 
 
 ## 45,832 total lines of code
 

@@ -7,7 +7,7 @@
   <img width="80" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/rar-pearl/mapbasic/logo.png"> 
   <img width="150" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/png-power/mapbasic/logo.png"> 
   <img width="150" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/sol-power/mapbasic/logo.png"> 
-  <img width="170" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/sam-power/mapbasic/logo.png"> 
+  <img width="160" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/sam-power/mapbasic/logo.png"> 
   <img width="60" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/ton-power/mapbasic/logo.png"> 
   <img width="80" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/ton-telco/mapbasic/logo.png"> 
 </p>

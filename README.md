@@ -1,6 +1,6 @@
 <h1 align="center">Open-Sourcing Decades of GIS Innovation</h1>
 
-<p float="left">
+<p float="center">
   <img width="100" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/fij-airport/mapbasic/logo.tif">
   <img width="100" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/nau-rain/mapbasic/logo.jpg"> 
   <img width="100" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/tuv-rain/mapbasic/logo.png"> 

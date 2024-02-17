@@ -1,6 +1,6 @@
 # Open-Sourcing Decades of GIS Innovation
 
-->![](https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/pic.png?raw=true)<-
+![](https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/pic.png?raw=true)
 
 ## About
 

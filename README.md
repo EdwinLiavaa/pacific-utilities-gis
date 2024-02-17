@@ -5,7 +5,7 @@
   <img width="80" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/nau-rain/mapbasic/logo.png"> 
   <img width="50" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/tuv-rain/mapbasic/logo.png"> 
   <img width="80" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/rar-pearl/mapbasic/logo.png"> 
-  <img width="135" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/png-power/mapbasic/logo.png"> 
+  <img width="130" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/png-power/mapbasic/logo.png"> 
   <img width="130" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/sol-power/mapbasic/logo.png"> 
   <img width="130" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/sam-power/mapbasic/logo.png"> 
   <img width="60" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/ton-power/mapbasic/logo.png"> 

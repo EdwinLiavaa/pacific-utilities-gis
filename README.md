@@ -9,7 +9,7 @@
   <img width="135" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/sol-power/mapbasic/logo.png"> 
   <img width="135" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/sam-power/mapbasic/logo.png"> 
   <img width="60" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/ton-power/mapbasic/logo.png"> 
-  <img width="70" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/ton-telco/mapbasic/logo.png"> 
+  <img width="60" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/ton-telco/mapbasic/logo.png"> 
 </p>
 
 ![](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/fij-airport/mapbasic/logo.tif)

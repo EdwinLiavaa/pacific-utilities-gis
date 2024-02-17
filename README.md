@@ -25,15 +25,15 @@ Let's leverage geospatial systems to build a better world together. 🛠
 
 ## Systems
 
-1. Airport Fiji Ltd Aerodrome Data Managemnt
-2. Nauru Rainwater Harvesting  
-3. Tuvalu Rainwater Harvesting 
-4. Cook Islands Pearl Farms 
-5. PNG Power Ltd 
-6. Solomon Islands Power Authority 
-7. Electric Power Corporation of Samoa 
-8. Tonga Electric Power Board 
-9. Tonga Communication Corporation 
+1. [Airport Fiji Ltd Aerodrome Data Managemnt](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/fij-airport/mapbasic)
+2. [Nauru Rainwater Harvesting](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/nau-rain/mapbasic)  
+3. [Tuvalu Rainwater Harvesting](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/tuv-rain/mapbasic) 
+4. [Cook Islands Pearl Farms](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/rar-pearl/mapbasic) 
+5. [PNG Power Ltd](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/png-power/mapbasic) 
+6. [Solomon Islands Power Authority](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/sol-power/mapbasic)  
+7. [Electric Power Corporation of Samoa](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/sam-power/mapbasic) 
+8. [Tonga Electric Power Board](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/ton-power/mapbasic) 
+9. [Tonga Communication Corporation](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/ton-telco/mapbasic)  
 
 ## Special Edition
 

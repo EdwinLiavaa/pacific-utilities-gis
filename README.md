@@ -1,15 +1,15 @@
 <h1 align="center">Open-Sourcing Decades of GIS Innovation</h1>
 
 <p float="center">
-  <img width="100" height="100" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/fij-airport/mapbasic/logo.png">
-  <img width="100" height="100" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/nau-rain/mapbasic/logo.png"> 
-  <img width="100" height="100" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/tuv-rain/mapbasic/logo.png"> 
-  <img width="100" height="100" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/rar-pearl/mapbasic/logo.png"> 
-  <img width="100" height="100" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/png-power/mapbasic/logo.png"> 
-  <img width="100" height="100" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/sol-power/mapbasic/logo.png"> 
-  <img width="100" height="100" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/sam-power/mapbasic/logo.png"> 
-  <img width="100" height="100" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/ton-power/mapbasic/logo.png"> 
-  <img width="100" height="100" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/ton-telco/mapbasic/logo.png"> 
+  <img width="50" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/fij-airport/mapbasic/logo.png">
+  <img width="50" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/nau-rain/mapbasic/logo.png"> 
+  <img width="50" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/tuv-rain/mapbasic/logo.png"> 
+  <img width="50" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/rar-pearl/mapbasic/logo.png"> 
+  <img width="50" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/png-power/mapbasic/logo.png"> 
+  <img width="50" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/sol-power/mapbasic/logo.png"> 
+  <img width="50" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/sam-power/mapbasic/logo.png"> 
+  <img width="50" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/ton-power/mapbasic/logo.png"> 
+  <img width="50" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/ton-telco/mapbasic/logo.png"> 
 </p>
 
 ![](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/fij-airport/mapbasic/logo.tif)

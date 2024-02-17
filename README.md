@@ -1,4 +1,15 @@
 <h1 align="center">Open-Sourcing Decades of GIS Innovation</h1>
+[![Fiji Airport Ltd](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/fij-airport/mapbasic/logo.tif)](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/fij-airport/mapbasic)
+[![Nauru Rainwater Harvesting](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/nau-rain/mapbasic/logo.jpg)](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/nau-rain/mapbasic) 
+[![Tuvalu Rainwater Harvesting](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/tuv-rain/mapbasic/logo.png)](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/tuv-rain/mapbasic) 
+[![Cook Islands Pearl Farms](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/rar-pearl/mapbasic/logo.tif)](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/rar-pearl/mapbasic) 
+[![PNG Power Ltd](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/png-power/mapbasic/logo.tif)](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/png-power/mapbasic)
+[![Solomon Islands Power Authority](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/sol-power/mapbasic/logo.jpg)](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/sol-power/mapbasic)
+[![Electric Power Corporation of Samoa](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/sam-power/mapbasic/logo.png)](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/sam-power/mapbasic)  
+[![Tonga Electric Power Board](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/ton-power/mapbasic/logo.tif)](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/ton-power/mapbasic)
+[![Tonga Communication Corporation](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/ton-telco/mapbasic/logo.tif)](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/ton-telco/mapbasic) 
+
+
 <p align="center">
  <img width="500" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/pic.png" alt="TEPB Main Office 1998">
 </p>

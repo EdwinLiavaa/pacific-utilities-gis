@@ -1,6 +1,8 @@
-# Open-Sourcing Decades of GIS Innovation
 <p align="center">
- <img width="200" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/pic.png" alt="TEPB Main Office 1998">
+# Open-Sourcing Decades of GIS Innovation
+</p>
+<p align="center">
+ <img width="500" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/pic.png" alt="TEPB Main Office 1998">
 </p>
 
 ## About

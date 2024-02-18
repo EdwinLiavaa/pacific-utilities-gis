@@ -12,23 +12,13 @@
   <img width="60" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/ton-telco/mapbasic/logo.png"> 
 </p>
 
-![](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/fij-airport/mapbasic/logo.tif)
-![](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/nau-rain/mapbasic/logo.jpg)
-![](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/tuv-rain/mapbasic/logo.png)
-![](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/rar-pearl/mapbasic/logo.tif)
-![](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/png-power/mapbasic/logo.tif)
-![](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/sol-power/mapbasic/logo.jpg)
-![](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/sam-power/mapbasic/logo.png)
-![](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/ton-power/mapbasic/logo.tif)
-![](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/ton-telco/mapbasic/logo.tif)
-
 <p align="center">
  <img width="500" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/pic.png" alt="TEPB Main Office 1998">
 </p>
 
 ## About
 
-For over 20+ years since 1997, I have developed custom GIS solutions to manage critical infrastructure and optimize operations for public utilities across the Pacific Islands. This GitHub repository is my contribution to the Pacific Islands open-source community by publicly open-sourcing over 45,000 lines of code and modules created with MapBasic for MapInfo to solve real-world challenges.
+For over 20+ years since 1997, I have developed custom GIS solutions to manage critical infrastructure and optimize operations for public utilities across the Pacific Islands. This GitHub repository is my contribution to the Pacific Islands [Free and Open Source Software](https://opensource.org/osd/) community by publicly open-sourcing over 45,000 lines of code and modules created with MapBasic for MapInfo to solve real-world challenges.
 
 As a GIS specialist and geospatial database developer, I helped architect and design integrated mapping systems from the ground up for various island utilities including power, water, telecommunications, airports and disaster management agencies. These map-centric solutions revolutionized asset management through data centralization, workflow automation, field mobility, and spatial analytics.
 

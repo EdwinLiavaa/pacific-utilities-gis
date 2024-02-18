@@ -40,6 +40,31 @@ I welcome any feedback, suggestions, or enhancements! Please reach out if you ha
 
 Let's leverage geospatial systems to build a better world together. 🛠 
 
+## Open Sourcing in the Pacific - A Call to Action
+
+I shared my journey open sourcing decades of custom GIS code created to optimize utilities across the Pacific Islands on LinkedIn. The response has been humbling, including [Lynnold Misifea Wini](https://www.linkedin.com/in/ACoAAA377zgBOe_RxnFWqGyHO5XHixpQkKsOEZc). Lynnold Misifea Wini's comment:
+
+"Awesome. Pacific Islands developers should be doing more of this. Sharing and peer-reviewing code. Wonder if there is any initiative to do this?"
+
+This sparks an important realization - while I've made a start, there is much more we can do as a community to build skills in open source contribution.
+Pioneers like [Les Allinson](https://en.wikipedia.org/wiki/PICISOC)(RIP), [Franck Martin](https://www.linkedin.com/in/franckmartin) and [Dr. Wolf Forstreuter](https://www.linkedin.com/in/wolf-forstreuter-3bbb123) were instrumental in leading efforts providing hands-on mentorship in open sourcing the early days of geospatial development in our region.
+
+I am now reaching out to carry on the torch in providing advocacy and capacity building in:
+
+* Cataloging and publishing code to GitHub
+*  Writing clear documentation and summaries
+* Structuring projects for collaboration
+* Managing issues and pull requests
+* Providing respectful code reviews
+
+Open source is founded on transparency and collective growth. By coaching emerging developers in the Pacific on how to effectively share their work for feedback, we empower innovation.
+
+If you're interested in volunteering your time to run workshops, share tutorials, or peer mentor new open source contributors, please connect with me. This is not about fame or recognition. It's about uplifting each other to create better solutions that improve lives.
+
+The time is now to build our capacity. Our remote islands have unique challenges that technology can help overcome, but only if we work together. I'm excited to see what we can achieve by connecting Pasifika coders to the global community.
+
+Let's share, review, and enhance each other's work - transparently and openly. The future is open source.
+
 ## Contributors
 
 1. [Les Allinson](https://en.wikipedia.org/wiki/PICISOC)

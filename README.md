@@ -47,7 +47,7 @@ I shared my journey open sourcing decades of custom GIS code created to optimize
 "Awesome. Pacific Islands developers should be doing more of this. Sharing and peer-reviewing code. Wonder if there is any initiative to do this?"
 
 This sparks an important realization - while I've made a start, there is much more we can do as a community to build skills in open source contribution.
-Pioneers like [Les Allinson](https://en.wikipedia.org/wiki/PICISOC)(RIP), [Franck Martin](https://www.linkedin.com/in/franckmartin) and [Dr. Wolf Forstreuter](https://www.linkedin.com/in/wolf-forstreuter-3bbb123) were instrumental in leading efforts providing hands-on mentorship in open sourcing the early days of geospatial development in our region.
+Pioneers like [Les Allinson](https://en.wikipedia.org/wiki/PICISOC) (RIP), [Franck Martin](https://www.linkedin.com/in/franckmartin) and [Dr. Wolf Forstreuter](https://www.linkedin.com/in/wolf-forstreuter-3bbb123) were instrumental in leading efforts providing hands-on mentorship in open sourcing the early days of geospatial development in our region.
 
 I am now reaching out to carry on the torch in providing advocacy and capacity building in:
 

@@ -74,9 +74,10 @@ Let's share, review, and enhance each other's work - transparently and openly. T
 8. [Tonga Electric Power Board](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/ton-power/mapbasic) 
 9. [Tonga Communication Corporation](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/ton-telco/mapbasic)  
 
-## Special Edition
+## Special Editions
 
 * [TEPB Programming Manual](https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/ton-power/TEPB%20Programming%20Manual.pdf) only available at the [National Library of Australia](https://catalogue.nla.gov.au/Record/2345856) 
+* [GIS for Sustainable Management of Pearl Farms - Cook Islands](https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/rar-pearl/mmr-gis-mis-pearl-farms-manihiki.pdf)
 
 ## 45,832 total lines of code
 

@@ -78,7 +78,7 @@ Let's share, review, and enhance each other's work - transparently and openly. T
 
 * [TEPB Programming Manual](https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/ton-power/TEPB%20Programming%20Manual.pdf) only available at the [National Library of Australia](https://catalogue.nla.gov.au/Record/2345856) 
 * [GIS for Sustainable Management of Pearl Farms - Cook Islands](https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/rar-pearl/mmr-gis-mis-pearl-farms-manihiki.pdf)
-
+* [Streamlining Utilities Operations with GIS Job Management - PNG Power Ltd](https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/png-power/ppl-utilitiesmis-gis-2014-edwin.pdf)
 ## 45,832 total lines of code
 
 * 30 ./fij-airport/mapbasic/about.mb

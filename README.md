@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
- <img width="500" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/pic.png" alt="TEPB Main Office 1998">
+ <img width="1000" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/pic.png" alt="TEPB Main Office 1998">
 </p>
 
 ## About

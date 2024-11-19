@@ -18,7 +18,7 @@
 
 ## About
 
-For over 20+ years since 1997, I have developed custom GIS solutions to manage critical infrastructure and optimize operations for public utilities across the Pacific Islands. This GitHub repository is my contribution to the Pacific Islands [FOSS4G0](https://wiki.osgeo.org/wiki/FOSS4G) - Free and Open Source Software for Geospatial community by publicly open-sourcing over 45,000 lines of code and modules created with MapBasic for MapInfo to solve real-world challenges.
+For over 20+ years since 1997, I have developed custom GIS solutions to manage critical infrastructure and optimize operations for public utilities across the Pacific Islands. This GitHub repository is my contribution to the Pacific Islands [FOSS4G](https://wiki.osgeo.org/wiki/FOSS4G) - Free and Open Source Software for Geospatial community by publicly open-sourcing over 45,000 lines of code and modules created with MapBasic for MapInfo to solve real-world challenges.
 
 As a GIS specialist and geospatial database developer, I helped architect and design integrated mapping systems from the ground up for various island utilities including power, water, telecommunications, airports and disaster management agencies. These map-centric solutions revolutionized asset management through data centralization, workflow automation, field mobility, and spatial analytics.
 

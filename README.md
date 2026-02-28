@@ -11,7 +11,7 @@
   <img width="80" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/adb-fsm/logos/Elemmental.png">
 </p>
 
-This mission report outlines Geographic Information System (GIS) support for disaster risk reduction for power utilities in the Federated States of Micronesia (FSM). Key activities include developing a geospatial energy asset database mapped in GIS to assess exposure to natural hazards, with capacity building for utilities. The GIS mapping will enable natural hazard exposure assessments (Task 3), with on the ground surveys by utility staff validating asset data. This feeds into a qualitative risk assessment, prioritizing high risk assets and integrating resilience into energy policies/plans.
+This project provides Geographic Information System (GIS) support for disaster risk reduction for power utilities in the Federated States of Micronesia (FSM). Key activities include developing a geospatial energy asset database mapped in GIS to assess exposure to natural hazards, with capacity building for utilities. The GIS mapping will enable natural hazard exposure assessments, with on the ground surveys by utility staff validating asset data. This feeds into a qualitative risk assessment, prioritizing high risk assets and integrating resilience into energy policies/plans.
 
 **Funded by ADB 175726: GRANT-0813 FSM: Renewable Energy Development Project, Disaster Risk Resilience (DRR) Consulting Services (49450-027)**
 

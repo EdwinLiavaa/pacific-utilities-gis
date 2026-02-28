@@ -74,6 +74,26 @@ Let's share, review, and enhance each other's work - transparently and openly. T
 8. [Tonga Electric Power Board](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/ton-power/mapbasic) 
 9. [Tonga Communication Corporation](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/ton-telco/mapbasic)  
 
+## ADB FSM - Disaster Risk Resilience GIS Support
+
+<p float="center">
+  <img width="80" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/adb-fsm/logos/ADB.png">
+  <img width="80" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/adb-fsm/logos/OCA Global.png">
+  <img width="80" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/adb-fsm/logos/oiko.png">
+  <img width="80" height="50" src="https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/adb-fsm/logos/Elemmental.png">
+</p>
+
+This mission report outlines Geographic Information System (GIS) support for disaster risk reduction for power utilities in the Federated States of Micronesia (FSM). Key activities include developing a geospatial energy asset database mapped in GIS to assess exposure to natural hazards, with capacity building for utilities. The GIS mapping will enable natural hazard exposure assessments (Task 3), with on the ground surveys by utility staff validating asset data. This feeds into a qualitative risk assessment, prioritizing high risk assets and integrating resilience into energy policies/plans.
+
+**Funded by ADB 175726: GRANT-0813 FSM: Renewable Energy Development Project, Disaster Risk Resilience (DRR) Consulting Services (49450-027)**
+
+### FSM Utilities
+
+1. [Pohnpei Utilities Corporation (PUC)](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/adb-fsm/puc)
+2. [Chuuk Public Utilities Corporation (CPUC)](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/adb-fsm/cpuc)
+3. [Kosrae Utilities Authority (KUA)](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/adb-fsm/kua)
+4. [Yap State Public Service Corporation (YSPSC)](https://github.com/EdwinLiavaa/pacific-utilities-gis/tree/main/adb-fsm/yspsc)
+
 ## Special Editions
 
 * [TEPB Programming Manual](https://github.com/EdwinLiavaa/pacific-utilities-gis/blob/main/ton-power/TEPB%20Programming%20Manual.pdf) only available at the [National Library of Australia](https://catalogue.nla.gov.au/Record/2345856) 
